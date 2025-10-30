@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Gaduka Gang - Python Community Forum{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <!-- Header section -->
+        <header class="header">
+            <div class="logo">
+                <h1>GADUKA GANG</h1>
+                <p>Сообщество фанатов Python</p>
+            </div>
+            <nav class="nav">
+                <ul>
+                    <li><a href="{% url 'home' %}" id="home-link">Главная</a></li>
+                    <li><a href="#" id="forum-link">Форум</a></li>
+                    <li><a href="#" id="chat-link">Чат</a></li>
+                    <li><a href="#" id="users-link">Участники</a></li>
+                    <li><a href="#" id="resources-link">Ресурсы</a></li>
+                </ul>
+            </nav>
+            <div class="user-actions">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile' %}" class="btn btn-secondary">Профиль</a>
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти</a>
+                    <a href="{% url 'register' %}" class="btn btn-secondary">Регистрация</a>
+                {% endif %}
+            </div>
+        </header>
+
+        <!-- Main content -->
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Gaduka Gang</h3>
+                    <p>Сообщество фанатов Python, объединенных страстью к коду и инновациям.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Навигация</h4>
+                    <ul>
+                        <li><a href="{% url 'home' %}">Главная</a></li>
+                        <li><a href="#">Форум</a></li>
+                        <li><a href="#">Чат</a></li>
+                        <li><a href="#">Участники</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Ресурсы</h4>
+                    <ul>
+                        <li><a href="https://docs.python.org/3/" target="_blank">Документация</a></li>
+                        <li><a href="#">Туториалы</a></li>
+                        <li><a href="#">Блог</a></li>
+                        <li><a href="https://www.codewars.com/kata/search/python" target="_blank">Практика</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Социальные сети</h4>
+                    <div class="social-links">
+                        <a href="#">GitHub</a>
+                        <a href="#">Telegram</a>
+                        <a href="#">Twitter</a>
+                        <a href="#">Discord</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Gaduka Gang. Все права защищены.</p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{% static 'js/script.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

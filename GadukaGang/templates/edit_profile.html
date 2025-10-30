@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактирование профиля - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-profile-section {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    .edit-profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+    
+    .edit-profile-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .edit-profile-header h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        margin-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--border-color);
+        background-color: var(--darker-bg);
+        color: var(--text-primary);
+        font-family: 'Roboto Mono', monospace;
+        border-radius: 0;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+    
+    .btn-group {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 30px;
+        flex-wrap: wrap;
+    }
+    
+    .message {
+        padding: 15px;
+        margin-bottom: 20px;
+        border-radius: 3px;
+        text-align: center;
+    }
+    
+    .message.success {
+        background-color: rgba(0, 255, 65, 0.1);
+        color: var(--accent-green);
+        border: 1px solid var(--accent-green);
+    }
+    
+    .message.error {
+        background-color: rgba(255, 68, 68, 0.1);
+        color: #ff4444;
+        border: 1px solid #ff4444;
+    }
+    
+    @media (max-width: 768px) {
+        .btn-group {
+            flex-direction: column;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Edit Profile section -->
+<section class="edit-profile-section">
+    <div class="edit-profile-container">
+        <div class="edit-profile-header">
+            <h2>Редактирование профиля</h2>
+            <p>Обновите информацию о себе</p>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" value="{{ user.username }}" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="first_name">Имя:</label>
+                <input type="text" id="first_name" name="first_name" value="{{ user.first_name }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="last_name">Фамилия:</label>
+                <input type="text" id="last_name" name="last_name" value="{{ user.last_name }}">
+            </div>
+            
+            <div class="form-group">
+                <label for="bio">Биография:</label>
+                <textarea id="bio" name="bio">{{ user_profile.bio }}</textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="signature">Подпись:</label>
+                <textarea id="signature" name="signature">{{ user_profile.signature }}</textarea>
+            </div>
+            
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                <a href="{% url 'profile' %}" class="btn btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

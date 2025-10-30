@@ -1,0 +1,510 @@
+/* Основные переменные */
+:root {
+    --dark-bg: #0a0a0a;
+    --darker-bg: #050505;
+    --card-bg: #121212;
+    --border-color: #222;
+    --accent-green: #00ff41;
+    --accent-green-dark: #00cc33;
+    --text-primary: #f0f0f0;
+    --text-secondary: #b0b0b0;
+    --metallic-1: #c0c0c0;
+    --metallic-2: #a9a9a9;
+    --neon-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    --neon-glow: 0 0 20px rgba(0, 255, 65, 0.7);
+}
+
+/* Сброс стилей */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(0, 255, 65, 0.05) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(0, 255, 65, 0.05) 0%, transparent 20%);
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Заголовок */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-color);
+    background-color: rgba(10, 10, 10, 0.8);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.logo h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: var(--neon-shadow);
+    letter-spacing: 2px;
+    min-width: fit-content;
+}
+
+.logo p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.nav ul {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.nav a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 300;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 5px 0;
+    white-space: nowrap;
+    display: block;
+}
+
+.nav a:hover,
+.nav a.active {
+    color: var(--accent-green);
+    text-shadow: var(--neon-shadow);
+}
+
+.nav a.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--accent-green);
+    box-shadow: var(--neon-glow);
+}
+
+.user-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    min-width: fit-content;
+}
+
+.user-actions form {
+    margin: 0;
+}
+
+/* Кнопки */
+.btn {
+    padding: 10px 20px;
+    border-radius: 0;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background-color: var(--accent-green);
+    color: var(--dark-bg);
+    border-color: var(--accent-green);
+    box-shadow: var(--neon-shadow);
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-green-dark);
+    box-shadow: var(--neon-glow);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--text-primary);
+    border-color: var(--metallic-1);
+}
+
+.btn-secondary:hover {
+    background-color: rgba(192, 192, 192, 0.1);
+    color: var(--accent-green);
+    border-color: var(--accent-green);
+    box-shadow: var(--neon-shadow);
+}
+
+.btn-outline {
+    background-color: transparent;
+    color: var(--accent-green);
+    border: 1px solid var(--accent-green);
+    box-shadow: var(--neon-shadow);
+}
+
+.btn-outline:hover {
+    background-color: rgba(0, 255, 65, 0.1);
+    box-shadow: var(--neon-glow);
+    transform: translateY(-2px);
+}
+
+/* Герой секция */
+.hero {
+    display: flex;
+    align-items: center;
+    gap: 50px;
+    padding: 80px 0;
+    min-height: 80vh;
+}
+
+.hero-content h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 3rem;
+    margin-bottom: 20px;
+    background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: var(--neon-shadow);
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin-bottom: 30px;
+    line-height: 1.8;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 20px;
+}
+
+.hero-image {
+    flex: 1;
+    position: relative;
+}
+
+.code-snippet {
+    background-color: var(--darker-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 20px;
+    box-shadow: var(--neon-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.code-snippet::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--accent-green);
+    box-shadow: var(--neon-glow);
+}
+
+.code-snippet pre {
+    color: var(--accent-green);
+    font-family: 'Roboto Mono', monospace;
+    overflow-x: auto;
+}
+
+/* Особенности */
+.features {
+    padding: 80px 0;
+}
+
+.features h2 {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 60px;
+    color: var(--text-primary);
+    text-shadow: var(--neon-shadow);
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 30px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--accent-green);
+    box-shadow: var(--neon-glow);
+}
+
+.feature-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+}
+
+.feature-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: var(--accent-green);
+}
+
+.feature-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+/* Обсуждения */
+.discussions {
+    padding: 80px 0;
+}
+
+.discussions h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2.5rem;
+    margin-bottom: 40px;
+    color: var(--text-primary);
+    text-shadow: var(--neon-shadow);
+}
+
+.discussion-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.discussion-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 25px;
+    transition: all 0.3s ease;
+}
+
+.discussion-card:hover {
+    border-color: var(--accent-green);
+    box-shadow: var(--neon-shadow);
+}
+
+.discussion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.discussion-header h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    flex: 1;
+    margin-right: 15px;
+}
+
+.tag {
+    background-color: rgba(0, 255, 65, 0.1);
+    color: var(--accent-green);
+    padding: 5px 10px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    border: 1px solid var(--accent-green);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+}
+
+.discussion-card p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.7;
+}
+
+.discussion-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 0.9rem;
+    color: var(--metallic-2);
+}
+
+.discussion-meta span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Футер */
+.footer {
+    background-color: var(--darker-bg);
+    border-top: 1px solid var(--border-color);
+    padding: 60px 0 30px;
+    margin-top: 80px;
+}
+
+.footer-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.footer-section h3,
+.footer-section h4 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--accent-green);
+    margin-bottom: 20px;
+    text-shadow: var(--neon-shadow);
+}
+
+.footer-section h3 {
+    font-size: 1.8rem;
+}
+
+.footer-section h4 {
+    font-size: 1.2rem;
+}
+
+.footer-section p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.footer-section ul {
+    list-style: none;
+}
+
+.footer-section ul li {
+    margin-bottom: 10px;
+}
+
+.footer-section a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.footer-section a:hover {
+    color: var(--accent-green);
+    text-shadow: var(--neon-shadow);
+}
+
+.social-links {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 30px;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+    .hero {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero-content p {
+        margin: 0 auto 30px;
+    }
+
+    .hero-buttons {
+        justify-content: center;
+    }
+
+    .discussion-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        gap: 20px;
+        text-align: center;
+    }
+
+    .logo h1 {
+        font-size: 2rem;
+    }
+
+    .nav ul {
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .user-actions {
+        justify-content: center;
+    }
+
+    .hero-content h2 {
+        font-size: 2.2rem;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .certificate {
+        padding: 20px;
+    }
+}

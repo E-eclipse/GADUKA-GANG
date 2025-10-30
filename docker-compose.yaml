@@ -1,0 +1,53 @@
+version: '3.9'
+
+services:
+  frontend:
+    restart: always
+    build: ./GadukaGang
+    ports:
+      - "9876:8000"
+    working_dir: /app
+    environment:
+      - DJANGO_DEBUG=true
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,frontend
+      - POSTGRES_DB=forum_database
+      - POSTGRES_USER=forum_owner
+      - POSTGRES_PASSWORD=1111
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    volumes:
+      - ./GadukaGang:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
+
+  postgres:
+    restart: always
+    build: ./database
+    environment:
+      - POSTGRES_DB=forum_database
+      - POSTGRES_USER=forum_owner
+      - POSTGRES_PASSWORD=1111
+    ports:
+      - "4545:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+a
+  adminer:
+    restart: always
+    image: adminer
+    ports:
+      - "5567:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pg_data:
+
+

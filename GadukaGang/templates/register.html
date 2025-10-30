@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Регистрация - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .registration-section {
+        padding: 60px 0;
+        min-height: calc(100vh - 300px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .registration-container {
+        max-width: 550px;
+        width: 100%;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: var(--neon-shadow);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .registration-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+    
+    .registration-container h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.2rem;
+        color: var(--accent-green);
+        text-align: center;
+        margin-bottom: 10px;
+        text-shadow: var(--neon-shadow);
+        letter-spacing: 1px;
+    }
+    
+    .registration-container p.subtitle {
+        text-align: center;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        font-size: 1.1rem;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+        position: relative;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-weight: 400;
+        font-size: 1rem;
+    }
+    
+    .form-group input {
+        width: 100%;
+        padding: 14px;
+        border: 1px solid var(--border-color);
+        background-color: var(--darker-bg);
+        color: var(--text-primary);
+        font-family: 'Roboto Mono', monospace;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border-left: 3px solid var(--accent-green);
+    }
+    
+    .form-group input:focus {
+        outline: none;
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+        background-color: rgba(0, 255, 65, 0.05);
+    }
+    
+    .error-message {
+        background-color: rgba(255, 68, 68, 0.1);
+        color: #ff4444;
+        padding: 12px;
+        border-radius: 4px;
+        margin-top: 8px;
+        border: 1px solid #ff4444;
+        font-size: 0.9rem;
+    }
+    
+    .password-requirements {
+        background-color: rgba(0, 255, 65, 0.1);
+        color: var(--text-secondary);
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 8px;
+        border: 1px solid var(--accent-green);
+        font-size: 0.85rem;
+    }
+    
+    .password-requirements ul {
+        padding-left: 20px;
+        margin: 10px 0;
+    }
+    
+    .password-requirements li {
+        margin-bottom: 5px;
+    }
+    
+    .btn-register {
+        width: 100%;
+        padding: 14px;
+        background-color: var(--accent-green);
+        color: var(--dark-bg);
+        border: none;
+        border-radius: 4px;
+        font-family: 'Roboto Mono', monospace;
+        font-weight: 500;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: var(--neon-shadow);
+        margin-top: 10px;
+    }
+    
+    .btn-register:hover {
+        background-color: var(--accent-green-dark);
+        box-shadow: var(--neon-glow);
+        transform: translateY(-2px);
+    }
+    
+    .registration-footer {
+        text-align: center;
+        margin-top: 30px;
+        color: var(--text-secondary);
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .registration-footer a {
+        color: var(--accent-green);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+    }
+    
+    .registration-footer a:hover {
+        text-shadow: var(--neon-shadow);
+        color: #00cc33;
+    }
+    
+    .terms {
+        text-align: center;
+        margin-top: 20px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    
+    .terms a {
+        color: var(--accent-green);
+        text-decoration: none;
+    }
+    
+    .terms a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Registration section -->
+<section class="registration-section">
+    <div class="registration-container">
+        <h2>Создать аккаунт</h2>
+        <p class="subtitle">Присоединяйтесь к сообществу Gaduka Gang</p>
+        
+        {% if form.non_field_errors %}
+            <div class="error-message">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">Имя пользователя</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="error-message">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">Email</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="error-message">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">Пароль</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="error-message">{{ form.password1.errors }}</div>
+                {% endif %}
+                <div class="password-requirements">
+                    <p>Пароль должен содержать:</p>
+                    <ul>
+                        <li>Минимум 8 символов</li>
+                        <li>Буквы верхнего и нижнего регистра</li>
+                        <li>Цифры</li>
+                        <li>Специальные символы</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">Подтверждение пароля</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="error-message">{{ form.password2.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <button type="submit" class="btn-register">Зарегистрироваться</button>
+            
+            <div class="terms">
+                <p>Регистрируясь, вы соглашаетесь с тем, что python - лучший язык программирования</a></p>
+            </div>
+        </form>
+        
+        <div class="registration-footer">
+            <p>Уже есть аккаунт? <a href="{% url 'login' %}">Войдите</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
