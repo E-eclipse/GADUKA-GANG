@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Админ-графики - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-charts {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    .admin-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+    }
+    
+    .admin-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        letter-spacing: 1px;
+        margin: 0;
+    }
+    
+    .back-link {
+        color: var(--accent-green);
+        text-decoration: none;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .back-link:hover {
+        text-shadow: var(--neon-shadow);
+        transform: translateX(-3px);
+    }
+    
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    
+    .chart-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: var(--neon-shadow);
+        transition: all 0.3s ease;
+    }
+    
+    .chart-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+    }
+    
+    .chart-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        margin: 0 0 20px 0;
+        font-size: 1.4rem;
+        text-align: center;
+    }
+    
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .stat-card {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+    }
+    
+    .stat-title {
+        color: var(--text-secondary);
+        margin: 0 0 8px 0;
+        font-size: 0.9rem;
+    }
+    
+    .stat-value {
+        font-size: 1.6rem;
+        color: var(--text-primary);
+        font-family: 'Roboto Mono', monospace;
+    }
+    
+    .chart-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+    
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-charts">
+    <div class="admin-header">
+        <h2 class="admin-title">Админ-графики</h2>
+        <a href="{% url 'admin_panel' %}" class="back-link">
+            ← Назад в админ-панель
+        </a>
+    </div>
+    
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3 class="chart-title">Статистика пользователей</h3>
+            <div class="chart-container">
+                <canvas id="usersChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">Активность на форуме</h3>
+            <div class="chart-container">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">Рост сообщества</h3>
+            <div class="chart-container">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="chart-card">
+            <h3 class="chart-title">Популярные разделы</h3>
+            <div class="chart-container">
+                <canvas id="sectionsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <h3 class="chart-title">Общая статистика</h3>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Всего пользователей</div>
+                <div class="stat-value">{{ stats.total_users }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Всего тем</div>
+                <div class="stat-value">{{ stats.total_topics }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Всего разделов</div>
+                <div class="stat-value">{{ stats.total_sections }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Всего сообщений</div>
+                <div class="stat-value">{{ stats.total_posts }}</div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Users Chart
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    const usersChart = new Chart(usersCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Активные', 'Неактивные', 'Новые (7дн)'],
+            datasets: [{
+                data: [65, 25, 10],
+                backgroundColor: [
+                    'rgba(0, 255, 65, 0.8)',
+                    'rgba(192, 192, 192, 0.5)',
+                    'rgba(0, 255, 65, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(0, 255, 65, 1)',
+                    'rgba(192, 192, 192, 1)',
+                    'rgba(0, 255, 65, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f0f0f0',
+                        font: {
+                            family: "'Roboto Mono', monospace"
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    const activityChart = new Chart(activityCtx, {
+        type: 'line',
+        data: {
+            labels: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
+            datasets: [{
+                label: 'Новые темы',
+                data: [12, 19, 3, 5, 2, 3, 9],
+                borderColor: 'rgba(0, 255, 65, 1)',
+                backgroundColor: 'rgba(0, 255, 65, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Новые сообщения',
+                data: [30, 45, 20, 25, 15, 18, 40],
+                borderColor: 'rgba(192, 192, 192, 1)',
+                backgroundColor: 'rgba(192, 192, 192, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f0f0f0',
+                        font: {
+                            family: "'Roboto Mono', monospace"
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b0b0b0'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b0b0b0'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Growth Chart
+    const growthCtx = document.getElementById('growthChart').getContext('2d');
+    const growthChart = new Chart(growthCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн'],
+            datasets: [{
+                label: 'Новые пользователи',
+                data: [12, 19, 3, 5, 2, 30],
+                backgroundColor: 'rgba(0, 255, 65, 0.7)',
+                borderColor: 'rgba(0, 255, 65, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#f0f0f0',
+                        font: {
+                            family: "'Roboto Mono', monospace"
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b0b0b0'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#b0b0b0'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Sections Chart
+    const sectionsCtx = document.getElementById('sectionsChart').getContext('2d');
+    const sectionsChart = new Chart(sectionsCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Python', 'Django', 'Flask', 'FastAPI', 'Асинхронность'],
+            datasets: [{
+                data: [30, 25, 15, 10, 20],
+                backgroundColor: [
+                    'rgba(0, 255, 65, 0.8)',
+                    'rgba(0, 200, 80, 0.8)',
+                    'rgba(0, 150, 100, 0.8)',
+                    'rgba(0, 100, 120, 0.8)',
+                    'rgba(0, 50, 140, 0.8)'
+                ],
+                borderColor: [
+                    'rgba(0, 255, 65, 1)',
+                    'rgba(0, 200, 80, 1)',
+                    'rgba(0, 150, 100, 1)',
+                    'rgba(0, 100, 120, 1)',
+                    'rgba(0, 50, 140, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#f0f0f0',
+                        font: {
+                            family: "'Roboto Mono', monospace"
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

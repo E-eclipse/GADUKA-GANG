@@ -9,6 +9,9 @@ from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from .forms import CustomUserCreationForm
 from .models import Section, Topic, UserRankProgress, UserProfile, UserCertificate
+from django.urls import reverse
+from .decorators import admin_required
+from django.db.models import Count
 
 User = get_user_model()
 
@@ -141,3 +144,65 @@ def edit_profile_view(request):
     }
     
     return render(request, 'edit_profile.html', context)
+
+@admin_required
+def admin_panel_view(request):
+    """
+    Custom admin panel (placeholder dashboard).
+    Accessible only by admins via direct URL.
+    Provides links to Django admin for managing all tables.
+    """
+    admin_links = [
+        { 'name': 'Пользователи', 'url': reverse('admin:GadukaGang_user_changelist') },
+        { 'name': 'Профили пользователей', 'url': reverse('admin:GadukaGang_userprofile_changelist') },
+        { 'name': 'Разделы', 'url': reverse('admin:GadukaGang_section_changelist') },
+        { 'name': 'Темы', 'url': reverse('admin:GadukaGang_topic_changelist') },
+        { 'name': 'Сообщения', 'url': reverse('admin:GadukaGang_post_changelist') },
+        { 'name': 'Достижения', 'url': reverse('admin:GadukaGang_achievement_changelist') },
+        { 'name': 'Достижения пользователей', 'url': reverse('admin:GadukaGang_userachievement_changelist') },
+        { 'name': 'Ранги', 'url': reverse('admin:GadukaGang_userrank_changelist') },
+        { 'name': 'Прогресс рангов', 'url': reverse('admin:GadukaGang_userrankprogress_changelist') },
+        { 'name': 'Теги', 'url': reverse('admin:GadukaGang_tag_changelist') },
+        { 'name': 'Теги тем', 'url': reverse('admin:GadukaGang_topictag_changelist') },
+        { 'name': 'Сертификаты', 'url': reverse('admin:GadukaGang_certificate_changelist') },
+        { 'name': 'Сертификаты пользователей', 'url': reverse('admin:GadukaGang_usercertificate_changelist') },
+        { 'name': 'Жалобы', 'url': reverse('admin:GadukaGang_complaint_changelist') },
+        { 'name': 'Чаты', 'url': reverse('admin:GadukaGang_chat_changelist') },
+        { 'name': 'Участники чатов', 'url': reverse('admin:GadukaGang_chatparticipant_changelist') },
+        { 'name': 'Сообщения чатов', 'url': reverse('admin:GadukaGang_chatmessage_changelist') },
+        { 'name': 'Системные логи', 'url': reverse('admin:GadukaGang_systemlog_changelist') },
+        { 'name': 'Настройки форума', 'url': reverse('admin:GadukaGang_forumsetting_changelist') },
+        { 'name': 'Лайки сообщений', 'url': reverse('admin:GadukaGang_postlike_changelist') },
+        { 'name': 'Оценки тем', 'url': reverse('admin:GadukaGang_topicrating_changelist') },
+        { 'name': 'Подписки на пользователей', 'url': reverse('admin:GadukaGang_usersubscription_changelist') },
+        { 'name': 'Подписки на темы', 'url': reverse('admin:GadukaGang_topicsubscription_changelist') },
+        { 'name': 'Действия модераторов', 'url': reverse('admin:GadukaGang_moderatoraction_changelist') },
+        { 'name': 'Логи администраторов', 'url': reverse('admin:GadukaGang_adminlog_changelist') },
+        { 'name': 'Уведомления', 'url': reverse('admin:GadukaGang_notification_changelist') },
+        { 'name': 'Поисковый индекс', 'url': reverse('admin:GadukaGang_searchindex_changelist') },
+        { 'name': 'GitHub OAuth', 'url': reverse('admin:GadukaGang_githubauth_changelist') },
+    ]
+
+    context = {
+        'admin_links': admin_links,
+    }
+    return render(request, 'admin_panel.html', context)
+
+@admin_required
+def admin_charts_view(request):
+    """
+    Admin charts page with beautiful visualizations.
+    """
+    # Get statistics for charts
+    stats = {
+        'total_users': User.objects.count(),
+        'total_topics': Topic.objects.count(),
+        'total_sections': Section.objects.count(),
+        'total_posts': 0,  # We'll calculate this properly
+        'total_complaints': 0,  # We'll calculate this properly
+    }
+    
+    context = {
+        'stats': stats,
+    }
+    return render(request, 'admin_charts.html', context)

@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Админ-панель - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-panel {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+    
+    .admin-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+    
+    .admin-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        letter-spacing: 1px;
+        margin: 0;
+    }
+    
+    .admin-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .btn-charts {
+        background-color: transparent;
+        color: var(--accent-green);
+        border: 1px solid var(--accent-green);
+        padding: 10px 20px;
+        border-radius: 0;
+        font-family: 'Roboto Mono', monospace;
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .btn-charts:hover {
+        background-color: rgba(0, 255, 65, 0.1);
+        box-shadow: var(--neon-glow);
+        transform: translateY(-2px);
+    }
+    
+    .dashboard-placeholder {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+    }
+    
+    .widget-card {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 16px;
+    }
+    
+    .widget-title {
+        color: var(--text-secondary);
+        margin: 0 0 8px 0;
+        font-size: 0.9rem;
+    }
+    
+    .widget-value {
+        font-size: 1.6rem;
+        color: var(--text-primary);
+        font-family: 'Roboto Mono', monospace;
+    }
+    
+    .tables-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: var(--neon-shadow);
+        margin-bottom: 24px;
+    }
+    
+    .tables-title {
+        margin: 0 0 16px 0;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .tables-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+    }
+    
+    .table-link {
+        display: block;
+        padding: 12px 14px;
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .table-link:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--neon-glow);
+        border-color: var(--accent-green);
+    }
+    
+    .hint {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-top: 8px;
+    }
+    
+    /* Table categories */
+    .table-category {
+        margin-bottom: 30px;
+    }
+    
+    .category-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin: 0 0 15px 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="admin-panel">
+    <div class="admin-header">
+        <h2 class="admin-title">Админ-панель</h2>
+        <div class="admin-actions">
+            <a href="{% url 'admin_charts' %}" class="btn-charts">Графики и статистика</a>
+            <a href="{% url 'admin:index' %}" class="btn btn-outline" target="_blank">Django Admin</a>
+        </div>
+    </div>
+
+    <div class="dashboard-placeholder">
+        <p>Здесь будет дашборд с графиками и метриками. Логику добавим позже.</p>
+        <div class="dashboard-grid">
+            <div class="widget-card">
+                <div class="widget-title">Всего пользователей</div>
+                <div class="widget-value">—</div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-title">Всего тем</div>
+                <div class="widget-value">—</div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-title">Всего сообщений</div>
+                <div class="widget-value">—</div>
+            </div>
+            <div class="widget-card">
+                <div class="widget-title">Жалоб открыто</div>
+                <div class="widget-value">—</div>
+            </div>
+        </div>
+        <div class="hint">Данные ниже — ссылки в стандартную Django админку для полного CRUD всех таблиц.</div>
+    </div>
+
+    <!-- User Management -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Управление пользователями</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.0.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.0.name }}</a>
+            <a class="table-link" href="{{ admin_links.1.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.1.name }}</a>
+            <a class="table-link" href="{{ admin_links.23.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.23.name }}</a>
+            <a class="table-link" href="{{ admin_links.24.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.24.name }}</a>
+        </div>
+    </div>
+
+    <!-- Content Management -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Управление контентом</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.2.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.2.name }}</a>
+            <a class="table-link" href="{{ admin_links.3.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.3.name }}</a>
+            <a class="table-link" href="{{ admin_links.4.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.4.name }}</a>
+        </div>
+    </div>
+
+    <!-- Forum Features -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Функции форума</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.5.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.5.name }}</a>
+            <a class="table-link" href="{{ admin_links.6.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.6.name }}</a>
+            <a class="table-link" href="{{ admin_links.7.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.7.name }}</a>
+            <a class="table-link" href="{{ admin_links.8.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.8.name }}</a>
+            <a class="table-link" href="{{ admin_links.9.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.9.name }}</a>
+            <a class="table-link" href="{{ admin_links.10.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.10.name }}</a>
+            <a class="table-link" href="{{ admin_links.21.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.21.name }}</a>
+            <a class="table-link" href="{{ admin_links.22.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.22.name }}</a>
+        </div>
+    </div>
+
+    <!-- Certificates -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Сертификаты</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.11.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.11.name }}</a>
+            <a class="table-link" href="{{ admin_links.12.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.12.name }}</a>
+        </div>
+    </div>
+
+    <!-- Chat System -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Система чатов</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.13.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.13.name }}</a>
+            <a class="table-link" href="{{ admin_links.14.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.14.name }}</a>
+            <a class="table-link" href="{{ admin_links.15.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.15.name }}</a>
+        </div>
+    </div>
+
+    <!-- System Management -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Управление системой</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.16.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.16.name }}</a>
+            <a class="table-link" href="{{ admin_links.17.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.17.name }}</a>
+            <a class="table-link" href="{{ admin_links.25.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.25.name }}</a>
+            <a class="table-link" href="{{ admin_links.26.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.26.name }}</a>
+            <a class="table-link" href="{{ admin_links.27.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.27.name }}</a>
+        </div>
+    </div>
+
+    <!-- Interactions -->
+    <div class="tables-card table-category">
+        <h3 class="tables-title">
+            <span class="category-title">Взаимодействия</span>
+        </h3>
+        <div class="category-grid">
+            <a class="table-link" href="{{ admin_links.18.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.18.name }}</a>
+            <a class="table-link" href="{{ admin_links.19.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.19.name }}</a>
+            <a class="table-link" href="{{ admin_links.20.url }}" target="_blank" rel="noopener noreferrer">{{ admin_links.20.name }}</a>
+        </div>
+    </div>
+</section>
+{% endblock %}

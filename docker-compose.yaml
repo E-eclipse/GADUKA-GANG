@@ -38,7 +38,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-a
+
   adminer:
     restart: always
     image: adminer

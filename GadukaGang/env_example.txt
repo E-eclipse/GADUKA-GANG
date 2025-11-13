@@ -1,0 +1,42 @@
+# ============================================
+# Файл переменных окружения для Gaduka Gang
+# ============================================
+# 
+# ИНСТРУКЦИЯ:
+# 1. Переименуйте этот файл в .env (уберите _example.txt, оставьте только .env)
+# 2. Заполните реальными значениями Client ID и Secret
+# 3. НЕ коммитьте .env в Git!
+#
+# ============================================
+# OAuth настройки
+# ============================================
+
+# GitHub OAuth
+# Получить Client ID и Secret: https://github.com/settings/developers
+# Инструкция: см. ИНСТРУКЦИЯ_OAUTH.md
+GITHUB_CLIENT_ID=ваш_github_client_id
+GITHUB_CLIENT_SECRET=ваш_github_client_secret
+
+# Google OAuth
+# Получить Client ID и Secret: https://console.cloud.google.com/
+# Инструкция: см. ИНСТРУКЦИЯ_OAUTH.md
+GOOGLE_CLIENT_ID=ваш_google_client_id
+GOOGLE_CLIENT_SECRET=ваш_google_client_secret
+
+# ============================================
+# Дополнительные настройки (опционально)
+# ============================================
+
+# Email настройки (для production)
+# EMAIL_HOST=smtp.gmail.com
+# EMAIL_PORT=587
+# EMAIL_USE_TLS=True
+# EMAIL_HOST_USER=your-email@gmail.com
+# EMAIL_HOST_PASSWORD=your-app-password
+
+# Django Secret Key (для production)
+# SECRET_KEY=your-secret-key-here
+
+# Debug режим (для production установите False)
+# DEBUG=True
+

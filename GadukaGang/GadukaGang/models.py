@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 # Модель пользователя
 class User(AbstractUser):
@@ -55,6 +56,8 @@ class Topic(models.Model):
     last_post_date = models.DateTimeField(auto_now=True)
     is_pinned = models.BooleanField(default=False)
     view_count = models.IntegerField(default=0)
+    average_rating = models.FloatField(default=0.0)
+    rating_count = models.IntegerField(default=0)
     
     def __str__(self):
         return self.title
@@ -71,6 +74,8 @@ class Post(models.Model):
     last_edited_date = models.DateTimeField(null=True, blank=True)
     edit_count = models.IntegerField(default=0)
     is_deleted = models.BooleanField(default=False)
+    like_count = models.IntegerField(default=0)
+    dislike_count = models.IntegerField(default=0)
     
     def __str__(self):
         return f"Post by {self.author.username} in {self.topic.title}"
@@ -272,5 +277,165 @@ class ForumSetting(models.Model):
     def __str__(self):
         return self.setting_name
 
+    class Meta:
+        app_label = 'GadukaGang'
+
+# Модель лайков/дизлайков сообщений
+class PostLike(models.Model):
+    LIKE_CHOICES = [
+        ('like', 'Like'),
+        ('dislike', 'Dislike'),
+    ]
+    
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    like_type = models.CharField(max_length=10, choices=LIKE_CHOICES)
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('post', 'user')
+        app_label = 'GadukaGang'
+
+# Модель оценок тем
+class TopicRating(models.Model):
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('topic', 'user')
+        app_label = 'GadukaGang'
+
+# Модель подписок на пользователей
+class UserSubscription(models.Model):
+    subscriber = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
+    subscribed_to = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscribers')
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('subscriber', 'subscribed_to')
+        app_label = 'GadukaGang'
+    
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.subscriber == self.subscribed_to:
+            raise ValidationError('Пользователь не может подписаться сам на себя.')
+
+# Модель подписок на темы
+class TopicSubscription(models.Model):
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='subscribers')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='topic_subscriptions')
+    created_date = models.DateTimeField(auto_now_add=True)
+    notify_on_new_post = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = ('topic', 'user')
+        app_label = 'GadukaGang'
+
+# Модель логов действий модераторов
+class ModeratorAction(models.Model):
+    ACTION_TYPES = [
+        ('delete_post', 'Delete Post'),
+        ('delete_topic', 'Delete Topic'),
+        ('edit_post', 'Edit Post'),
+        ('edit_topic', 'Edit Topic'),
+        ('pin_topic', 'Pin Topic'),
+        ('unpin_topic', 'Unpin Topic'),
+        ('block_user', 'Block User'),
+        ('unblock_user', 'Unblock User'),
+        ('award_achievement', 'Award Achievement'),
+        ('award_rank', 'Award Rank'),
+        ('process_complaint', 'Process Complaint'),
+    ]
+    
+    moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='moderator_actions')
+    action_type = models.CharField(max_length=50, choices=ACTION_TYPES)
+    description = models.TextField()
+    target_type = models.CharField(max_length=50)  # 'post', 'topic', 'user', etc.
+    target_id = models.IntegerField()
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        app_label = 'GadukaGang'
+
+# Модель логов действий администраторов
+class AdminLog(models.Model):
+    ACTION_TYPES = [
+        ('assign_moderator', 'Assign Moderator'),
+        ('remove_moderator', 'Remove Moderator'),
+        ('change_user_role', 'Change User Role'),
+        ('create_section', 'Create Section'),
+        ('delete_section', 'Delete Section'),
+        ('update_settings', 'Update Settings'),
+        ('create_backup', 'Create Backup'),
+        ('restore_backup', 'Restore Backup'),
+        ('system_update', 'System Update'),
+    ]
+    
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='admin_logs')
+    action_type = models.CharField(max_length=50, choices=ACTION_TYPES)
+    description = models.TextField()
+    affected_resource_type = models.CharField(max_length=50, blank=True)
+    affected_resource_id = models.IntegerField(null=True, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        app_label = 'GadukaGang'
+
+# Модель уведомлений пользователей
+class Notification(models.Model):
+    NOTIFICATION_TYPES = [
+        ('new_post_in_topic', 'New Post in Topic'),
+        ('reply_to_post', 'Reply to Post'),
+        ('post_liked', 'Post Liked'),
+        ('post_disliked', 'Post Disliked'),
+        ('achievement_earned', 'Achievement Earned'),
+        ('complaint_resolved', 'Complaint Resolved'),
+        ('chat_message', 'Chat Message'),
+        ('user_subscribed', 'User Subscribed'),
+        ('topic_subscribed', 'Topic Subscribed'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_date = models.DateTimeField(auto_now_add=True)
+    related_resource_type = models.CharField(max_length=50, blank=True)
+    related_resource_id = models.IntegerField(null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-created_date']
+        app_label = 'GadukaGang'
+
+# Модель индекса для поиска (опционально)
+class SearchIndex(models.Model):
+    content_type = models.CharField(max_length=50)  # 'topic', 'post'
+    object_id = models.IntegerField()
+    search_vector = models.TextField()  # Полнотекстовый вектор для поиска
+    tags = models.TextField(blank=True)  # Теги через запятую
+    author_username = models.CharField(max_length=150, blank=True)
+    created_date = models.DateTimeField()
+    last_updated = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ('content_type', 'object_id')
+        indexes = [
+            models.Index(fields=['content_type', 'object_id']),
+        ]
+        app_label = 'GadukaGang'
+
+# Модель GitHub OAuth данных (опционально)
+class GitHubAuth(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='github_auth')
+    github_id = models.CharField(max_length=100, unique=True)
+    github_username = models.CharField(max_length=150)
+    access_token = models.CharField(max_length=500)  # В production - зашифровать
+    refresh_token = models.CharField(max_length=500, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    last_sync = models.DateTimeField(auto_now=True)
+    
     class Meta:
         app_label = 'GadukaGang'

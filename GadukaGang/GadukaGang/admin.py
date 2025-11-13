@@ -1,0 +1,61 @@
+from django.contrib import admin
+from .models import (
+    User,
+    UserProfile,
+    Section,
+    Topic,
+    Post,
+    Achievement,
+    UserAchievement,
+    UserRank,
+    UserRankProgress,
+    Tag,
+    TopicTag,
+    Certificate,
+    UserCertificate,
+    Complaint,
+    Chat,
+    ChatParticipant,
+    ChatMessage,
+    SystemLog,
+    ForumSetting,
+    PostLike,
+    TopicRating,
+    UserSubscription,
+    TopicSubscription,
+    ModeratorAction,
+    AdminLog,
+    Notification,
+    SearchIndex,
+    GitHubAuth,
+)
+
+# Basic registrations; customize as needed later
+admin.site.register(User)
+admin.site.register(UserProfile)
+admin.site.register(Section)
+admin.site.register(Topic)
+admin.site.register(Post)
+admin.site.register(Achievement)
+admin.site.register(UserAchievement)
+admin.site.register(UserRank)
+admin.site.register(UserRankProgress)
+admin.site.register(Tag)
+admin.site.register(TopicTag)
+admin.site.register(Certificate)
+admin.site.register(UserCertificate)
+admin.site.register(Complaint)
+admin.site.register(Chat)
+admin.site.register(ChatParticipant)
+admin.site.register(ChatMessage)
+admin.site.register(SystemLog)
+admin.site.register(ForumSetting)
+admin.site.register(PostLike)
+admin.site.register(TopicRating)
+admin.site.register(UserSubscription)
+admin.site.register(TopicSubscription)
+admin.site.register(ModeratorAction)
+admin.site.register(AdminLog)
+admin.site.register(Notification)
+admin.site.register(SearchIndex)
+admin.site.register(GitHubAuth)

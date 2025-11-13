@@ -15,7 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
@@ -23,9 +23,20 @@ from . import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='home'),
+    
+    # Custom admin panel (direct URL only)
+    path('admin-panel/', views.admin_panel_view, name='admin_panel'),
+    path('admin-charts/', views.admin_charts_view, name='admin_charts'),
+    
+    # Старые пути для обратной совместимости (перенаправляют на allauth)
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+    
+    # allauth URLs (включает login, logout, signup, password reset, email verification, OAuth)
+    path('accounts/', include('allauth.urls')),
+    
+    # Профиль пользователя
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
 ]
