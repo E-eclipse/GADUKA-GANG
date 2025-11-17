@@ -351,42 +351,45 @@
 <section class="discussions">
     <h2>Последние обсуждения</h2>
     <div class="discussion-list">
+        {% for topic in latest_topics %}
         <div class="discussion-card">
             <div class="discussion-header">
-                <h3>Лучшие практики для асинхронного программирования в Python 3.12</h3>
-                <span class="tag">asyncio</span>
+                <h3><a href="{% url 'topic_detail' topic.id %}">{{ topic.title }}</a></h3>
+                {% if topic.topic_tags.all %}
+                    {% for topic_tag in topic.topic_tags.all|slice:":1" %}
+                    <span class="tag" style="background-color: {{ topic_tag.tag.color }};">{{ topic_tag.tag.name }}</span>
+                    {% endfor %}
+                {% endif %}
             </div>
-            <p>Обсуждаем новые возможности и паттерны для эффективной работы с async/await. Какие подходы вы используете в своих проектах?</p>
             <div class="discussion-meta">
-                <span>Автор: Pythoneer92</span>
-                <span>Ответов: 24</span>
-                <span>Просмотров: 142</span>
+                <span>Раздел: <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a></span>
+                <span>Автор: {{ topic.author.username }}</span>
+                <span>Создано: {{ topic.created_date|date:"d.m.Y" }}</span>
+                <span>Просмотров: {{ topic.view_count }}</span>
+                {% if topic.average_rating > 0 %}
+                <span>⭐ {{ topic.average_rating|floatformat:1 }}</span>
+                {% endif %}
             </div>
         </div>
+        {% empty %}
         <div class="discussion-card">
-            <div class="discussion-header">
-                <h3>Сравнение FastAPI и Django для микросервисов</h3>
-                <span class="tag">web-frameworks</span>
-            </div>
-            <p>Какой фреймворк лучше подходит для микросервисной архитектуры? Делимся опытом и производственными кейсами.</p>
-            <div class="discussion-meta">
-                <span>Автор: DjangoMaster</span>
-                <span>Ответов: 37</span>
-                <span>Просмотров: 201</span>
-            </div>
+            <p>Пока нет тем. <a href="{% url 'sections_list' %}">Перейти к разделам</a></p>
         </div>
-        <div class="discussion-card">
-            <div class="discussion-header">
-                <h3>Оптимизация производительности Python приложений</h3>
-                <span class="tag">performance</span>
-            </div>
-            <p>Техники профилирования и оптимизации для высоконагруженных Python приложений. Делимся инструментами и подходами.</p>
-            <div class="discussion-meta">
-                <span>Автор: SpeedCoder</span>
-                <span>Ответов: 18</span>
-                <span>Просмотров: 98</span>
-            </div>
-        </div>
+        {% endfor %}
     </div>
 </section>
+
+<!-- Popular tags -->
+{% if popular_tags %}
+<section class="discussions">
+    <h2>Популярные теги</h2>
+    <div class="tags-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        {% for tag in popular_tags %}
+        <a href="{% url 'topics_by_tag' tag.id %}" class="tag" style="background-color: {{ tag.color }}; text-decoration: none;">
+            {{ tag.name }} ({{ tag.topics_count }})
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
 {% endblock %}

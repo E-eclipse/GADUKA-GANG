@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Теги - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <h1>Теги форума</h1>
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'tag_create' %}" class="btn btn-primary">Создать тег</a>
+        {% endif %}
+    </div>
+
+    <div class="tags-list">
+        {% for tag in tags %}
+        <div class="tag-card">
+            <span class="tag" style="background-color: {{ tag.color }};">
+                <a href="{% url 'topics_by_tag' tag.id %}">{{ tag.name }}</a>
+            </span>
+            <span class="tag-count">Тем: {{ tag.topics_count }}</span>
+            {% if user.is_staff or user.is_superuser %}
+            <div class="tag-actions">
+                <a href="{% url 'tag_edit' tag.id %}" class="btn btn-sm btn-secondary">Редактировать</a>
+                <form method="post" action="{% url 'tag_delete' tag.id %}" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить этот тег?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>Пока нет тегов. {% if user.is_staff or user.is_superuser %}<a href="{% url 'tag_create' %}">Создайте первый тег</a>{% endif %}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

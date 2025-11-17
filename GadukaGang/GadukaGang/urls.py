@@ -39,6 +39,35 @@ urlpatterns = [
     # Профиль пользователя
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
+    
+    # Разделы форума
+    path('sections/', views.sections_list, name='sections_list'),
+    path('sections/create/', views.section_create, name='section_create'),
+    path('sections/<int:section_id>/edit/', views.section_edit, name='section_edit'),
+    path('sections/<int:section_id>/delete/', views.section_delete, name='section_delete'),
+    
+    # Темы форума
+    path('sections/<int:section_id>/topics/', views.topics_list, name='topics_list'),
+    path('sections/<int:section_id>/topics/create/', views.topic_create, name='topic_create'),
+    path('topics/<int:topic_id>/', views.topic_detail, name='topic_detail'),
+    path('topics/<int:topic_id>/edit/', views.topic_edit, name='topic_edit'),
+    path('topics/<int:topic_id>/delete/', views.topic_delete, name='topic_delete'),
+    
+    # Сообщения
+    path('topics/<int:topic_id>/posts/create/', views.post_create, name='post_create'),
+    path('posts/<int:post_id>/edit/', views.post_edit, name='post_edit'),
+    path('posts/<int:post_id>/delete/', views.post_delete, name='post_delete'),
+    
+    # API для лайков и оценок
+    path('api/posts/<int:post_id>/like/', views.post_like, name='post_like'),
+    path('api/topics/<int:topic_id>/rating/', views.topic_rating, name='topic_rating'),
+    
+    # Теги
+    path('tags/', views.tags_list, name='tags_list'),
+    path('tags/create/', views.tag_create, name='tag_create'),
+    path('tags/<int:tag_id>/edit/', views.tag_edit, name='tag_edit'),
+    path('tags/<int:tag_id>/delete/', views.tag_delete, name='tag_delete'),
+    path('tags/<int:tag_id>/topics/', views.topics_by_tag, name='topics_by_tag'),
 ]
 
 # Serve static files during development

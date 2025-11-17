@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ section.name }} - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <nav class="breadcrumb">
+                <a href="{% url 'sections_list' %}">Форум</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ section.name }}</span>
+            </nav>
+            <h1 class="forum-title">{{ section.name }}</h1>
+            {% if section.description %}
+            <p class="forum-subtitle">{{ section.description }}</p>
+            {% endif %}
+        </div>
+        {% if user.is_authenticated %}
+        <div class="forum-actions">
+            <a href="{% url 'topic_create' section.id %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Создать тему
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="topics-toolbar">
+        <div class="topics-filter">
+            <span>Сортировать по:</span>
+            <div class="filter-options">
+                <a href="?sort=date&order=desc" class="filter-option {% if sort_by == 'date' and order == 'desc' %}active{% endif %}">
+                    Новым
+                </a>
+                <a href="?sort=date&order=asc" class="filter-option {% if sort_by == 'date' and order == 'asc' %}active{% endif %}">
+                    Старым
+                </a>
+                <a href="?sort=popularity&order=desc" class="filter-option {% if sort_by == 'popularity' %}active{% endif %}">
+                    Популярным
+                </a>
+                <a href="?sort=rating&order=desc" class="filter-option {% if sort_by == 'rating' %}active{% endif %}">
+                    Рейтингу
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj %}
+    <div class="topics-list">
+        {% for topic in page_obj %}
+        <div class="topic-block {% if topic.is_pinned %}pinned{% endif %}">
+            <div class="topic-header">
+                <div class="topic-title">
+                    {% if topic.is_pinned %}
+                    <span class="pinned-badge">
+                        <i class="fas fa-thumbtack"></i> Закреплено
+                    </span>
+                    {% endif %}
+                    <a href="{% url 'topic_detail' topic.id %}">{{ topic.title }}</a>
+                </div>
+                <div class="topic-stats">
+                    <span class="stat-item">
+                        <i class="fas fa-eye"></i> {{ topic.view_count }}
+                    </span>
+                    <span class="stat-item">
+                        <i class="fas fa-comment"></i> {{ topic.posts_count }}
+                    </span>
+                    {% if topic.average_rating > 0 %}
+                    <span class="stat-item rating">
+                        <i class="fas fa-star"></i> {{ topic.average_rating|floatformat:1 }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="topic-meta">
+                <div class="topic-author">
+                    <span>Автор: {{ topic.author.username }}</span>
+                    <span>Создано: {{ topic.created_date|date:"d.m.Y H:i" }}</span>
+                </div>
+                <div class="topic-tags">
+                    {% for tag_link in topic.topic_tags.all %}
+                    <span class="tag-badge" style="--tag-color: {{ tag_link.tag.color }};">
+                        {{ tag_link.tag.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="topic-footer">
+                <span>Последнее сообщение: {{ topic.last_post_date|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        <div class="pagination-info">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </div>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+            <a href="?page=1&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-comments"></i>
+        </div>
+        <h3>Темы не найдены</h3>
+        <p>В этом разделе пока нет ни одной темы.</p>
+        {% if user.is_authenticated %}
+        <a href="{% url 'topic_create' section.id %}" class="btn btn-primary">Создать первую тему</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} раздел - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <nav class="breadcrumb">
+                <a href="{% url 'sections_list' %}">Форум</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ action }} раздел</span>
+            </nav>
+            <h1 class="forum-title">{{ action }} раздел</h1>
+            <p class="forum-subtitle">Заполните информацию о новом разделе форума</p>
+        </div>
+        <div class="forum-actions">
+            <a href="{% url 'sections_list' %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <div class="form-card">
+            <form method="post" class="section-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                    <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                        Название раздела
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <div class="field-errors">
+                        {% for error in form.name.errors %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-help">
+                        Укажите краткое и понятное название раздела
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">
+                        Описание
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                    <div class="field-errors">
+                        {% for error in form.description.errors %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-help">
+                        Опишите назначение раздела, чтобы пользователи понимали, какие темы здесь уместны
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> {{ action }}
+                    </button>
+                    <a href="{% url 'sections_list' %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times"></i> Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

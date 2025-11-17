@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} тег - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <h1>{{ action }} тег</h1>
+        <a href="{% url 'tags_list' %}" class="btn btn-secondary">Назад к тегам</a>
+    </div>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="name">Название тега</label>
+                <input type="text" name="name" id="name" class="form-control" 
+                       value="{% if tag %}{{ tag.name }}{% endif %}" 
+                       placeholder="Название тега" required>
+            </div>
+
+            <div class="form-group">
+                <label for="color">Цвет тега</label>
+                <input type="color" name="color" id="color" class="form-control" 
+                       value="{% if tag %}{{ tag.color }}{% else %}#000000{% endif %}">
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{{ action }}</button>
+                <a href="{% url 'tags_list' %}" class="btn btn-secondary">Отмена</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

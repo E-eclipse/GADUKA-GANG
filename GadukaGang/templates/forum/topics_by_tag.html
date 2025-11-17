@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Темы с тегом "{{ tag.name }}" - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <h1>Темы с тегом: <span class="tag" style="background-color: {{ tag.color }};">{{ tag.name }}</span></h1>
+        <a href="{% url 'tags_list' %}" class="btn btn-secondary">Все теги</a>
+    </div>
+
+    <div class="topics-list">
+        {% for topic in page_obj %}
+        <div class="topic-card {% if topic.is_pinned %}pinned{% endif %}">
+            <div class="topic-info">
+                {% if topic.is_pinned %}
+                <span class="pin-badge">📌 Закреплено</span>
+                {% endif %}
+                <h3><a href="{% url 'topic_detail' topic.id %}">{{ topic.title }}</a></h3>
+                <div class="topic-meta">
+                    <span>Раздел: <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a></span>
+                    <span>Автор: <a href="#">{{ topic.author.username }}</a></span>
+                    <span>Создано: {{ topic.created_date|date:"d.m.Y H:i" }}</span>
+                    <span>Просмотров: {{ topic.view_count }}</span>
+                    <span>Сообщений: {{ topic.posts_count }}</span>
+                    {% if topic.average_rating > 0 %}
+                    <span>⭐ {{ topic.average_rating|floatformat:1 }} ({{ topic.rating_count }})</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="topic-last-post">
+                <span>Последнее сообщение: {{ topic.last_post_date|date:"d.m.Y H:i" }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <p>Нет тем с этим тегом.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="btn btn-sm">Первая</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">Предыдущая</a>
+        {% endif %}
+
+        <span class="page-info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Следующая</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Последняя</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

@@ -142,8 +142,8 @@ class Tag(models.Model):
 
 # Модель связи тегов с темами
 class TopicTag(models.Model):
-    topic = models.ForeignKey(Topic, on_delete=models.CASCADE)
-    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='topic_tags')
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name='topic_tags')
     
     class Meta:
         unique_together = ('topic', 'tag')

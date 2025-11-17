@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} сообщение - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <h1>{{ action }} сообщение</h1>
+        {% if post %}
+        <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Назад к теме</a>
+        {% else %}
+        <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Назад к теме</a>
+        {% endif %}
+    </div>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.content.id_for_label }}">Содержание сообщения</label>
+                {{ form.content }}
+                {% if form.content.errors %}
+                <div class="error-message">{{ form.content.errors }}</div>
+                {% endif %}
+                <small class="form-hint">Поддерживается Markdown форматирование</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{{ action }}</button>
+                {% if post %}
+                <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Отмена</a>
+                {% else %}
+                <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Отмена</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+

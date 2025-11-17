@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ topic.title }} - Gaduka Gang{% endblock %}
+
+{% block content %}
+<section class="forum-layout topic-view">
+    <nav class="breadcrumb-line">
+        <a href="{% url 'sections_list' %}">Разделы</a>
+        <span>/</span>
+        <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
+        <span>/</span>
+        <span>{{ topic.title }}</span>
+    </nav>
+
+    <article class="topic-summary">
+        <header class="topic-summary__header">
+            <h1>{{ topic.title }}</h1>
+            <div class="topic-summary__meta">
+                <span>Автор: <a href="#">{{ topic.author.username }}</a></span>
+                <span>Создано: {{ topic.created_date|date:"d.m.Y H:i" }}</span>
+                <span>Просмотров: {{ topic.view_count }}</span>
+                {% if topic.average_rating > 0 %}
+                <span>⭐ {{ topic.average_rating|floatformat:1 }} • {{ topic.rating_count }} оценок</span>
+                {% endif %}
+            </div>
+            {% if topic_tags %}
+            <div class="topic-summary__tags">
+                {% for tag in topic_tags %}
+                <span class="badge tag-badge" style="color: {{ tag.color }}; border-color: {{ tag.color }};">{{ tag.name }}</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </header>
+        {% if user.is_authenticated %}
+        <div class="topic-summary__actions">
+            <a href="{% url 'post_create' topic.id %}" class="btn btn-primary">Ответить</a>
+            {% if topic.author == user or user.is_staff or user.is_superuser %}
+            <a href="{% url 'topic_edit' topic.id %}" class="btn btn-secondary">Редактировать</a>
+            <form method="post" action="{% url 'topic_delete' topic.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Удалить</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endif %}
+    </article>
+
+    {% if user.is_authenticated %}
+    <section class="rating-box">
+        <div class="rating-box__title">
+            <strong>Оцените тему</strong>
+            <span class="rating-info">{{ topic.average_rating|floatformat:1 }} из 5 • {{ topic.rating_count }} оценок</span>
+        </div>
+        <div class="star-rating" data-topic-id="{{ topic.id }}">
+            {% for i in "12345" %}
+            <span class="star" data-rating="{{ i }}">⭐</span>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="posts-stack">
+        {% for post in page_obj %}
+        <article class="post" id="post-{{ post.id }}">
+            <header class="post__header">
+                <div class="avatar">{{ post.author.username|first|upper }}</div>
+                <div class="post__meta">
+                    <strong><a href="#">{{ post.author.username }}</a></strong>
+                    <span>{{ post.created_date|date:"d.m.Y H:i" }}</span>
+                    {% if post.last_edited_date %}
+                    <span>Редактировано {{ post.last_edited_date|date:"d.m.Y H:i" }} · {{ post.edit_count }}</span>
+                    {% endif %}
+                </div>
+            </header>
+            <div class="post__content">
+                {% if post.content_html %}
+                    {{ post.content_html }}
+                {% else %}
+                    {{ post.content|linebreaks }}
+                {% endif %}
+            </div>
+            <footer class="post__footer">
+                <div class="post__reactions">
+                    {% if user.is_authenticated %}
+                    <button class="reaction-btn like-btn" data-post-id="{{ post.id }}" data-like-type="like">
+                        👍 <span class="like-count">{{ post.like_count }}</span>
+                    </button>
+                    <button class="reaction-btn dislike-btn" data-post-id="{{ post.id }}" data-like-type="dislike">
+                        👎 <span class="dislike-count">{{ post.dislike_count }}</span>
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="post__actions">
+                    {% if post.author == user or user.is_staff or user.is_superuser %}
+                    <a href="{% url 'post_edit' post.id %}" class="btn btn-sm btn-secondary">Редактировать</a>
+                    <form method="post" action="{% url 'post_delete' post.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                    </form>
+                    {% endif %}
+                </div>
+            </footer>
+        </article>
+        {% empty %}
+        <div class="empty-panel">
+            <p>В этой теме пока нет сообщений. {% if user.is_authenticated %}<a href="{% url 'post_create' topic.id %}">Напишите первое сообщение</a>.{% endif %}</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1" class="btn btn-sm">Первая</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">Предыдущая</a>
+        {% endif %}
+
+        <span class="page-info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Следующая</a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Последняя</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Обработка лайков/дизлайков
+    document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const likeType = this.dataset.likeType;
+            const formData = new FormData();
+            formData.append('like_type', likeType);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch(`/api/posts/${postId}/like/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector(`#post-${postId} .like-count`).textContent = data.like_count;
+                    document.querySelector(`#post-${postId} .dislike-count`).textContent = data.dislike_count;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+
+    // Обработка рейтинга тем
+    document.querySelectorAll('.star-rating .star').forEach(star => {
+        star.addEventListener('click', function() {
+            const topicId = this.closest('.star-rating').dataset.topicId;
+            const rating = this.dataset.rating;
+            const formData = new FormData();
+            formData.append('rating', rating);
+            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+            fetch(`/api/topics/${topicId}/rating/`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.querySelector('.rating-info').textContent =
+                        `${data.average_rating} из 5 • ${data.rating_count} оценок`;
+                    // Подсветка выбранных звезд
+                    document.querySelectorAll('.star-rating .star').forEach((s, idx) => {
+                        if (idx < rating) {
+                            s.style.opacity = '1';
+                        } else {
+                            s.style.opacity = '0.3';
+                        }
+                    });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    });
+</script>
+{% endblock %}
+

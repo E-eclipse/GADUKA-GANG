@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Разделы форума - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <h1 class="forum-title">Форум сообщества</h1>
+            <p class="forum-subtitle">Выберите интересующий вас раздел для обсуждения</p>
+        </div>
+        {% if user.is_staff or user.is_superuser %}
+        <div class="forum-actions">
+            <a href="{% url 'section_create' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-plus"></i> Создать раздел
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if sections %}
+    <div class="sections-grid">
+        {% for section in sections %}
+        <div class="section-block">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <a href="{% url 'topics_list' section.id %}">{{ section.name }}</a>
+                </h2>
+                <div class="section-meta">
+                    <span class="meta-item">
+                        <i class="fas fa-comments"></i> {{ section.topics_count }} тем
+                    </span>
+                    <span class="meta-item">
+                        <i class="fas fa-calendar"></i> {{ section.created_date|date:"d.m.Y" }}
+                    </span>
+                </div>
+            </div>
+            {% if section.description %}
+            <div class="section-description">
+                {{ section.description }}
+            </div>
+            {% endif %}
+            <div class="section-footer">
+                <a href="{% url 'topics_list' section.id %}" class="btn btn-outline btn-sm">
+                    Перейти к темам
+                </a>
+                {% if user.is_staff or user.is_superuser %}
+                <div class="section-admin-actions">
+                    <a href="{% url 'section_edit' section.id %}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </a>
+                    <form method="post" action="{% url 'section_delete' section.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить этот раздел?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Удалить
+                        </button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-folder-open"></i>
+        </div>
+        <h3>Разделы не найдены</h3>
+        <p>В форуме пока нет ни одного раздела.</p>
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'section_create' %}" class="btn btn-primary">Создать первый раздел</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

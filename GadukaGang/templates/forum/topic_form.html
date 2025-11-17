@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} тему - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <nav class="breadcrumb">
+                <a href="{% url 'sections_list' %}">Форум</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'topics_list' section.id %}">{{ section.name }}</a>
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ action }} тему</span>
+            </nav>
+            <h1 class="forum-title">{{ action }} тему</h1>
+            <p class="forum-subtitle">Создайте новую тему для обсуждения</p>
+        </div>
+        <div class="forum-actions">
+            <a href="{% url 'topics_list' section.id %}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+    </div>
+
+    <div class="form-container">
+        <div class="form-card">
+            <form method="post" class="topic-form">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                    <div class="error-message">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                        Название темы
+                    </label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                    <div class="field-errors">
+                        {% for error in form.title.errors %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-help">
+                        Укажите краткое и понятное название темы
+                    </div>
+                </div>
+
+                {% if not topic %}
+                <div class="form-group">
+                    <label for="{{ form.section.id_for_label }}" class="form-label">
+                        Раздел
+                    </label>
+                    {{ form.section }}
+                    {% if form.section.errors %}
+                    <div class="field-errors">
+                        {% for error in form.section.errors %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-help">
+                        Выберите раздел, в котором будет создана тема
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label class="form-label">Теги</label>
+                    <div class="tags-selector">
+                        {% for tag in form.tags %}
+                        <label class="tag-option">
+                            {{ tag.tag }}
+                            <span class="tag-name">{{ tag.choice_label }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    {% if form.tags.errors %}
+                    <div class="field-errors">
+                        {% for error in form.tags.errors %}
+                        <div class="error-message">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="form-help">
+                        Выберите теги, которые соответствуют теме обсуждения
+                    </div>
+                </div>
+
+                {% if not topic %}
+                <div class="form-group">
+                    <label for="post_content" class="form-label">
+                        Первое сообщение
+                    </label>
+                    <textarea name="post_content" id="post_content" rows="10" placeholder="Напишите ваше первое сообщение в теме..."></textarea>
+                    <div class="form-help">
+                        Напишите содержание первого сообщения в теме
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> {{ action }}
+                    </button>
+                    <a href="{% url 'topics_list' section.id %}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-times"></i> Отмена
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
