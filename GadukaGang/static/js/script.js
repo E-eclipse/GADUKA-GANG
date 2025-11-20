@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     // Only keep essential functionality
     // Remove any complex button handlers that might interfere with navigation
-    
+
     // Анимация для логотипа при загрузке страницы
     const logo = document.querySelector('.logo h1');
     if (logo) {
@@ -52,23 +52,62 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     });
-    
+
     // Add active class to the current page link in header
     // Get current page URL
     const currentPage = window.location.pathname;
-    
+
     // Remove active class from all links
     const allLinks = document.querySelectorAll('.nav a');
     allLinks.forEach(link => {
         link.classList.remove('active');
     });
-    
+
     // Add active class to the current page link
     if (currentPage === '/') {
-        document.getElementById('home-link').classList.add('active');
+        const homeLink = document.getElementById('home-link');
+        if (homeLink) homeLink.classList.add('active');
     } else if (currentPage.includes('/profile/')) {
         // Profile link would be highlighted if we had a specific link for it in nav
     }
+
+    // ==================== SIDEBAR MENU FUNCTIONALITY ====================
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebarClose = document.getElementById('sidebarClose');
+
+    // Open sidebar
+    if (hamburger) {
+        hamburger.addEventListener('click', function () {
+            sidebar.classList.add('active');
+            sidebarOverlay.classList.add('active');
+        });
+    }
+
+    // Close sidebar via close button
+    if (sidebarClose) {
+        sidebarClose.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // Close sidebar via overlay click
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', function () {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+    }
+
+    // Highlight active sidebar link based on current page
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    sidebarLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+            link.classList.add('active');
+        }
+    });
 });
 
 // Функция для создания частиц в фоне (демонстрация эффекта)
@@ -126,17 +165,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const certificateModal = document.getElementById('certificateModal');
     const closeButtons = document.querySelectorAll('.close');
     const loginForm = document.getElementById('loginForm');
-    
+
     // Закрываем модальное окно при клике на крестик
     closeButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            loginModal.style.display = 'none';
-            certificateModal.style.display = 'none';
+        button.addEventListener('click', function () {
+            if (loginModal) loginModal.style.display = 'none';
+            if (certificateModal) certificateModal.style.display = 'none';
         });
     });
-    
+
     // Закрываем модальное окно при клике вне его содержимого
-    window.addEventListener('click', function(event) {
+    window.addEventListener('click', function (event) {
         if (event.target === loginModal) {
             loginModal.style.display = 'none';
         }
@@ -144,30 +183,30 @@ document.addEventListener('DOMContentLoaded', function () {
             certificateModal.style.display = 'none';
         }
     });
-    
+
     // Обрабатываем отправку формы
     if (loginForm) {
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
+
             // Получаем значения из формы
             const nickname = document.getElementById('nickname').value;
             const surname = document.getElementById('surname').value;
             const name = document.getElementById('name').value;
-            
+
             // Генерируем сертификат
             generateCertificate(nickname, surname, name);
-            
+
             // Закрываем форму входа и открываем сертификат
             loginModal.style.display = 'none';
             certificateModal.style.display = 'block';
         });
     }
-    
+
     // Функция для генерации сертификата
     function generateCertificate(nickname, surname, name) {
         const certificateContent = document.getElementById('certificateContent');
-        
+
         // Формируем содержимое сертификата
         certificateContent.innerHTML = `
             <div class="certificate-header">
@@ -192,14 +231,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
         `;
-        
+
         // Добавляем обработчик для кнопки скачивания
         const downloadBtn = document.getElementById('downloadCertificate');
-        downloadBtn.onclick = function() {
-            downloadCertificate(nickname, surname, name);
-        };
+        if (downloadBtn) {
+            downloadBtn.onclick = function () {
+                downloadCertificate(nickname, surname, name);
+            };
+        }
     }
-    
+
     // Функция для скачивания сертификата как текстового файла
     function downloadCertificate(nickname, surname, name) {
         const certificateText = `
@@ -217,17 +258,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
 Дата выдачи: ${new Date().toLocaleDateString('ru-RU')}
         `;
-        
+
         // Создаем элемент для скачивания
         const element = document.createElement('a');
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(certificateText));
         element.setAttribute('download', `Сертификат_${nickname}.txt`);
-        
+
         element.style.display = 'none';
         document.body.appendChild(element);
-        
+
         element.click();
-        
+
         document.body.removeChild(element);
     }
 });

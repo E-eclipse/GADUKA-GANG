@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Участники форума - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="forum-container">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <h1 class="forum-title">Участники форума</h1>
+            <p class="forum-subtitle">Список всех участников сообщества Gaduka Gang</p>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-container">
+        <form method="get" class="search-form">
+            <div class="search-input-group">
+                <input type="text" name="search" value="{{ search_query }}"
+                    placeholder="Поиск по имени, фамилии или никнейму..." class="form-control search-input">
+                <button type="submit" class="btn btn-primary search-button">
+                    <i class="fas fa-search"></i> Найти
+                </button>
+                {% if search_query %}
+                <a href="{% url 'members_list' %}" class="btn btn-secondary clear-search">
+                    <i class="fas fa-times"></i> Очистить
+                </a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    {% if page_obj %}
+    <div class="members-grid">
+        {% for user in page_obj %}
+        <div class="member-card">
+            <div class="member-avatar">
+                {% if user.userprofile.avatar %}
+                <img src="{{ user.userprofile.avatar.url }}" alt="{{ user.username }}" class="avatar-img">
+                {% else %}
+                <div class="avatar-placeholder">
+                    <i class="fas fa-user"></i>
+                </div>
+                {% endif %}
+            </div>
+            <div class="member-info">
+                <h3 class="member-name">
+                    <a href="{% url 'profile_detail' user.id %}">{{ user.username }}</a>
+                    {% if user.is_staff %}
+                    <span class="badge badge-moderator">Модератор</span>
+                    {% endif %}
+                    {% if user.is_superuser %}
+                    <span class="badge badge-admin">Админ</span>
+                    {% endif %}
+                </h3>
+                <div class="member-details">
+                    <div class="detail-item">
+                        <i class="fas fa-calendar"></i>
+                        Зарегистрирован: {{ user.date_joined|date:"d.m.Y" }}
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-comments"></i>
+                        Сообщений: {{ user.userprofile.post_count }}
+                    </div>
+                    <div class="detail-item">
+                        <i class="fas fa-star"></i>
+                        Карма: {{ user.userprofile.karma }}
+                    </div>
+                </div>
+                {% if user.userprofile.bio %}
+                <div class="member-bio">
+                    {{ user.userprofile.bio|truncatewords:15 }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="pagination-container">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                    <i class="fas fa-chevron-left"></i> Назад
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item">
+                <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{
+                    num }}</a>
+                </li>
+                {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link"
+                        href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        Вперед <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="fas fa-users"></i>
+        </div>
+        <h3>Участники не найдены</h3>
+        <p>По вашему запросу участники не найдены.</p>
+        <a href="{% url 'members_list' %}" class="btn btn-primary">Показать всех участников</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .forum-container {
+        padding: 30px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .forum-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .forum-header-content {
+        flex: 1;
+    }
+
+    .forum-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+
+    .forum-subtitle {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .search-container {
+        margin-bottom: 30px;
+    }
+
+    .search-form {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .search-input-group {
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        background-color: var(--darker-bg);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+
+    .search-button,
+    .clear-search {
+        padding: 12px 20px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .members-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .member-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        gap: 15px;
+        box-shadow: var(--neon-shadow);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--neon-shadow-hover);
+    }
+
+    .member-avatar {
+        flex-shrink: 0;
+    }
+
+    .avatar-img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--accent-green);
+    }
+
+    .avatar-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--darker-bg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid var(--accent-green);
+        color: var(--accent-green);
+        font-size: 1.5rem;
+    }
+
+    .member-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .member-name {
+        margin: 0 0 10px 0;
+        font-size: 1.2rem;
+    }
+
+    .member-name a {
+        color: var(--accent-green);
+        text-decoration: none;
+    }
+
+    .member-name a:hover {
+        text-decoration: underline;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        margin-left: 8px;
+    }
+
+    .badge-moderator {
+        background-color: #4285f4;
+        color: white;
+    }
+
+    .badge-admin {
+        background-color: #ea4335;
+        color: white;
+    }
+
+    .member-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 10px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .member-bio {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        gap: 5px;
+    }
+
+    .page-item {
+        margin: 0;
+    }
+
+    .page-link {
+        display: block;
+        padding: 8px 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        text-decoration: none;
+        color: var(--text-primary);
+        background-color: var(--card-bg);
+        transition: all 0.2s ease;
+    }
+
+    .page-link:hover {
+        background-color: var(--accent-green);
+        color: white;
+        border-color: var(--accent-green);
+    }
+
+    .page-item.active .page-link {
+        background-color: var(--accent-green);
+        color: white;
+        border-color: var(--accent-green);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        color: var(--text-primary);
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .members-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .member-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .member-details {
+            justify-content: center;
+        }
+
+        .search-input-group {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}

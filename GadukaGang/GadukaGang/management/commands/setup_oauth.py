@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.sites.models import Site
 from allauth.socialaccount.models import SocialApp
+import os
 
 class Command(BaseCommand):
     help = 'Setup OAuth applications for GitHub and Google'
@@ -21,24 +22,36 @@ class Command(BaseCommand):
         SocialApp.objects.all().delete()
         self.stdout.write('Deleted existing social apps')
         
-        # Create GitHub OAuth app
-        github_app = SocialApp.objects.create(
-            provider='github',
-            name='GitHub OAuth',
-            client_id='Ov23lieNLQVHELWIif5Y',
-            secret='c7a728d241aad3692a417c3cff487208e501af7b'
-        )
-        github_app.sites.add(site)
-        self.stdout.write('Created GitHub OAuth app')
+        # Create GitHub OAuth app (only if credentials are provided in .env)
+        github_client_id = os.getenv('GITHUB_OAUTH_CLIENT_ID')
+        github_secret = os.getenv('GITHUB_OAUTH_SECRET')
         
-        # Create Google OAuth app
-        google_app = SocialApp.objects.create(
-            provider='google',
-            name='Google OAuth',
-            client_id='577335155855-iggc9dtajj7b5ke0mulf4o86vs3nj99e.apps.googleusercontent.com',
-            secret='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'
-        )
-        google_app.sites.add(site)
-        self.stdout.write('Created Google OAuth app')
+        if github_client_id and github_secret:
+            github_app = SocialApp.objects.create(
+                provider='github',
+                name='GitHub OAuth',
+                client_id=github_client_id,
+                secret=github_secret
+            )
+            github_app.sites.add(site)
+            self.stdout.write('Created GitHub OAuth app')
+        else:
+            self.stdout.write(self.style.WARNING('Skipped GitHub OAuth: credentials not found in .env'))
+        
+        # Create Google OAuth app (only if credentials are provided in .env)
+        google_client_id = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
+        google_secret = os.getenv('GOOGLE_OAUTH_SECRET')
+        
+        if google_client_id and google_secret:
+            google_app = SocialApp.objects.create(
+                provider='google',
+                name='Google OAuth',
+                client_id=google_client_id,
+                secret=google_secret
+            )
+            google_app.sites.add(site)
+            self.stdout.write('Created Google OAuth app')
+        else:
+            self.stdout.write(self.style.WARNING('Skipped Google OAuth: credentials not found in .env'))
         
         self.stdout.write('Successfully setup OAuth applications')

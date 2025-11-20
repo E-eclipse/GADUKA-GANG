@@ -30,13 +30,16 @@
         <div class="topics-filter">
             <span>Сортировать по:</span>
             <div class="filter-options">
-                <a href="?sort=date&order=desc" class="filter-option {% if sort_by == 'date' and order == 'desc' %}active{% endif %}">
+                <a href="?sort=date&order=desc"
+                    class="filter-option {% if sort_by == 'date' and order == 'desc' %}active{% endif %}">
                     Новым
                 </a>
-                <a href="?sort=date&order=asc" class="filter-option {% if sort_by == 'date' and order == 'asc' %}active{% endif %}">
+                <a href="?sort=date&order=asc"
+                    class="filter-option {% if sort_by == 'date' and order == 'asc' %}active{% endif %}">
                     Старым
                 </a>
-                <a href="?sort=popularity&order=desc" class="filter-option {% if sort_by == 'popularity' %}active{% endif %}">
+                <a href="?sort=popularity&order=desc"
+                    class="filter-option {% if sort_by == 'popularity' %}active{% endif %}">
                     Популярным
                 </a>
                 <a href="?sort=rating&order=desc" class="filter-option {% if sort_by == 'rating' %}active{% endif %}">
@@ -80,7 +83,7 @@
                 </div>
                 <div class="topic-tags">
                     {% for tag_link in topic.topic_tags.all %}
-                    <span class="tag-badge" style="--tag-color: {{ tag_link.tag.color }};">
+                    <span class="tag-badge">
                         {{ tag_link.tag.name }}
                     </span>
                     {% endfor %}
@@ -103,16 +106,19 @@
             <a href="?page=1&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-angle-double-left"></i>
             </a>
-            <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+            <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}&order={{ order }}"
+                class="btn btn-secondary btn-sm">
                 <i class="fas fa-angle-left"></i>
             </a>
             {% endif %}
 
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+            <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}&order={{ order }}"
+                class="btn btn-secondary btn-sm">
                 <i class="fas fa-angle-right"></i>
             </a>
-            <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_by }}&order={{ order }}" class="btn btn-secondary btn-sm">
+            <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_by }}&order={{ order }}"
+                class="btn btn-secondary btn-sm">
                 <i class="fas fa-angle-double-right"></i>
             </a>
             {% endif %}

@@ -39,6 +39,8 @@ urlpatterns = [
     # Профиль пользователя
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
+    path('profile/achievements/', views.achievements_view, name='achievements'),
+    path('profile/<int:user_id>/', views.profile_detail_view, name='profile_detail'),
     
     # Разделы форума
     path('sections/', views.sections_list, name='sections_list'),
@@ -68,8 +70,13 @@ urlpatterns = [
     path('tags/<int:tag_id>/edit/', views.tag_edit, name='tag_edit'),
     path('tags/<int:tag_id>/delete/', views.tag_delete, name='tag_delete'),
     path('tags/<int:tag_id>/topics/', views.topics_by_tag, name='topics_by_tag'),
+    
+    # Практика
+    path('', views.practice_view, name='practice'),
+    
+    # Участники форума
+    path('members/', views.members_list, name='members_list'),
 ]
-
 # Serve static files during development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

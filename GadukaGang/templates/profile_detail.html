@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профиль {{ viewed_user.username }} - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-section {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+
+    .profile-container {
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 0 20px;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .profile-header h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        margin-bottom: 10px;
+    }
+
+    .profile-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .profile-sidebar {
+        flex: 1;
+        min-width: 300px;
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 30px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .profile-main {
+        flex: 2;
+        min-width: 300px;
+    }
+
+    .avatar-container {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .avatar-placeholder,
+    .avatar-image {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        background: linear-gradient(135deg, var(--accent-green), var(--metallic-1));
+        color: var(--dark-bg);
+        border: 3px solid var(--accent-green);
+        box-shadow: var(--neon-glow);
+    }
+
+    .avatar-image {
+        background: none;
+        color: inherit;
+        object-fit: cover;
+    }
+
+    .user-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.8rem;
+        color: var(--accent-green);
+        margin-bottom: 5px;
+    }
+
+    .user-role {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .profile-details {
+        margin-bottom: 30px;
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+
+    .detail-value {
+        color: var(--text-primary);
+        text-align: right;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .stat-card.achievements:hover {
+        border-color: var(--accent-green);
+    }
+
+    .stat-value {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--accent-green);
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .bio-section {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .section-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+
+    .bio-content {
+        line-height: 1.6;
+        color: var(--text-primary);
+    }
+
+    .certificates-list {
+        margin-top: 20px;
+    }
+
+    .certificate-item {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .certificate-name {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 10px;
+    }
+
+    .certificate-date {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .no-certificates {
+        color: var(--text-secondary);
+        font-style: italic;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .achievements-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .achievement-item {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        transition: all 0.3s ease;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .achievement-item:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-2px);
+        box-shadow: var(--neon-shadow-hover);
+    }
+
+    .achievement-icon-container {
+        flex-shrink: 0;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background-color: rgba(30, 30, 30, 0.8);
+        border: 1px solid var(--border-color);
+    }
+
+    .achievement-icon-container.rare-glow {
+        box-shadow: 0 0 15px 5px gold;
+        border: 1px solid gold;
+    }
+
+    .achievement-icon {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .achievement-icon.placeholder {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--accent-green);
+    }
+
+    .achievement-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .achievement-name {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 8px;
+        font-size: 1.3rem;
+    }
+
+    .achievement-description {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .achievement-date {
+        color: var(--metallic-2);
+        font-size: 0.9rem;
+    }
+
+    .achievement-rarity {
+        text-align: right;
+        padding: 10px 15px;
+        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 5px;
+        border: 1px solid var(--border-color);
+    }
+
+    .rarity-count {
+        color: var(--text-primary);
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    .rarity-percentage {
+        color: var(--accent-green);
+        font-size: 0.9rem;
+    }
+
+    @media (max-width: 768px) {
+        .profile-content {
+            flex-direction: column;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .achievement-item {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .achievement-rarity {
+            text-align: center;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-section">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>Профиль участника</h2>
+        </div>
+
+        <div class="profile-content">
+            <div class="profile-sidebar">
+                <div class="avatar-container">
+                    {% if user_profile.avatar %}
+                    <img src="{{ user_profile.avatar.url }}" alt="{{ viewed_user.username }}" class="avatar-image">
+                    {% else %}
+                    <div class="avatar-placeholder">
+                        {{ viewed_user.username|first|upper }}
+                    </div>
+                    {% endif %}
+                    <h3 class="user-name">{{ viewed_user.username }}</h3>
+                    <div class="user-role">
+                        {% if viewed_user.is_superuser %}
+                        Администратор
+                        {% elif viewed_user.is_staff %}
+                        Модератор
+                        {% else %}
+                        Участник
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Зарегистрирован:</span>
+                        <span class="detail-value">{{ viewed_user.date_joined|date:"d.m.Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Последняя активность:</span>
+                        <span class="detail-value">{{ viewed_user.last_login|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Карма:</span>
+                        <span class="detail-value">{{ user_profile.karma }}</span>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ user_profile.post_count }}</div>
+                        <div class="stat-label">Сообщений</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">{{ user_profile.karma }}</div>
+                        <div class="stat-label">Карма</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-main">
+                {% if user_profile.bio %}
+                <div class="bio-section">
+                    <h3 class="section-title">О себе</h3>
+                    <div class="bio-content">
+                        {{ user_profile.bio|linebreaks }}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="bio-section">
+                    <h3 class="section-title">Сертификаты</h3>
+                    {% if user_certificates %}
+                    <div class="certificates-list">
+                        {% for cert in user_certificates %}
+                        <div class="certificate-item">
+                            <h4 class="certificate-name">{{ cert.certificate.name }}</h4>
+                            <div class="certificate-date">
+                                Получен: {{ cert.issued_date|date:"d.m.Y" }}
+                            </div>
+                            {% if cert.certificate.description %}
+                            <div class="certificate-description">
+                                {{ cert.certificate.description }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-certificates">
+                        У этого пользователя пока нет сертификатов
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="bio-section">
+                    <h3 class="section-title">Достижения</h3>
+                    {% if user_achievements_with_rarity %}
+                    <div class="achievements-list">
+                        {% for achievement_data in user_achievements_with_rarity %}
+                        {% with user_achievement=achievement_data.user_achievement
+                        achievement=achievement_data.user_achievement.achievement %}
+                        <div class="achievement-item">
+                            <div
+                                class="achievement-icon-container {% if achievement_data.is_rare %}rare-glow{% endif %}">
+                                {% if achievement.icon_url %}
+                                <img src="{{ achievement.icon_url }}" alt="{{ achievement.name }}"
+                                    class="achievement-icon">
+                                {% else %}
+                                <div class="achievement-icon placeholder">
+                                    <i class="fas fa-trophy"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="achievement-details">
+                                <h4 class="achievement-name">{{ achievement.name }}</h4>
+                                <p class="achievement-description">{{ achievement.description }}</p>
+                                <div class="achievement-date">
+                                    Получено: {{ user_achievement.earned_date|date:"d.m.Y" }}
+                                </div>
+                            </div>
+                            <div class="achievement-rarity">
+                                <div class="rarity-count">{{ achievement_data.recipients_count }} пользователей</div>
+                                <div class="rarity-percentage">{{ achievement_data.rarity_percentage|floatformat:1 }}%
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="no-certificates">
+                        У этого пользователя пока нет достижений
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

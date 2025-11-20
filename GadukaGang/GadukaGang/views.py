@@ -14,8 +14,9 @@ from django.utils.safestring import mark_safe
 import markdown
 from .forms import CustomUserCreationForm, SectionForm, TopicForm, PostForm
 from .models import (
-    Section, Topic, Post, UserRankProgress, UserProfile, UserCertificate,
-    PostLike, TopicRating, Tag, TopicTag
+    User, UserProfile, Section, Topic, Post, Tag, TopicTag, 
+    Certificate, UserCertificate, Achievement, UserAchievement,
+    UserRank, UserRankProgress, PostLike, TopicRating
 )
 from django.urls import reverse
 from .decorators import admin_required
@@ -106,20 +107,78 @@ def register_view(request):
 
 @login_required
 def profile_view(request):
-    """
-    View function for displaying user profile
-    """
-    # Ensure user profile exists
+    """Просмотр профиля пользователя"""
+    # Получаем или создаем профиль пользователя
     user_profile, created = UserProfile.objects.get_or_create(user=request.user)
     
-    # Get user certificates with related certificate information
+    # Получаем сертификаты пользователя
     user_certificates = UserCertificate.objects.filter(user=request.user).select_related('certificate')
     
+    # Обновляем количество сообщений пользователя
+    post_count = Post.objects.filter(author=request.user, is_deleted=False).count()
+    user_profile.post_count = post_count
+    user_profile.save(update_fields=['post_count'])
+    
     context = {
+        'user_profile': user_profile,
         'user_certificates': user_certificates,
     }
-    
     return render(request, 'profile.html', context)
+
+
+def profile_detail_view(request, user_id):
+    """Просмотр профиля другого пользователя"""
+    user = get_object_or_404(User, id=user_id)
+    
+    # Получаем или создаем профиль пользователя
+    user_profile, created = UserProfile.objects.get_or_create(user=user)
+    
+    # Получаем сертификаты пользователя
+    user_certificates = UserCertificate.objects.filter(user=user).select_related('certificate')
+    
+    # Получаем достижения пользователя с информацией о редкости
+    from django.db.models import Count
+    user_achievements = UserAchievement.objects.filter(user=user).select_related('achievement')
+    
+    # Получаем общее количество пользователей для расчета редкости
+    total_users = User.objects.filter(is_active=True).count()
+    
+    # Добавляем информацию о редкости для каждого достижения пользователя
+    achievements_with_rarity = []
+    for user_achievement in user_achievements:
+        # Считаем, сколько пользователей получило это достижение
+        achievement_recipients = UserAchievement.objects.filter(
+            achievement=user_achievement.achievement
+        ).count()
+        
+        # Рассчитываем процент получивших достижение
+        if total_users > 0:
+            rarity_percentage = (achievement_recipients / total_users) * 100
+        else:
+            rarity_percentage = 0
+            
+        achievements_with_rarity.append({
+            'user_achievement': user_achievement,
+            'recipients_count': achievement_recipients,
+            'rarity_percentage': rarity_percentage,
+            'is_rare': rarity_percentage < 10  # Редкое достижение, если менее 10% пользователей получили его
+        })
+    
+    # Сортируем по редкости (сначала редкие)
+    achievements_with_rarity.sort(key=lambda x: x['rarity_percentage'])
+    
+    # Обновляем количество сообщений пользователя
+    post_count = Post.objects.filter(author=user, is_deleted=False).count()
+    user_profile.post_count = post_count
+    user_profile.save(update_fields=['post_count'])
+    
+    context = {
+        'user_profile': user_profile,
+        'user_certificates': user_certificates,
+        'user_achievements_with_rarity': achievements_with_rarity,
+        'viewed_user': user,
+    }
+    return render(request, 'profile_detail.html', context)
 
 @login_required
 def edit_profile_view(request):
@@ -323,7 +382,6 @@ def topic_create(request, section_id):
             
             # Сохраняем теги
             tags = form.cleaned_data.get('tags', [])
-            TopicTag.objects.filter(topic=topic).delete()  # Удаляем старые теги
             for tag in tags:
                 TopicTag.objects.create(topic=topic, tag=tag)
             
@@ -336,23 +394,73 @@ def topic_create(request, section_id):
                     content=post_content
                 )
             
+            # Проверяем достижения после создания темы
+            from .signals import check_topic_achievements
+            check_topic_achievements(request.user)
+            
             messages.success(request, 'Тема успешно создана!')
             return redirect('topic_detail', topic_id=topic.id)
     else:
-        form = TopicForm(initial={'section': section})
+        form = TopicForm()
     
-    return render(request, 'forum/topic_form.html', {'form': form, 'section': section, 'action': 'Создать'})
+    return render(request, 'forum/topic_form.html', {
+        'form': form, 
+        'section': section,
+        'action': 'Создать'
+    })
 
 def topic_detail(request, topic_id):
     """Просмотр темы с сообщениями"""
     topic = get_object_or_404(Topic, id=topic_id)
     
-    # Увеличиваем счетчик просмотров
-    topic.view_count += 1
-    topic.save(update_fields=['view_count'])
+    # Уникальный счетчик просмотров с 6-часовым кулдауном
+    if request.user.is_authenticated:
+        from django.utils import timezone
+        from datetime import timedelta
+        from .models import TopicView
+        
+        # Проверяем, есть ли уже запись о просмотре от этого пользователя
+        try:
+            topic_view = TopicView.objects.get(topic=topic, user=request.user)
+            # Проверяем, прошло ли 6 часов с последнего просмотра
+            time_threshold = timezone.now() - timedelta(hours=6)
+            if topic_view.view_date < time_threshold:
+                # Обновляем время просмотра
+                topic_view.view_date = timezone.now()
+                topic_view.save(update_fields=['view_date'])
+                # Увеличиваем счетчик просмотров
+                topic.view_count += 1
+                topic.save(update_fields=['view_count'])
+        except TopicView.DoesNotExist:
+            # Создаем новую запись о просмотре
+            TopicView.objects.create(topic=topic, user=request.user)
+            # Увеличиваем счетчик просмотров
+            topic.view_count += 1
+            topic.save(update_fields=['view_count'])
+    else:
+        # Для анонимных пользователей считаем каждый просмотр
+        topic.view_count += 1
+        topic.save(update_fields=['view_count'])
     
     # Получаем сообщения с пагинацией
     posts = Post.objects.filter(topic=topic, is_deleted=False).select_related('author').order_by('created_date')
+    
+    # Если пользователь авторизован, получаем информацию о лайках/дизлайках
+    if request.user.is_authenticated:
+        from .models import PostLike
+        # Получаем все лайки/дизлайки пользователя для постов в этой теме
+        user_likes = PostLike.objects.filter(
+            post__in=posts,
+            user=request.user
+        ).values('post_id', 'like_type')
+        
+        # Создаем словарь для быстрого поиска
+        user_likes_dict = {like['post_id']: like['like_type'] for like in user_likes}
+        
+        # Добавляем информацию о лайках к каждому посту
+        for post in posts:
+            post.user_liked = user_likes_dict.get(post.id) == 'like'
+            post.user_disliked = user_likes_dict.get(post.id) == 'dislike'
     
     paginator = Paginator(posts, 25)  # 25 сообщений на страницу
     page_number = request.GET.get('page')
@@ -381,6 +489,32 @@ def topic_detail(request, topic_id):
     }
     return render(request, 'forum/topic_detail.html', context)
 
+
+def members_list(request):
+    """Список участников форума с поиском"""
+    # Получаем всех пользователей с профилями
+    users = User.objects.select_related('userprofile').filter(is_active=True).order_by('-date_joined')
+    
+    # Поиск пользователей
+    search_query = request.GET.get('search', '')
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) | 
+            Q(first_name__icontains=search_query) | 
+            Q(last_name__icontains=search_query)
+        )
+    
+    # Пагинация
+    paginator = Paginator(users, 20)  # 20 пользователей на страницу
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+    }
+    return render(request, 'forum/members_list.html', context)
+
 @login_required
 def topic_edit(request, topic_id):
     """Редактирование темы (только автор или админ)"""
@@ -391,8 +525,14 @@ def topic_edit(request, topic_id):
         messages.error(request, 'У вас нет прав для редактирования этой темы.')
         return redirect('topic_detail', topic_id=topic_id)
     
+    # Получаем первое сообщение темы
+    first_post = Post.objects.filter(topic=topic, is_deleted=False).order_by('created_date').first()
+    
     if request.method == 'POST':
         form = TopicForm(request.POST, instance=topic)
+        # Always process the form data even if validation fails to see what's happening
+        post_content = request.POST.get('post_content', '')
+        
         if form.is_valid():
             form.save()
             
@@ -402,14 +542,35 @@ def topic_edit(request, topic_id):
             for tag in tags:
                 TopicTag.objects.create(topic=topic, tag=tag)
             
+            # Обновляем содержание первого сообщения, если оно существует
+            if first_post:
+                if post_content != first_post.content:
+                    first_post.content = post_content
+                    first_post.edit_count += 1
+                    from django.utils import timezone
+                    first_post.last_edited_date = timezone.now()
+                    first_post.save()
+            
             messages.success(request, 'Тема успешно обновлена!')
             return redirect('topic_detail', topic_id=topic_id)
+        else:
+            # If form is not valid, add error messages
+            messages.error(request, 'Пожалуйста, исправьте ошибки в форме.')
+            # Print form errors for debugging
+            print("Form errors:", form.errors)
     else:
         form = TopicForm(instance=topic)
         # Загружаем существующие теги
         form.fields['tags'].initial = topic.topic_tags.all().values_list('tag_id', flat=True)
     
-    return render(request, 'forum/topic_form.html', {'form': form, 'topic': topic, 'action': 'Редактировать'})
+    # Передаем section и first_post в контекст для использования в шаблоне
+    return render(request, 'forum/topic_form.html', {
+        'form': form, 
+        'topic': topic, 
+        'section': topic.section,
+        'first_post': first_post,
+        'action': 'Редактировать'
+    })
 
 @login_required
 @require_POST
@@ -445,6 +606,10 @@ def post_create(request, topic_id):
             # Обновляем дату последнего сообщения в теме
             topic.last_post_date = post.created_date
             topic.save(update_fields=['last_post_date'])
+            
+            # Проверяем достижения после создания сообщения
+            from .signals import check_post_achievements
+            check_post_achievements(Post, post, created=True)
             
             messages.success(request, 'Сообщение успешно добавлено!')
             return redirect('topic_detail', topic_id=topic_id)
@@ -518,6 +683,9 @@ def post_like(request, post_id):
         defaults={'like_type': like_type}
     )
     
+    # Получаем профиль автора поста для обновления кармы
+    author_profile, _ = UserProfile.objects.get_or_create(user=post.author)
+    
     if not created:
         # Если лайк уже существует, обновляем его
         if post_like_obj.like_type == like_type:
@@ -528,9 +696,14 @@ def post_like(request, post_id):
             # Обновляем счетчики
             if old_type == 'like':
                 post.like_count = max(0, post.like_count - 1)
+                # Уменьшаем карму автора поста
+                author_profile.karma = max(0, author_profile.karma - 1)
             else:
                 post.dislike_count = max(0, post.dislike_count - 1)
+                # Увеличиваем карму автора поста (удаление дизлайка)
+                author_profile.karma += 1
             post.save(update_fields=['like_count', 'dislike_count'])
+            author_profile.save(update_fields=['karma'])
             
             return JsonResponse({
                 'success': True,
@@ -544,27 +717,39 @@ def post_like(request, post_id):
             post_like_obj.like_type = like_type
             post_like_obj.save()
             
-            # Обновляем счетчики
+            # Обновляем счетчики и карму
             if old_type == 'like':
                 post.like_count = max(0, post.like_count - 1)
                 post.dislike_count += 1
+                # Уменьшаем карму на 2 (удаление лайка и добавление дизлайка)
+                author_profile.karma = max(0, author_profile.karma - 2)
             else:
                 post.dislike_count = max(0, post.dislike_count - 1)
                 post.like_count += 1
+                # Увеличиваем карму на 2 (удаление дизлайка и добавление лайка)
+                author_profile.karma += 2
             post.save(update_fields=['like_count', 'dislike_count'])
-    
+            author_profile.save(update_fields=['karma'])
     else:
         # Новый лайк
         if like_type == 'like':
             post.like_count += 1
+            # Увеличиваем карму автора поста
+            author_profile.karma += 1
         else:
             post.dislike_count += 1
+            # Уменьшаем карму автора поста
+            author_profile.karma = max(0, author_profile.karma - 1)
         post.save(update_fields=['like_count', 'dislike_count'])
+        author_profile.save(update_fields=['karma'])
+    
+    # Проверяем достижения, связанные с лайками
+    from .signals import check_upvotes_achievements
+    check_upvotes_achievements(post.author)
     
     return JsonResponse({
         'success': True,
         'action': 'added',
-        'like_type': like_type,
         'like_count': post.like_count,
         'dislike_count': post.dislike_count
     })
@@ -697,3 +882,15 @@ def topics_by_tag(request, tag_id):
         'page_obj': page_obj,
     }
     return render(request, 'forum/topics_by_tag.html', context)
+
+
+def practice_view(request):
+    """Страница практики"""
+    return render(request, 'practice.html')
+
+
+@login_required
+def achievements_view(request):
+    """Страница достижений пользователя"""
+    user_achievements = UserAchievement.objects.filter(user=request.user).select_related('achievement')
+    return render(request, 'achievements_list.html', {'user_achievements': user_achievements})
