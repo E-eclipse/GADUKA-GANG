@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from . import views
+from . import api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -35,6 +36,9 @@ urlpatterns = [
     
     # allauth URLs (включает login, logout, signup, password reset, email verification, OAuth)
     path('accounts/', include('allauth.urls')),
+    
+    # REST API URLs
+    path('api/v1/', include('GadukaGang.api_urls')),
     
     # Профиль пользователя
     path('profile/', views.profile_view, name='profile'),
@@ -63,6 +67,126 @@ urlpatterns = [
     # API для лайков и оценок
     path('api/posts/<int:post_id>/like/', views.post_like, name='post_like'),
     path('api/topics/<int:topic_id>/rating/', views.topic_rating, name='topic_rating'),
+    
+    # API Documentation
+    path('api/', api.api_documentation, name='api_documentation'),
+    
+    # CRUD API для всех моделей
+    # User API
+    path('api/users/', api.user_list_create, name='api_user_list_create'),
+    path('api/users/<int:user_id>/', api.user_detail, name='api_user_detail'),
+    
+    # UserProfile API
+    path('api/userprofiles/', api.userprofile_list_create, name='api_userprofile_list_create'),
+    path('api/userprofiles/<int:user_id>/', api.userprofile_detail, name='api_userprofile_detail'),
+    
+    # Section API
+    path('api/sections/', api.section_list_create, name='api_section_list_create'),
+    path('api/sections/<int:section_id>/', api.section_detail, name='api_section_detail'),
+    
+    # Topic API
+    path('api/topics/', api.topic_list_create, name='api_topic_list_create'),
+    path('api/topics/<int:topic_id>/', api.topic_detail, name='api_topic_detail'),
+    
+    # Post API
+    path('api/posts/', api.post_list_create, name='api_post_list_create'),
+    path('api/posts/<int:post_id>/', api.post_detail, name='api_post_detail'),
+    
+    # Achievement API
+    path('api/achievements/', api.achievement_list_create, name='api_achievement_list_create'),
+    path('api/achievements/<int:achievement_id>/', api.achievement_detail, name='api_achievement_detail'),
+    
+    # UserAchievement API
+    path('api/userachievements/', api.userachievement_list_create, name='api_userachievement_list_create'),
+    path('api/userachievements/<int:userachievement_id>/', api.userachievement_detail, name='api_userachievement_detail'),
+    
+    # UserRank API
+    path('api/userranks/', api.userrank_list_create, name='api_userrank_list_create'),
+    path('api/userranks/<int:userrank_id>/', api.userrank_detail, name='api_userrank_detail'),
+    
+    # UserRankProgress API
+    path('api/userrankprogresses/', api.userrankprogress_list_create, name='api_userrankprogress_list_create'),
+    path('api/userrankprogresses/<int:user_id>/', api.userrankprogress_detail, name='api_userrankprogress_detail'),
+    
+    # Tag API
+    path('api/tags/', api.tag_list_create, name='api_tag_list_create'),
+    path('api/tags/<int:tag_id>/', api.tag_detail, name='api_tag_detail'),
+    
+    # TopicTag API
+    path('api/topictags/', api.topictag_list_create, name='api_topictag_list_create'),
+    path('api/topictags/<int:topictag_id>/', api.topictag_detail, name='api_topictag_detail'),
+    
+    # Certificate API
+    path('api/certificates/', api.certificate_list_create, name='api_certificate_list_create'),
+    path('api/certificates/<int:certificate_id>/', api.certificate_detail, name='api_certificate_detail'),
+    
+    # UserCertificate API
+    path('api/usercertificates/', api.usercertificate_list_create, name='api_usercertificate_list_create'),
+    path('api/usercertificates/<int:usercertificate_id>/', api.usercertificate_detail, name='api_usercertificate_detail'),
+    
+    # Complaint API
+    path('api/complaints/', api.complaint_list_create, name='api_complaint_list_create'),
+    path('api/complaints/<int:complaint_id>/', api.complaint_detail, name='api_complaint_detail'),
+    
+    # Chat API
+    path('api/chats/', api.chat_list_create, name='api_chat_list_create'),
+    path('api/chats/<int:chat_id>/', api.chat_detail, name='api_chat_detail'),
+    
+    # ChatParticipant API
+    path('api/chatparticipants/', api.chatparticipant_list_create, name='api_chatparticipant_list_create'),
+    path('api/chatparticipants/<int:chatparticipant_id>/', api.chatparticipant_detail, name='api_chatparticipant_detail'),
+    
+    # ChatMessage API
+    path('api/chatmessages/', api.chatmessage_list_create, name='api_chatmessage_list_create'),
+    path('api/chatmessages/<int:chatmessage_id>/', api.chatmessage_detail, name='api_chatmessage_detail'),
+    
+    # SystemLog API
+    path('api/systemlogs/', api.systemlog_list_create, name='api_systemlog_list_create'),
+    path('api/systemlogs/<int:systemlog_id>/', api.systemlog_detail, name='api_systemlog_detail'),
+    
+    # ForumSetting API
+    path('api/forumsettings/', api.forumsetting_list_create, name='api_forumsetting_list_create'),
+    path('api/forumsettings/<int:forumsetting_id>/', api.forumsetting_detail, name='api_forumsetting_detail'),
+    
+    # PostLike API
+    path('api/postlikes/', api.postlike_list_create, name='api_postlike_list_create'),
+    path('api/postlikes/<int:postlike_id>/', api.postlike_detail, name='api_postlike_detail'),
+    
+    # TopicRating API
+    path('api/topicratings/', api.topicrating_list_create, name='api_topicrating_list_create'),
+    path('api/topicratings/<int:topicrating_id>/', api.topicrating_detail, name='api_topicrating_detail'),
+    
+    # UserSubscription API
+    path('api/usersubscriptions/', api.usersubscription_list_create, name='api_usersubscription_list_create'),
+    path('api/usersubscriptions/<int:usersubscription_id>/', api.usersubscription_detail, name='api_usersubscription_detail'),
+    
+    # TopicSubscription API
+    path('api/topicsubscriptions/', api.topicsubscription_list_create, name='api_topicsubscription_list_create'),
+    path('api/topicsubscriptions/<int:topicsubscription_id>/', api.topicsubscription_detail, name='api_topicsubscription_detail'),
+    
+    # ModeratorAction API
+    path('api/moderatoractions/', api.moderatoraction_list_create, name='api_moderatoraction_list_create'),
+    path('api/moderatoractions/<int:moderatoraction_id>/', api.moderatoraction_detail, name='api_moderatoraction_detail'),
+    
+    # AdminLog API
+    path('api/adminlogs/', api.adminlog_list_create, name='api_adminlog_list_create'),
+    path('api/adminlogs/<int:adminlog_id>/', api.adminlog_detail, name='api_adminlog_detail'),
+    
+    # Notification API
+    path('api/notifications/', api.notification_list_create, name='api_notification_list_create'),
+    path('api/notifications/<int:notification_id>/', api.notification_detail, name='api_notification_detail'),
+    
+    # SearchIndex API
+    path('api/searchindices/', api.searchindex_list_create, name='api_searchindex_list_create'),
+    path('api/searchindices/<int:searchindex_id>/', api.searchindex_detail, name='api_searchindex_detail'),
+    
+    # GitHubAuth API
+    path('api/githubauths/', api.githubauth_list_create, name='api_githubauth_list_create'),
+    path('api/githubauths/<int:user_id>/', api.githubauth_detail, name='api_githubauth_detail'),
+    
+    # TopicView API
+    path('api/topicviews/', api.topicview_list_create, name='api_topicview_list_create'),
+    path('api/topicviews/<int:topicview_id>/', api.topicview_detail, name='api_topicview_detail'),
     
     # Теги
     path('tags/', views.tags_list, name='tags_list'),

@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}API Documentation - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="api-container">
+    <div class="api-header">
+        <h1><i class="fas fa-code"></i> API Documentation</h1>
+        <p>Полный список доступных API endpoints для работы с данными форума</p>
+    </div>
+
+    <div class="api-info">
+        <h3><i class="fas fa-info-circle"></i> Информация об API</h3>
+        <p><strong>Базовый URL:</strong> <code>/api/</code></p>
+        <p><strong>Формат ответа:</strong> JSON</p>
+        <p><strong>Методы:</strong></p>
+        <ul>
+            <li><span class="method-get">GET</span> - Получить данные (список или один объект)</li>
+            <li><span class="method-post">POST</span> - Создать новый объект</li>
+            <li><span class="method-delete">DELETE</span> - Удалить объект</li>
+        </ul>
+    </div>
+
+    <h2 style="margin-top: 40px; color: #333;">Доступные Endpoints</h2>
+
+    <div class="endpoints-grid">
+        {% for endpoint in endpoints %}
+        <div class="endpoint-card">
+            <h3>{{ endpoint.name }}</h3>
+
+            <div style="margin-bottom: 15px;">
+                <span class="method-get">GET</span>
+                <span class="method-post">POST</span>
+                <div class="endpoint-url">
+                    <a href="{{ endpoint.list }}" target="_blank">{{ endpoint.list }}</a>
+                </div>
+                <small style="color: #666;">Список всех объектов / Создание нового</small>
+            </div>
+
+            <div>
+                <span class="method-get">GET</span>
+                <span class="method-delete">DELETE</span>
+                <div class="endpoint-url">
+                    {{ endpoint.detail }}
+                </div>
+                <small style="color: #666;">Получить / Удалить объект по ID</small>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="example-section">
+        <h3><i class="fas fa-code"></i> Примеры использования</h3>
+
+        <h4>1. Получить список всех пользователей:</h4>
+        <div class="code-block">
+            GET /api/users/
+        </div>
+
+        <h4>2. Получить пользователя по ID:</h4>
+        <div class="code-block">
+            GET /api/users/1/
+        </div>
+
+        <h4>3. Создать нового пользователя:</h4>
+        <div class="code-block">
+            POST /api/users/
+            Content-Type: application/json
+
+            {
+            "username": "newuser",
+            "email": "user@example.com",
+            "password": "securepassword123",
+            "role": "user"
+            }
+        </div>
+
+        <h4>4. Удалить пользователя:</h4>
+        <div class="code-block">
+            DELETE /api/users/1/
+        </div>
+
+        <h4>5. Получить список всех тем:</h4>
+        <div class="code-block">
+            GET /api/topics/
+        </div>
+
+        <h4>6. Создать новую тему:</h4>
+        <div class="code-block">
+            POST /api/topics/
+            Content-Type: application/json
+
+            {
+            "section_id": 1,
+            "title": "Новая тема",
+            "author_id": 1,
+            "is_pinned": false
+            }
+        </div>
+    </div>
+
+    <div class="api-info" style="margin-top: 30px;">
+        <h3><i class="fas fa-lightbulb"></i> Советы</h3>
+        <ul>
+            <li>Для тестирования API можно использовать браузер (для GET запросов) или инструменты типа Postman, curl
+            </li>
+            <li>Все POST запросы должны содержать заголовок <code>Content-Type: application/json</code></li>
+            <li>При создании объектов через POST, обязательные поля должны быть указаны в теле запроса</li>
+            <li>Для DELETE запросов достаточно указать ID объекта в URL</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
