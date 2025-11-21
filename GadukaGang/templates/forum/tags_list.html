@@ -4,37 +4,40 @@
 {% block title %}Теги - Gaduka Gang{% endblock %}
 
 {% block content %}
-<div class="forum-container">
-    <div class="forum-header">
-        <h1>Теги форума</h1>
+<div class="minimal-container">
+    <div class="minimal-header">
+        <h1>Теги</h1>
         {% if user.is_staff or user.is_superuser %}
-        <a href="{% url 'tag_create' %}" class="btn btn-primary">Создать тег</a>
+        <a href="{% url 'tag_create' %}" class="minimal-btn">Создать тег</a>
         {% endif %}
     </div>
 
-    <div class="tags-list">
+    <div class="minimal-tags-grid">
         {% for tag in tags %}
-        <div class="tag-card">
-            <span class="tag" style="background-color: {{ tag.color }};">
-                <a href="{% url 'topics_by_tag' tag.id %}">{{ tag.name }}</a>
-            </span>
-            <span class="tag-count">Тем: {{ tag.topics_count }}</span>
+        <div class="minimal-tag-card">
+            <div class="tag-info">
+                <a href="{% url 'topics_by_tag' tag.id %}" class="minimal-tag-link">
+                    <span class="tag-hash">#</span>
+                    <span class="tag-name">{{ tag.name }}</span>
+                </a>
+                <span class="tag-count">{{ tag.topics_count }} тем</span>
+            </div>
             {% if user.is_staff or user.is_superuser %}
-            <div class="tag-actions">
-                <a href="{% url 'tag_edit' tag.id %}" class="btn btn-sm btn-secondary">Редактировать</a>
-                <form method="post" action="{% url 'tag_delete' tag.id %}" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить этот тег?');">
+            <div class="minimal-tag-actions">
+                <a href="{% url 'tag_edit' tag.id %}" class="action-icon" title="Редактировать">✎</a>
+                <form method="post" action="{% url 'tag_delete' tag.id %}" style="display: inline;"
+                    onsubmit="return confirm('Удалить?');">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
+                    <button type="submit" class="action-icon delete" title="Удалить">×</button>
                 </form>
             </div>
             {% endif %}
         </div>
         {% empty %}
-        <div class="empty-state">
-            <p>Пока нет тегов. {% if user.is_staff or user.is_superuser %}<a href="{% url 'tag_create' %}">Создайте первый тег</a>{% endif %}</p>
+        <div class="minimal-empty">
+            <p>Нет тегов.</p>
         </div>
         {% endfor %}
     </div>
 </div>
 {% endblock %}
-

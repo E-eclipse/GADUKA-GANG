@@ -4,134 +4,212 @@
 {% block title %}{{ topic.title }} - Gaduka Gang{% endblock %}
 
 {% block content %}
-<section class="forum-layout topic-view">
-    <nav class="breadcrumb-line">
+<div class="cyber-container">
+    <!-- Breadcrumbs -->
+    <nav class="cyber-breadcrumbs">
         <a href="{% url 'sections_list' %}">Разделы</a>
-        <span>/</span>
+        <span class="breadcrumb-separator">/</span>
         <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
-        <span>/</span>
-        <span>{{ topic.title }}</span>
+        <span class="breadcrumb-separator">/</span>
+        <span class="current-page">{{ topic.title }}</span>
     </nav>
 
-    <article class="topic-summary">
-        <header class="topic-summary__header">
-            <h1>{{ topic.title }}</h1>
-            <div class="topic-summary__meta">
-                <span>Автор: <a href="#">{{ topic.author.username }}</a></span>
-                <span>Создано: {{ topic.created_date|date:"d.m.Y H:i" }}</span>
-                <span>Просмотров: {{ topic.view_count }}</span>
+    <!-- Topic Header -->
+    <header class="cyber-topic-header">
+        <div class="topic-title-section">
+            <h1 class="topic-title">{{ topic.title }}</h1>
+            <div class="topic-meta-info">
+                <div class="meta-item">
+                    <i class="fas fa-user cyber-icon"></i>
+                    <span>Автор: <a href="#" class="author-link">{{ topic.author.username }}</a></span>
+                </div>
+                <div class="meta-item">
+                    <i class="far fa-clock cyber-icon"></i>
+                    <span>{{ topic.created_date|date:"d.m.Y H:i" }}</span>
+                </div>
+                <div class="meta-item">
+                    <i class="far fa-eye cyber-icon"></i>
+                    <span>Просмотров: {{ topic.view_count }}</span>
+                </div>
                 {% if topic.average_rating > 0 %}
-                <span>⭐ {{ topic.average_rating|floatformat:1 }} • {{ topic.rating_count }} оценок</span>
+                <div class="meta-item">
+                    <i class="fas fa-star cyber-icon"></i>
+                    <span>{{ topic.average_rating|floatformat:1 }} ({{ topic.rating_count }} оценок)</span>
+                </div>
                 {% endif %}
             </div>
-            {% if topic_tags %}
-            <div class="topic-summary__tags">
-                {% for tag in topic_tags %}
-                <span class="badge tag-badge" style="color: {{ tag.color }}; border-color: {{ tag.color }};">{{ tag.name }}</span>
-                {% endfor %}
-            </div>
-            {% endif %}
-        </header>
+        </div>
+
+        {% if topic_tags %}
+        <div class="topic-tags-section">
+            {% for tag in topic_tags %}
+            <a href="{% url 'topics_by_tag' tag.id %}" class="cyber-tag" style="--tag-color: {{ tag.color }}">
+                <span class="tag-hash">#</span> {{ tag.name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         {% if user.is_authenticated %}
-        <div class="topic-summary__actions">
-            <a href="{% url 'post_create' topic.id %}" class="btn btn-primary">Ответить</a>
+        <div class="topic-actions">
+            <a href="#reply-form" class="cyber-button primary">
+                <i class="fas fa-reply"></i> Ответить
+            </a>
             {% if topic.author == user or user.is_staff or user.is_superuser %}
-            <a href="{% url 'topic_edit' topic.id %}" class="btn btn-secondary">Редактировать</a>
-            <form method="post" action="{% url 'topic_delete' topic.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');">
+            <a href="{% url 'topic_edit' topic.id %}" class="cyber-button secondary">
+                <i class="fas fa-edit"></i> Редактировать
+            </a>
+            <form method="post" action="{% url 'topic_delete' topic.id %}"
+                onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');" style="display: inline;">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-danger">Удалить</button>
+                <button type="submit" class="cyber-button danger">
+                    <i class="fas fa-trash-alt"></i> Удалить
+                </button>
             </form>
             {% endif %}
         </div>
         {% endif %}
-    </article>
+    </header>
 
-    {% if user.is_authenticated %}
-    <section class="rating-box">
-        <div class="rating-box__title">
-            <strong>Оцените тему</strong>
-            <span class="rating-info">{{ topic.average_rating|floatformat:1 }} из 5 • {{ topic.rating_count }} оценок</span>
-        </div>
-        <div class="star-rating" data-topic-id="{{ topic.id }}">
-            {% for i in "12345" %}
-            <span class="star" data-rating="{{ i }}">⭐</span>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
-    <div class="posts-stack">
+    <!-- Posts List -->
+    <div class="cyber-posts-container">
         {% for post in page_obj %}
-        <article class="post" id="post-{{ post.id }}">
-            <header class="post__header">
-                <div class="avatar">{{ post.author.username|first|upper }}</div>
-                <div class="post__meta">
-                    <strong><a href="#">{{ post.author.username }}</a></strong>
-                    <span>{{ post.created_date|date:"d.m.Y H:i" }}</span>
-                    {% if post.last_edited_date %}
-                    <span>Редактировано {{ post.last_edited_date|date:"d.m.Y H:i" }} · {{ post.edit_count }}</span>
-                    {% endif %}
+        <article class="cyber-post-card" id="post-{{ post.id }}">
+            <div class="post-header">
+                <div class="post-author-info">
+                    <div class="author-avatar">
+                        {{ post.author.username|first|upper }}
+                    </div>
+                    <div class="author-details">
+                        <a href="#" class="author-name">{{ post.author.username }}</a>
+                        <span class="post-date">{{ post.created_date|date:"d.m.Y H:i" }}</span>
+                    </div>
                 </div>
-            </header>
-            <div class="post__content">
+                <div class="post-actions">
+                    <a href="#post-{{ post.id }}" class="cyber-button small outline">#{{ forloop.counter }}</a>
+                </div>
+            </div>
+
+            <div class="post-content">
                 {% if post.content_html %}
-                    {{ post.content_html }}
+                {{ post.content_html|safe }}
                 {% else %}
-                    {{ post.content|linebreaks }}
+                {{ post.content|linebreaks }}
                 {% endif %}
             </div>
-            <footer class="post__footer">
-                <div class="post__reactions">
-                    {% if user.is_authenticated %}
-                    <button class="reaction-btn like-btn" data-post-id="{{ post.id }}" data-like-type="like">
-                        👍 <span class="like-count">{{ post.like_count }}</span>
+
+            {% if post.last_edited_date %}
+            <div class="post-edit-info">
+                <i class="fas fa-pencil-alt"></i> Редактировано {{ post.last_edited_date|date:"d.m.Y H:i" }} (всего
+                правок: {{ post.edit_count }})
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="post-links">
+                {% if user.is_authenticated %}
+                {% if post.author == user or user.is_staff or user.is_superuser %}
+                <a href="{% url 'post_edit' post.id %}" class="cyber-button small secondary">
+                    <i class="fas fa-edit"></i>
+                </a>
+                <form method="post" action="{% url 'post_delete' post.id %}"
+                    onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');"
+                    style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="cyber-button small danger">
+                        <i class="fas fa-trash"></i>
                     </button>
-                    <button class="reaction-btn dislike-btn" data-post-id="{{ post.id }}" data-like-type="dislike">
-                        👎 <span class="dislike-count">{{ post.dislike_count }}</span>
-                    </button>
-                    {% endif %}
-                </div>
-                <div class="post__actions">
-                    {% if post.author == user or user.is_staff or user.is_superuser %}
-                    <a href="{% url 'post_edit' post.id %}" class="btn btn-sm btn-secondary">Редактировать</a>
-                    <form method="post" action="{% url 'post_delete' post.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-danger">Удалить</button>
-                    </form>
-                    {% endif %}
-                </div>
+                </form>
+                {% endif %}
+                {% endif %}
+            </div>
             </footer>
         </article>
         {% empty %}
-        <div class="empty-panel">
-            <p>В этой теме пока нет сообщений. {% if user.is_authenticated %}<a href="{% url 'post_create' topic.id %}">Напишите первое сообщение</a>.{% endif %}</p>
+        <div class="cyber-empty-state">
+            <div class="empty-icon">
+                <i class="far fa-comment-dots"></i>
+            </div>
+            <h3>Нет сообщений</h3>
+            <p>В этой теме пока никто не ответил. Будьте первым!</p>
         </div>
         {% endfor %}
     </div>
 
+    <!-- Pagination -->
     {% if page_obj.has_other_pages %}
-    <div class="pagination">
-        {% if page_obj.has_previous %}
-        <a href="?page=1" class="btn btn-sm">Первая</a>
-        <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-sm">Предыдущая</a>
-        {% endif %}
+    <div class="cyber-pagination">
+        <div class="pagination-info">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </div>
+        <div class="pagination-controls">
+            {% if page_obj.has_previous %}
+            <a href="?page=1" class="cyber-button small secondary">Первая</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="cyber-button small secondary">Назад</a>
+            {% endif %}
 
-        <span class="page-info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            <span class="current-page-info">{{ page_obj.number }}</span>
 
-        {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="btn btn-sm">Следующая</a>
-        <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-sm">Последняя</a>
-        {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="cyber-button small secondary">Вперед</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="cyber-button small secondary">Последняя</a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
-</section>
+
+    <!-- Rating Section -->
+    {% if user.is_authenticated %}
+    <section class="cyber-topic-rating">
+        <h3 class="rating-title">Оцените тему</h3>
+        <div class="rating-container">
+            <div class="stars-container" data-topic-id="{{ topic.id }}">
+                {% for i in "12345" %}
+                <button class="star-button" data-rating="{{ i }}">
+                    <i class="fas fa-star"></i>
+                </button>
+                {% endfor %}
+            </div>
+            <div class="rating-info">
+                {{ topic.average_rating|floatformat:1 }} из 5 • {{ topic.rating_count }} оценок
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Reply Form -->
+    {% if user.is_authenticated %}
+    <section id="reply-form" class="cyber-reply-form">
+        <h3 class="form-title">Ваш ответ</h3>
+        <form method="post" action="{% url 'post_create' topic.id %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <p style="color: var(--text-secondary); margin-bottom: 15px;">Нажмите кнопку ниже, чтобы написать ответ.
+                </p>
+                <a href="{% url 'post_create' topic.id %}" class="cyber-button primary">Написать ответ</a>
+            </div>
+        </form>
+    </section>
+    {% else %}
+    <div class="cyber-login-prompt">
+        <div class="empty-icon">
+            <i class="fas fa-lock"></i>
+        </div>
+        <p>Чтобы отвечать в темах и ставить оценки, необходимо авторизоваться.</p>
+        <div style="display: flex; gap: 15px; justify-content: center;">
+            <a href="{% url 'login' %}?next={{ request.path }}" class="cyber-button primary">Войти</a>
+            <a href="{% url 'register' %}" class="cyber-button secondary">Регистрация</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     // Обработка лайков/дизлайков
     document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const postId = this.dataset.postId;
             const likeType = this.dataset.likeType;
             const formData = new FormData();
@@ -142,21 +220,33 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.querySelector(`#post-${postId} .like-count`).textContent = data.like_count;
-                    document.querySelector(`#post-${postId} .dislike-count`).textContent = data.dislike_count;
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update counts
+                        const postCard = document.getElementById(`post-${postId}`);
+                        postCard.querySelector('.like-count').textContent = data.like_count;
+                        postCard.querySelector('.dislike-count').textContent = data.dislike_count;
+
+                        // Toggle active class
+                        if (likeType === 'like') {
+                            this.classList.toggle('active');
+                            postCard.querySelector('.dislike-btn').classList.remove('active');
+                        } else {
+                            this.classList.toggle('active');
+                            postCard.querySelector('.like-btn').classList.remove('active');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         });
     });
 
     // Обработка рейтинга тем
-    document.querySelectorAll('.star-rating .star').forEach(star => {
-        star.addEventListener('click', function() {
-            const topicId = this.closest('.star-rating').dataset.topicId;
+    document.querySelectorAll('.star-button').forEach(star => {
+        star.addEventListener('click', function () {
+            const container = this.closest('.stars-container');
+            const topicId = container.dataset.topicId;
             const rating = this.dataset.rating;
             const formData = new FormData();
             formData.append('rating', rating);
@@ -166,24 +256,26 @@
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.querySelector('.rating-info').textContent =
-                        `${data.average_rating} из 5 • ${data.rating_count} оценок`;
-                    // Подсветка выбранных звезд
-                    document.querySelectorAll('.star-rating .star').forEach((s, idx) => {
-                        if (idx < rating) {
-                            s.style.opacity = '1';
-                        } else {
-                            s.style.opacity = '0.3';
-                        }
-                    });
-                }
-            })
-            .catch(error => console.error('Error:', error));
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.querySelector('.rating-info').textContent =
+                            `${data.average_rating} из 5 • ${data.rating_count} оценок`;
+
+                        // Подсветка выбранных звезд
+                        container.querySelectorAll('.star-button').forEach((s, idx) => {
+                            if (idx < rating) {
+                                s.classList.add('active');
+                                s.style.color = 'var(--warning)';
+                            } else {
+                                s.classList.remove('active');
+                                s.style.color = 'var(--text-secondary)';
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         });
     });
 </script>
 {% endblock %}
-

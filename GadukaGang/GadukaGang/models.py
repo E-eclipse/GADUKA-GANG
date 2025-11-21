@@ -439,3 +439,13 @@ class GitHubAuth(models.Model):
     
     class Meta:
         app_label = 'GadukaGang'
+
+# Модель просмотров тем
+class TopicView(models.Model):
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='views')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    view_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('topic', 'user')
+        app_label = 'GadukaGang'

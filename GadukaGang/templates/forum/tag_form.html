@@ -4,34 +4,35 @@
 {% block title %}{{ action }} тег - Gaduka Gang{% endblock %}
 
 {% block content %}
-<div class="forum-container">
-    <div class="forum-header">
+<div class="minimal-container">
+    <div class="minimal-header">
         <h1>{{ action }} тег</h1>
-        <a href="{% url 'tags_list' %}" class="btn btn-secondary">Назад к тегам</a>
+        <a href="{% url 'tags_list' %}" class="minimal-btn">Назад</a>
     </div>
 
-    <div class="form-container">
-        <form method="post">
+    <div class="minimal-form-container">
+        <form method="post" class="minimal-form">
             {% csrf_token %}
-            <div class="form-group">
-                <label for="name">Название тега</label>
-                <input type="text" name="name" id="name" class="form-control" 
-                       value="{% if tag %}{{ tag.name }}{% endif %}" 
-                       placeholder="Название тега" required>
+            <div class="minimal-form-group">
+                <label for="name">Название</label>
+                <input type="text" name="name" id="name" class="minimal-input"
+                    value="{% if tag %}{{ tag.name }}{% endif %}" placeholder="Например: python" required>
             </div>
 
-            <div class="form-group">
-                <label for="color">Цвет тега</label>
-                <input type="color" name="color" id="color" class="form-control" 
-                       value="{% if tag %}{{ tag.color }}{% else %}#000000{% endif %}">
+            <div class="minimal-form-group">
+                <label for="color">Цвет</label>
+                <div class="color-input-wrapper">
+                    <input type="color" name="color" id="color" class="minimal-color-input"
+                        value="{% if tag %}{{ tag.color }}{% else %}#000000{% endif %}">
+                    <span class="color-value">{% if tag %}{{ tag.color }}{% else %}#000000{% endif %}</span>
+                </div>
             </div>
 
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{{ action }}</button>
-                <a href="{% url 'tags_list' %}" class="btn btn-secondary">Отмена</a>
+            <div class="minimal-form-actions">
+                <button type="submit" class="minimal-submit-btn">{{ action }}</button>
+                <a href="{% url 'tags_list' %}" class="minimal-cancel-btn">Отмена</a>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
-
