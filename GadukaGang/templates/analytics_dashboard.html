@@ -1,0 +1,376 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Аналитика - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-dashboard {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+
+    .analytics-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 32px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .analytics-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    .filters-panel {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        gap: 16px;
+        flex-wrap: wrap;
+        align-items: end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .filter-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .filter-input {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 8px 12px;
+        color: var(--text-primary);
+        font-family: 'Roboto Mono', monospace;
+    }
+
+    .filter-input:focus {
+        outline: none;
+        border-color: var(--accent-green);
+    }
+
+    .btn-filter,
+    .btn-export {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: 'Orbitron', sans-serif;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-filter:hover,
+    .btn-export:hover {
+        box-shadow: 0 0 15px var(--accent-green);
+        transform: translateY(-2px);
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .btn-export {
+        background: var(--darker-bg);
+        color: var(--accent-green);
+        border: 1px solid var(--accent-green);
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+    }
+
+    .stat-title {
+        color: var(--text-secondary);
+        margin: 0 0 12px 0;
+        font-size: 0.9rem;
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        color: var(--accent-green);
+        font-family: 'Roboto Mono', monospace;
+        text-shadow: var(--neon-shadow);
+    }
+
+    .charts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .chart-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .chart-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+    }
+
+    .chart-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        margin: 0 0 20px 0;
+        font-size: 1.2rem;
+        text-align: center;
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+
+    .chart-full-width {
+        grid-column: 1 / -1;
+    }
+
+    @media (max-width: 768px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .filters-panel {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="analytics-dashboard">
+    <div class="analytics-header">
+        <h2 class="analytics-title">📊 Аналитический дашборд</h2>
+        <div class="export-buttons">
+            <a href="{% url 'export_analytics_csv' %}?type=daily_activity" class="btn-export">📥 Экспорт активности</a>
+            <a href="{% url 'export_analytics_csv' %}?type=top_contributors" class="btn-export">📥 Экспорт авторов</a>
+            <a href="{% url 'export_analytics_csv' %}?type=sections" class="btn-export">📥 Экспорт разделов</a>
+        </div>
+    </div>
+
+    <div class="filters-panel">
+        <div class="filter-group">
+            <label class="filter-label">Дата от:</label>
+            <input type="date" id="dateFrom" class="filter-input" value="{{ date_from }}">
+        </div>
+        <div class="filter-group">
+            <label class="filter-label">Дата до:</label>
+            <input type="date" id="dateTo" class="filter-input" value="{{ date_to }}">
+        </div>
+        <button onclick="applyFilters()" class="btn-filter">Применить фильтры</button>
+    </div>
+
+    <div class="stats-cards">
+        <div class="stat-card">
+            <div class="stat-title">Всего пользователей</div>
+            <div class="stat-value">{{ stats.total_users }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Всего тем</div>
+            <div class="stat-value">{{ stats.total_topics }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Всего сообщений</div>
+            <div class="stat-value">{{ stats.total_posts }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Разделов</div>
+            <div class="stat-value">{{ stats.total_sections }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Активных (24ч)</div>
+            <div class="stat-value">{{ stats.active_users_24h }}</div>
+        </div>
+    </div>
+
+    <div class="charts-grid">
+        <div class="chart-card chart-full-width">
+            <h3 class="chart-title">Активность по дням</h3>
+            <div class="chart-container">
+                <canvas id="dailyActivityChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">Распределение по разделам</h3>
+            <div class="chart-container">
+                <canvas id="sectionsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">Топ-10 авторов</h3>
+            <div class="chart-container">
+                <canvas id="contributorsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">Популярные теги</h3>
+            <div class="chart-container">
+                <canvas id="tagsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3 class="chart-title">Распределение по ролям</h3>
+            <div class="chart-container">
+                <canvas id="rolesChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card chart-full-width">
+            <h3 class="chart-title">Аналитический отчёт (с трендами)</h3>
+            <div class="chart-container">
+                <canvas id="analyticsReportChart"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: {
+                    color: '#f0f0f0',
+                    font: { family: "'Roboto Mono', monospace" }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                ticks: { color: '#b0b0b0' }
+            },
+            x: {
+                grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                ticks: { color: '#b0b0b0' }
+            }
+        }
+    };
+
+    let charts = {};
+
+    function loadChartData(chartId, apiType) {
+        const dateFrom = document.getElementById('dateFrom').value;
+        const dateTo = document.getElementById('dateTo').value;
+
+        fetch(`/analytics/api/data/?type=${apiType}&date_from=${dateFrom}&date_to=${dateTo}`)
+            .then(response => response.json())
+            .then(data => {
+                if (charts[chartId]) {
+                    charts[chartId].destroy();
+                }
+
+                const ctx = document.getElementById(chartId).getContext('2d');
+                const config = getChartConfig(apiType, data);
+                charts[chartId] = new Chart(ctx, config);
+            })
+            .catch(error => console.error('Error loading chart:', error));
+    }
+
+    function getChartConfig(type, data) {
+        const baseConfig = { data: data, options: { ...chartDefaults } };
+
+        switch (type) {
+            case 'daily_activity':
+                return { ...baseConfig, type: 'line', options: { ...chartDefaults, tension: 0.4 } };
+            case 'sections_distribution':
+                return { ...baseConfig, type: 'doughnut', options: { responsive: true, maintainAspectRatio: false, plugins: chartDefaults.plugins } };
+            case 'top_contributors':
+                return { ...baseConfig, type: 'bar' };
+            case 'popular_tags':
+                return { ...baseConfig, type: 'pie', options: { responsive: true, maintainAspectRatio: false, plugins: chartDefaults.plugins } };
+            case 'user_roles':
+                return { ...baseConfig, type: 'doughnut', options: { responsive: true, maintainAspectRatio: false, plugins: chartDefaults.plugins } };
+            case 'analytics_report':
+                return {
+                    ...baseConfig,
+                    type: 'bar',
+                    options: {
+                        ...chartDefaults,
+                        scales: {
+                            ...chartDefaults.scales,
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                grid: { drawOnChartArea: false },
+                                ticks: { color: '#b0b0b0' }
+                            }
+                        }
+                    }
+                };
+            default:
+                return baseConfig;
+        }
+    }
+
+    function applyFilters() {
+        loadChartData('dailyActivityChart', 'daily_activity');
+        loadChartData('sectionsChart', 'sections_distribution');
+        loadChartData('contributorsChart', 'top_contributors');
+        loadChartData('tagsChart', 'popular_tags');
+        loadChartData('rolesChart', 'user_roles');
+        loadChartData('analyticsReportChart', 'analytics_report');
+    }
+
+    // Загрузка всех графиков при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function () {
+        applyFilters();
+    });
+</script>
+{% endblock %}

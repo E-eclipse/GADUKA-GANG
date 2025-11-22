@@ -20,6 +20,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from . import views
 from . import api
+from . import analytics_views as analytics
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,7 +28,12 @@ urlpatterns = [
     
     # Custom admin panel (direct URL only)
     path('admin-panel/', views.admin_panel_view, name='admin_panel'),
-    path('admin-charts/', views.admin_charts_view, name='admin_charts'),
+    
+    
+    # Analytics Dashboard
+    path('analytics/', analytics.analytics_dashboard, name='analytics_dashboard'),
+    path('analytics/api/data/', analytics.analytics_api_data, name='analytics_api_data'),
+    path('analytics/export/', analytics.export_analytics_csv, name='export_analytics_csv'),
     
     # Старые пути для обратной совместимости (перенаправляют на allauth)
     path('login/', views.login_view, name='login'),

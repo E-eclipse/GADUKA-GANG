@@ -325,3 +325,26 @@ class TopicViewSerializer(serializers.ModelSerializer):
         model = TopicView
         fields = ['id', 'topic', 'user', 'view_date']
         read_only_fields = ['id', 'view_date']
+
+
+# Search Index Serializer
+class SearchIndexSerializer(serializers.ModelSerializer):
+    """Serializer for SearchIndex model"""
+    
+    class Meta:
+        model = SearchIndex
+        fields = ['id', 'content_type', 'object_id', 'search_vector', 'tags', 
+                  'author_username', 'created_date', 'last_updated']
+        read_only_fields = ['id', 'created_date', 'last_updated']
+
+
+# GitHub Auth Serializer
+class GitHubAuthSerializer(serializers.ModelSerializer):
+    """Serializer for GitHubAuth model"""
+    user = UserSerializer(read_only=True)
+    
+    class Meta:
+        model = GitHubAuth
+        fields = ['id', 'user', 'github_id', 'github_username', 'access_token', 
+                  'refresh_token', 'created_date', 'last_sync']
+        read_only_fields = ['id', 'created_date', 'last_sync']
