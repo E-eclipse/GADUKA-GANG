@@ -1,0 +1,410 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Настройки - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="settings-container">
+    <h1>⚙️ Настройки пользователя</h1>
+
+    <div class="settings-tabs">
+        <button class="tab-btn active" data-tab="appearance">🎨 Внешний вид</button>
+        <button class="tab-btn" data-tab="preferences">⚡ Предпочтения</button>
+        <button class="tab-btn" data-tab="filters">🔍 Сохранённые фильтры</button>
+        <button class="tab-btn" data-tab="hotkeys">⌨️ Горячие клавиши</button>
+    </div>
+
+    <form id="settings-form" class="settings-form">
+        {% csrf_token %}
+
+        <!-- Appearance Tab -->
+        <div class="tab-content active" data-tab="appearance">
+            <h2>Внешний вид</h2>
+
+            <div class="setting-group">
+                <label for="theme">Тема оформления</label>
+                <select id="theme" name="theme">
+                    <option value="dark" {% if settings.theme=='dark' %}selected{% endif %}>Тёмная</option>
+                    <option value="light" {% if settings.theme=='light' %}selected{% endif %}>Светлая</option>
+                    <option value="cyberpunk" {% if settings.theme=='cyberpunk' %}selected{% endif %}>Киберпанк</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" name="show_avatars" {% if settings.show_avatars %}checked{% endif %}>
+                    Показывать аватары пользователей
+                </label>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" name="show_signatures" {% if settings.show_signatures %}checked{% endif %}>
+                    Показывать подписи пользователей
+                </label>
+            </div>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div class="tab-content" data-tab="preferences">
+            <h2>Предпочтения</h2>
+
+            <div class="setting-group">
+                <label for="date_format">Формат даты</label>
+                <select id="date_format" name="date_format">
+                    <option value="DD.MM.YYYY" {% if settings.date_format=='DD.MM.YYYY' %}selected{% endif %}>ДД.ММ.ГГГГ
+                    </option>
+                    <option value="MM/DD/YYYY" {% if settings.date_format=='MM/DD/YYYY' %}selected{% endif %}>ММ/ДД/ГГГГ
+                    </option>
+                    <option value="YYYY-MM-DD" {% if settings.date_format=='YYYY-MM-DD' %}selected{% endif %}>ГГГГ-ММ-ДД
+                    </option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="time_format">Формат времени</label>
+                <select id="time_format" name="time_format">
+                    <option value="24h" {% if settings.time_format=='24h' %}selected{% endif %}>24 часа</option>
+                    <option value="12h" {% if settings.time_format=='12h' %}selected{% endif %}>12 часов (AM/PM)
+                    </option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="posts_per_page">Постов на странице</label>
+                <select id="posts_per_page" name="posts_per_page">
+                    <option value="10" {% if settings.posts_per_page==10 %}selected{% endif %}>10</option>
+                    <option value="20" {% if settings.posts_per_page==20 %}selected{% endif %}>20</option>
+                    <option value="50" {% if settings.posts_per_page==50 %}selected{% endif %}>50</option>
+                    <option value="100" {% if settings.posts_per_page==100 %}selected{% endif %}>100</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label for="language">Язык интерфейса</label>
+                <select id="language" name="language">
+                    <option value="ru" {% if settings.language=='ru' %}selected{% endif %}>Русский</option>
+                    <option value="en" {% if settings.language=='en' %}selected{% endif %}>English</option>
+                </select>
+            </div>
+
+            <div class="setting-group">
+                <label>
+                    <input type="checkbox" name="email_notifications" {% if settings.email_notifications %}checked{%
+                        endif %}>
+                    Email уведомления
+                </label>
+            </div>
+        </div>
+
+        <!-- Filters Tab -->
+        <div class="tab-content" data-tab="filters">
+            <h2>Сохранённые фильтры</h2>
+            <p class="hint">Здесь будут отображаться ваши сохранённые пресеты фильтров</p>
+
+            <div id="saved-filters-list">
+                {% if settings.saved_filters %}
+                {% for name, filters in settings.saved_filters.items %}
+                <div class="filter-preset">
+                    <strong>{{ name }}</strong>
+                    <button type="button" class="btn-small" onclick="loadFilterPreset('{{ name }}')">Загрузить</button>
+                    <button type="button" class="btn-small btn-danger"
+                        onclick="deleteFilterPreset('{{ name }}')">Удалить</button>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p>Нет сохранённых фильтров</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Hotkeys Tab -->
+        <div class="tab-content" data-tab="hotkeys">
+            <h2>Горячие клавиши</h2>
+            <p class="hint">Нажмите <kbd>?</kbd> в любом месте сайта, чтобы увидеть все доступные горячие клавиши</p>
+
+            <div class="hotkeys-list">
+                <div class="hotkey-item">
+                    <kbd>g</kbd> <kbd>h</kbd>
+                    <span>Перейти на главную</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>g</kbd> <kbd>f</kbd>
+                    <span>Перейти на форум</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>g</kbd> <kbd>p</kbd>
+                    <span>Перейти в профиль</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>c</kbd>
+                    <span>Создать новую тему</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>r</kbd>
+                    <span>Ответить в теме</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>/</kbd>
+                    <span>Фокус на поиск</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>?</kbd>
+                    <span>Показать справку по клавишам</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>Esc</kbd>
+                    <span>Закрыть модальные окна</span>
+                </div>
+                <div class="hotkey-item">
+                    <kbd>Ctrl</kbd> + <kbd>K</kbd>
+                    <span>Быстрые команды</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-actions">
+            <button type="submit" class="btn btn-primary">💾 Сохранить настройки</button>
+            <button type="button" class="btn btn-secondary" onclick="resetSettings()">🔄 Сбросить</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .settings-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 30px;
+        background: #1a1a2e;
+        border-radius: 12px;
+        border: 2px solid #00ff88;
+    }
+
+    .settings-container h1 {
+        color: #00ff88;
+        margin-bottom: 30px;
+    }
+
+    .settings-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #16213e;
+    }
+
+    .tab-btn {
+        background: transparent;
+        border: none;
+        color: #888;
+        padding: 15px 20px;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-bottom: 3px solid transparent;
+    }
+
+    .tab-btn:hover {
+        color: #00ff88;
+    }
+
+    .tab-btn.active {
+        color: #00ff88;
+        border-bottom-color: #00ff88;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .setting-group {
+        margin-bottom: 25px;
+    }
+
+    .setting-group label {
+        display: block;
+        color: #fff;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .setting-group select,
+    .setting-group input[type="text"],
+    .setting-group input[type="number"] {
+        width: 100%;
+        padding: 12px;
+        background: #16213e;
+        border: 1px solid #00ff88;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 16px;
+    }
+
+    .setting-group input[type="checkbox"] {
+        margin-right: 10px;
+    }
+
+    .settings-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        padding-top: 30px;
+        border-top: 2px solid #16213e;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #00ff88;
+        color: #000;
+    }
+
+    .btn-primary:hover {
+        background: #00cc6a;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: #16213e;
+        color: #fff;
+        border: 1px solid #00ff88;
+    }
+
+    .btn-secondary:hover {
+        background: #1f2a47;
+    }
+
+    .hint {
+        color: #888;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+
+    .hotkeys-list {
+        display: grid;
+        gap: 15px;
+    }
+
+    .hotkey-item {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #16213e;
+        border-radius: 6px;
+    }
+
+    .hotkey-item kbd {
+        background: #1a1a2e;
+        border: 1px solid #00ff88;
+        border-radius: 4px;
+        padding: 4px 8px;
+        font-family: monospace;
+        color: #00ff88;
+    }
+
+    .hotkey-item span {
+        color: #fff;
+    }
+
+    .filter-preset {
+        padding: 15px;
+        background: #16213e;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .filter-preset strong {
+        color: #00ff88;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+
+    .btn-danger {
+        background: #ff4444;
+        color: #fff;
+    }
+</style>
+
+<script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Update content
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`.tab-content[data-tab="${tab}"]`).classList.add('active');
+        });
+    });
+
+    // Form submission
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const settings = {};
+
+        for (let [key, value] of formData.entries()) {
+            if (key !== 'csrfmiddlewaretoken') {
+                // Handle checkboxes
+                if (e.target.elements[key].type === 'checkbox') {
+                    settings[key] = e.target.elements[key].checked;
+                } else {
+                    settings[key] = value;
+                }
+            }
+        }
+
+        try {
+            const response = await fetch('/settings/save/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: JSON.stringify(settings)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('✅ ' + data.message);
+                // Apply theme immediately
+                if (settings.theme) {
+                    document.body.className = `theme-${settings.theme}`;
+                }
+            } else {
+                alert('❌ ' + data.message);
+            }
+        } catch (error) {
+            alert('❌ Ошибка сохранения настроек');
+        }
+    });
+
+    function resetSettings() {
+        if (confirm('Сбросить все настройки к значениям по умолчанию?')) {
+            location.reload();
+        }
+    }
+</script>
+{% endblock %}

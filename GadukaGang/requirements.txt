@@ -9,3 +9,4 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
 django-filter==23.5
 drf-yasg==1.21.7
+cryptography>=41.0.0

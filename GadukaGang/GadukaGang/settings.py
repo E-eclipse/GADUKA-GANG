@@ -73,7 +73,7 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware',  # Требуется для django-allauth
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'GadukaGang.middleware.AdminActionLoggingMiddleware',  # Логирование действий администраторов
+    # 'GadukaGang.middleware.AdminActionLoggingMiddleware'  # ��������,  # Логирование действий администраторов
 ]
 
 ROOT_URLCONF = 'GadukaGang.urls'

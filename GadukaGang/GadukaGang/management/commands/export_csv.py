@@ -186,10 +186,10 @@ class Command(BaseCommand):
                 'Количество постов', 'Теги', 'Последний пост'
             ])
             
-            topics = Topic.objects.select_related('section', 'author').prefetch_related('tags', 'post_set').all()
+            topics = Topic.objects.select_related('section', 'author').prefetch_related('topic_tags__tag', 'post_set').all()
             for topic in topics:
                 # Собираем теги
-                tags = ', '.join([tag.name for tag in topic.tags.all()]) if topic.tags.exists() else 'Нет тегов'
+                tags = ', '.join([tt.tag.name for tt in topic.topic_tags.all()]) if topic.topic_tags.exists() else 'Нет тегов'
                 
                 # Получаем дату последнего поста
                 last_post = topic.post_set.filter(is_deleted=False).order_by('-created_date').first()
@@ -262,10 +262,12 @@ class Command(BaseCommand):
                 'Общих просмотров', 'Средний рейтинг тем', 'Популярность'
             ])
             
-            tags = Tag.objects.prefetch_related('topic_set__author').all()
+            tags = Tag.objects.prefetch_related('topic_tags__topic__author').all()
             for tag in tags:
-                topics = tag.topic_set.all()
-                topics_count = topics.count()
+                # Получаем темы через TopicTag
+                topic_tags = tag.topic_tags.select_related('topic').all()
+                topics = [tt.topic for tt in topic_tags]
+                topics_count = len(topics)
                 
                 if topics_count > 0:
                     # Уникальные авторы

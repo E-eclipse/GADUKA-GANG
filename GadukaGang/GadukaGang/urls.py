@@ -21,6 +21,7 @@ from django.conf.urls.static import static
 from . import views
 from . import api
 from . import analytics_views as analytics
+from . import data_management_views as data_mgmt
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -34,6 +35,15 @@ urlpatterns = [
     path('analytics/', analytics.analytics_dashboard, name='analytics_dashboard'),
     path('analytics/api/data/', analytics.analytics_api_data, name='analytics_api_data'),
     path('analytics/export/', analytics.export_analytics_csv, name='export_analytics_csv'),
+    
+    # Data Management (CSV Import/Export, Backups)
+    path('data-management/csv/', data_mgmt.csv_operations_view, name='csv_operations'),
+    path('data-management/csv/import/', data_mgmt.handle_csv_import, name='csv_import_handle'),
+    path('data-management/csv/export/<str:entity_type>/', data_mgmt.download_csv_export, name='csv_export_download'),
+    path('data-management/backups/', data_mgmt.backup_management_view, name='backup_management'),
+    path('data-management/backups/create/', data_mgmt.create_backup, name='backup_create'),
+    path('data-management/backups/delete/<str:filename>/', data_mgmt.delete_backup, name='backup_delete'),
+    path('data-management/backups/download/<str:filename>/', data_mgmt.download_backup, name='backup_download'),
     
     # Старые пути для обратной совместимости (перенаправляют на allauth)
     path('login/', views.login_view, name='login'),

@@ -1,0 +1,353 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Управление бэкапами - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .backup-page {
+        padding: 40px 0;
+        min-height: calc(100vh - 300px);
+    }
+
+    .page-header {
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .page-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin-bottom: 10px;
+        text-shadow: 0 0 10px rgba(0, 255, 65, 0.3);
+    }
+
+    .page-title span {
+        color: var(--accent-green);
+    }
+
+    .create-backup-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .backup-form {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    .checkbox-label input {
+        width: 20px;
+        height: 20px;
+    }
+
+    .btn-create {
+        background: var(--accent-green);
+        color: #000;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 15px 40px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-create:hover {
+        background: #00cc33;
+        box-shadow: 0 0 20px rgba(0, 255, 65, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .backups-list {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .backup-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+
+    .backup-item:hover {
+        border-color: var(--accent-green);
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+    }
+
+    .backup-info {
+        flex: 1;
+    }
+
+    .backup-name {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .backup-meta {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+
+    .backup-meta span {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .backup-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action {
+        padding: 10px 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Roboto', sans-serif;
+    }
+
+    .btn-action:hover {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+    }
+
+    .btn-delete {
+        border-color: #ff3333;
+        color: #ff3333;
+    }
+
+    .btn-delete:hover {
+        background: rgba(255, 51, 51, 0.1);
+        border-color: #ff3333;
+        color: #ff3333;
+    }
+
+    .no-backups {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-secondary);
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 40px;
+        max-width: 500px;
+        text-align: center;
+    }
+
+    .modal-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+
+    .modal-text {
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="backup-page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">
+                Управление <span>Бэкапами</span>
+            </h1>
+        </div>
+
+        <!-- Create Backup -->
+        <div class="create-backup-card">
+            <h2 class="card-title">🔄 Создать новый бэкап</h2>
+
+            <form method="post" action="{% url 'backup_create' %}" class="backup-form">
+                {% csrf_token %}
+
+                <label class="checkbox-label">
+                    <input type="checkbox" name="compress" checked>
+                    <span>Сжать бэкап (gzip)</span>
+                </label>
+
+                <button type="submit" class="btn-create">
+                    <i class="fas fa-plus"></i> Создать бэкап
+                </button>
+            </form>
+
+            {% if messages %}
+            <div style="margin-top: 20px;">
+                {% for message in messages %}
+                <div
+                    style="padding: 15px; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--accent-green); border-radius: 8px; color: var(--text-primary);">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Backups List -->
+        <div class="backups-list">
+            <h2 class="card-title">📦 Существующие бэкапы</h2>
+
+            {% if backups %}
+            {% for backup in backups %}
+            <div class="backup-item">
+                <div class="backup-info">
+                    <div class="backup-name">{{ backup.filename }}</div>
+                    <div class="backup-meta">
+                        <span>
+                            <i class="fas fa-calendar"></i>
+                            {{ backup.created|date:"d.m.Y H:i" }}
+                        </span>
+                        <span>
+                            <i class="fas fa-hdd"></i>
+                            {{ backup.size_mb }} MB
+                        </span>
+                        {% if backup.compressed %}
+                        <span>
+                            <i class="fas fa-file-archive"></i>
+                            Сжат
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="backup-actions">
+                    <a href="{% url 'backup_download' backup.filename %}" class="btn-action">
+                        <i class="fas fa-download"></i> Скачать
+                    </a>
+
+                    <button onclick="showDeleteModal('{{ backup.filename }}')" class="btn-action btn-delete">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="no-backups">
+                <i class="fas fa-database" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.3;"></i>
+                <p>Бэкапов пока нет. Создайте первый бэкап выше.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal">
+    <div class="modal-content">
+        <h3 class="modal-title">⚠️ Подтверждение удаления</h3>
+        <p class="modal-text" id="delete-message">
+            Вы уверены, что хотите удалить этот бэкап?
+        </p>
+        <div class="modal-actions">
+            <button onclick="closeDeleteModal()" class="btn-action">
+                Отмена
+            </button>
+            <form id="delete-form" method="post" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action btn-delete">
+                    Удалить
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showDeleteModal(filename) {
+        document.getElementById('delete-modal').classList.add('active');
+        document.getElementById('delete-message').textContent =
+            `Вы уверены, что хотите удалить бэкап "${filename}"?`;
+        document.getElementById('delete-form').action =
+            `/data-management/backups/delete/${filename}/`;
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').classList.remove('active');
+    }
+
+    // Close modal on background click
+    document.getElementById('delete-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'delete-modal') {
+            closeDeleteModal();
+        }
+    });
+</script>
+{% endblock %}
