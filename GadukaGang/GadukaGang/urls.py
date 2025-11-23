@@ -22,6 +22,7 @@ from . import views
 from . import api
 from . import analytics_views as analytics
 from . import data_management_views as data_mgmt
+from . import community_views as community
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -61,6 +62,24 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
     path('profile/achievements/', views.achievements_view, name='achievements'),
     path('profile/<int:user_id>/', views.profile_detail_view, name='profile_detail'),
+    
+    # Форум и сообщества
+    path('forum/', community.forum_hub, name='forum_hub'),
+    path('communities/', community.community_list, name='community_list'),
+    path('communities/create/', community.community_create, name='community_create'),
+    path('communities/<int:community_id>/', community.community_detail, name='community_detail'),
+    path('communities/<int:community_id>/edit/', community.community_edit, name='community_edit'),
+    path('communities/<int:community_id>/join/', community.community_join, name='community_join'),
+    path('communities/<int:community_id>/members/', community.community_members, name='community_members'),
+    path('communities/<int:community_id>/topics/create/', community.community_topic_create, name='community_topic_create'),
+    path('communities/invite/<str:token>/', community.community_invite, name='community_invite'),
+    path('communities/<int:community_id>/notifications/toggle/', community.toggle_community_notifications, name='toggle_community_notifications'),
+    
+    # Подписки на пользователей
+    path('users/<int:user_id>/follow/', community.follow_user, name='follow_user'),
+    path('users/<int:user_id>/followers/', community.followers_list, name='followers_list'),
+    path('users/<int:user_id>/following/', community.following_list, name='following_list'),
+    path('feed/', community.activity_feed, name='activity_feed'),
     
     # Разделы форума
     path('sections/', views.sections_list, name='sections_list'),

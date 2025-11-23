@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ viewed_user.username }} - Профиль - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-page {
+        padding: 40px 0;
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+
+    .profile-header {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 30px;
+        display: flex;
+        gap: 30px;
+        align-items: flex-start;
+    }
+
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-green), var(--metallic-1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        font-weight: bold;
+        color: var(--darker-bg);
+        border: 3px solid var(--accent-green);
+    }
+
+    .profile-info h1 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 10px;
+    }
+
+    .profile-stats {
+        display: flex;
+        gap: 25px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--accent-green);
+    }
+
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .profile-section {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 30px;
+        margin-bottom: 20px;
+    }
+
+    .profile-section h2 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+    }
+
+    .achievement-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .achievement-card {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 15px;
+        text-align: center;
+    }
+
+    .achievement-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+
+    .achievement-name {
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+
+    .achievement-rarity {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .rare {
+        border-color: #ffc107;
+    }
+
+    .certificate-list {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .certificate-item {
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .certificate-info h3 {
+        color: var(--accent-green);
+        margin-bottom: 5px;
+    }
+
+    .certificate-date {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-primary {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+    }
+
+    .btn-secondary {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <div class="profile-header">
+        <div class="profile-avatar">
+            {{ viewed_user.username|first|upper }}
+        </div>
+
+        <div class="profile-info">
+            <h1>{{ viewed_user.username }}</h1>
+
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_profile.post_count }}</span>
+                    <span class="stat-label">Сообщений</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_achievements_with_rarity|length }}</span>
+                    <span class="stat-label">Достижений</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">{{ user_certificates|length }}</span>
+                    <span class="stat-label">Сертификатов</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <span style="color: var(--text-secondary);">Зарегистрирован: {{ user_profile.join_date|date:"d.m.Y"
+                    }}</span>
+            </div>
+        </div>
+    </div>
+
+    {% if user_achievements_with_rarity %}
+    <div class="profile-section">
+        <h2>🏆 Достижения</h2>
+        <div class="achievement-grid">
+            {% for item in user_achievements_with_rarity %}
+            <div class="achievement-card {% if item.is_rare %}rare{% endif %}">
+                <div class="achievement-icon">{{ item.user_achievement.achievement.icon }}</div>
+                <div class="achievement-name">{{ item.user_achievement.achievement.name }}</div>
+                <div class="achievement-rarity">
+                    {{ item.recipients_count }} из {{ item.total_users }} ({{ item.rarity_percentage|floatformat:1 }}%)
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if user_certificates %}
+    <div class="profile-section">
+        <h2>📜 Сертификаты</h2>
+        <div class="certificate-list">
+            {% for user_cert in user_certificates %}
+            <div class="certificate-item">
+                <div class="certificate-info">
+                    <h3>{{ user_cert.certificate.name }}</h3>
+                    <div class="certificate-date">Получен: {{ user_cert.earned_date|date:"d.m.Y" }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not user_achievements_with_rarity and not user_certificates %}
+    <div class="profile-section">
+        <div class="empty-state">
+            <p>У пользователя пока нет достижений и сертификатов</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

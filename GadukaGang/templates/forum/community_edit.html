@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Редактировать {{ community.name }} - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-community-page {
+        padding: 40px 0;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .page-header {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 30px;
+        margin-bottom: 30px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .page-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.2rem;
+        color: var(--text-primary);
+        text-shadow: var(--neon-shadow);
+    }
+
+    .form-container {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--accent-green);
+        font-weight: 600;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .form-group input[type="text"],
+    .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--border-color);
+        background: var(--darker-bg);
+        color: var(--text-primary);
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        border: 1px solid var(--border-color);
+    }
+
+    .btn-primary {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        border-color: var(--accent-green);
+    }
+
+    .btn-secondary {
+        background: var(--card-bg);
+        color: var(--text-primary);
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .invite-link-section {
+        margin-top: 30px;
+        padding: 20px;
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+    }
+
+    .invite-link-section h3 {
+        color: var(--accent-green);
+        margin-bottom: 15px;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .invite-link-display {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .invite-link-display input {
+        flex: 1;
+        padding: 10px;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        border-radius: 4px;
+        font-family: monospace;
+    }
+
+    .copy-btn {
+        padding: 10px 20px;
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .copy-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 255, 65, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="edit-community-page">
+    <div class="page-header">
+        <h1>⚙️ Редактировать сообщество</h1>
+    </div>
+
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="name">Название сообщества *</label>
+                <input type="text" id="name" name="name" value="{{ community.name }}" required>
+            </div>
+
+            <div class="form-group">
+                <label for="description">Описание *</label>
+                <textarea id="description" name="description" required>{{ community.description }}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="icon_url">URL иконки</label>
+                <input type="text" id="icon_url" name="icon_url" value="{{ community.icon_url }}">
+            </div>
+
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="is_private" name="is_private" {% if community.is_private %}checked{%
+                        endif %}>
+                    <label for="is_private" style="margin: 0;">Приватное сообщество</label>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">✓ Сохранить</button>
+                <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">✗ Отмена</a>
+            </div>
+        </form>
+
+        {% if community.is_private %}
+        <div class="invite-link-section">
+            <h3>🔗 Ссылка-приглашение</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 15px;">
+                Используйте эту ссылку для приглашения пользователей в приватное сообщество:
+            </p>
+            <div class="invite-link-display">
+                <input type="text" id="invite-link"
+                    value="{{ request.scheme }}://{{ request.get_host }}{% url 'community_invite' community.invite_token %}"
+                    readonly>
+                <button class="copy-btn" onclick="copyInviteLink()">📋 Копировать</button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function copyInviteLink() {
+        const input = document.getElementById('invite-link');
+        input.select();
+        document.execCommand('copy');
+        alert('Ссылка скопирована в буфер обмена!');
+    }
+</script>
+{% endblock %}

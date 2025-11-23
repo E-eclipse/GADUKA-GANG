@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Сообщества - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .community-list-page {
+        padding: 40px 0;
+    }
+
+    .page-header {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .page-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        text-shadow: var(--neon-shadow);
+    }
+
+    .search-bar {
+        max-width: 600px;
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    .search-bar input {
+        flex: 1;
+        padding: 12px 20px;
+        border: 1px solid var(--border-color);
+        background: var(--darker-bg);
+        color: var(--text-primary);
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .search-bar input:focus {
+        outline: none;
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .search-btn {
+        padding: 12px 24px;
+        background: var(--accent-green);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        color: var(--darker-bg);
+        font-weight: 600;
+    }
+
+    .communities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 25px;
+    }
+
+    .community-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 30px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .community-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .community-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .community-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .community-icon,
+    .community-icon-placeholder {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        border: 2px solid var(--accent-green);
+    }
+
+    .community-icon-placeholder {
+        background: linear-gradient(135deg, var(--accent-green), var(--metallic-1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--darker-bg);
+    }
+
+    .community-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        font-size: 1.4rem;
+    }
+
+    .community-card p {
+        color: var(--text-secondary);
+        margin: 15px 0;
+        line-height: 1.6;
+    }
+
+    .community-stats {
+        display: flex;
+        gap: 15px;
+        color: var(--metallic-2);
+        font-size: 0.9rem;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge.private {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid #ffc107;
+    }
+
+    @media (max-width: 768px) {
+        .communities-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="community-list-page">
+    <div class="page-header">
+        <h1>🏘️ Все сообщества</h1>
+        <div class="search-bar">
+            <input type="search" placeholder="Поиск сообществ..." value="{{ search_query }}" id="search-input">
+            <button class="search-btn" onclick="searchCommunities()">🔍 Найти</button>
+        </div>
+    </div>
+
+    <div class="communities-grid">
+        {% for community in communities %}
+        <a href="{% url 'community_detail' community.id %}" class="community-card">
+            <div class="community-header">
+                {% if community.icon_url %}
+                <img src="{{ community.icon_url }}" alt="{{ community.name }}" class="community-icon">
+                {% else %}
+                <div class="community-icon-placeholder">{{ community.name|first|upper }}</div>
+                {% endif %}
+                <div>
+                    <h3>{{ community.name }}</h3>
+                    {% if community.is_private %}
+                    <span class="badge private">🔒 Приватное</span>
+                    {% endif %}
+                </div>
+            </div>
+            <p>{{ community.description|truncatewords:25 }}</p>
+            <div class="community-stats">
+                <span>👥 {{ community.member_count }} участников</span>
+                <span>💬 {{ community.topic_count }} тем</span>
+            </div>
+        </a>
+        {% empty %}
+        <div style="grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-secondary);">
+            <p>Сообществ не найдено</p>
+            <a href="{% url 'community_create' %}" class="btn-primary"
+                style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: var(--accent-green); color: var(--darker-bg); text-decoration: none; border-radius: 4px; font-weight: 600;">Создать
+                сообщество</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    function searchCommunities() {
+        const query = document.getElementById('search-input').value;
+        window.location.href = `/communities/?search=${encodeURIComponent(query)}`;
+    }
+
+    document.getElementById('search-input').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchCommunities();
+        }
+    });
+</script>
+{% endblock %}

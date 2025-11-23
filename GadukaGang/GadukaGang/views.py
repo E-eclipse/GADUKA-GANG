@@ -160,6 +160,7 @@ def profile_detail_view(request, user_id):
         achievements_with_rarity.append({
             'user_achievement': user_achievement,
             'recipients_count': achievement_recipients,
+            'total_users': total_users,
             'rarity_percentage': rarity_percentage,
             'is_rare': rarity_percentage < 10  # Редкое достижение, если менее 10% пользователей получили его
         })
@@ -178,7 +179,7 @@ def profile_detail_view(request, user_id):
         'user_achievements_with_rarity': achievements_with_rarity,
         'viewed_user': user,
     }
-    return render(request, 'profile_detail.html', context)
+    return render(request, 'profile_guest.html', context)
 
 @login_required
 def edit_profile_view(request):

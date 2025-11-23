@@ -448,4 +448,65 @@ class TopicView(models.Model):
 
     class Meta:
         unique_together = ('topic', 'user')
+        app_label = 'GadukaGang'# Модель сообществ
+class Community(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField()
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='created_communities')
+    created_date = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+    member_count = models.IntegerField(default=0)
+    icon_url = models.URLField(max_length=500, blank=True)
+    is_private = models.BooleanField(default=False)
+    invite_token = models.CharField(max_length=64, unique=True, blank=True, null=True)
+    
+    def __str__(self):
+        return self.name
+    
+    def save(self, *args, **kwargs):
+        if self.is_private and not self.invite_token:
+            import secrets
+            self.invite_token = secrets.token_urlsafe(32)
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        app_label = 'GadukaGang'
+        verbose_name_plural = 'Communities'
+
+# Модель участников сообществ
+class CommunityMembership(models.Model):
+    ROLE_CHOICES = [
+        ('member', 'Member'),
+        ('moderator', 'Moderator'),
+        ('owner', 'Owner'),
+    ]
+    
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='memberships')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_memberships')
+    joined_date = models.DateTimeField(auto_now_add=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
+    
+    class Meta:
+        unique_together = ('community', 'user')
+        app_label = 'GadukaGang'
+
+# Модель связи тем с сообществами
+class CommunityTopic(models.Model):
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='community_topics')
+    topic = models.ForeignKey(Topic, on_delete=models.CASCADE, related_name='community_topics')
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('community', 'topic')
+        app_label = 'GadukaGang'
+
+# Модель подписок на уведомления сообщества
+class CommunityNotificationSubscription(models.Model):
+    community = models.ForeignKey(Community, on_delete=models.CASCADE, related_name='notification_subscriptions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='community_notification_subscriptions')
+    notify_on_new_post = models.BooleanField(default=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('community', 'user')
         app_label = 'GadukaGang'

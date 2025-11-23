@@ -1,0 +1,468 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Форум - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .forum-hub {
+        padding: 40px 0;
+    }
+
+    .forum-hero {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 50px 40px;
+        text-align: center;
+        margin-bottom: 50px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .forum-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .forum-hero h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.8rem;
+        margin-bottom: 15px;
+        color: var(--text-primary);
+        text-shadow: var(--neon-shadow);
+    }
+
+    .forum-hero p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+    }
+
+    .search-bar {
+        max-width: 600px;
+        margin: 0 auto;
+        display: flex;
+        gap: 10px;
+    }
+
+    .search-bar input {
+        flex: 1;
+        padding: 12px 20px;
+        border: 1px solid var(--border-color);
+        background: var(--darker-bg);
+        color: var(--text-primary);
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-bar input:focus {
+        outline: none;
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .search-btn {
+        padding: 12px 24px;
+        background: var(--accent-green);
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        color: var(--darker-bg);
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .search-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--neon-glow);
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 12px 24px;
+        border-radius: 4px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        background: var(--card-bg);
+    }
+
+    .action-btn.primary {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        border-color: var(--accent-green);
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        border-color: var(--accent-green);
+    }
+
+    .forum-section {
+        margin-bottom: 60px;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .section-header h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--text-primary);
+        text-shadow: var(--neon-shadow);
+    }
+
+    .view-all {
+        color: var(--accent-green);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .view-all:hover {
+        text-shadow: var(--neon-shadow);
+    }
+
+    .sections-grid,
+    .communities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 25px;
+    }
+
+    .section-card,
+    .community-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 30px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        display: block;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .section-card::before,
+    .community-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .section-card:hover,
+    .community-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .section-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+    }
+
+    .section-card h3,
+    .community-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem;
+        margin-bottom: 12px;
+        color: var(--accent-green);
+    }
+
+    .section-card p,
+    .community-card p {
+        color: var(--text-secondary);
+        margin-bottom: 15px;
+        line-height: 1.6;
+    }
+
+    .section-stats,
+    .community-stats {
+        display: flex;
+        gap: 15px;
+        font-size: 0.9rem;
+        color: var(--metallic-2);
+    }
+
+    .community-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .community-icon,
+    .community-icon-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--accent-green);
+    }
+
+    .community-icon-placeholder {
+        background: linear-gradient(135deg, var(--accent-green), var(--metallic-1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--darker-bg);
+    }
+
+    .community-info {
+        flex: 1;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge.private {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffc107;
+        border: 1px solid #ffc107;
+    }
+
+    .my-community {
+        border-color: var(--accent-green);
+    }
+
+    .my-community::before {
+        background: var(--accent-green);
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-secondary);
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .empty-state .btn-primary {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 24px;
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .empty-state .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--neon-glow);
+    }
+
+    @media (max-width: 768px) {
+        .forum-hero h1 {
+            font-size: 2.2rem;
+        }
+
+        .sections-grid,
+        .communities-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="forum-hub">
+    <!-- Hero Section -->
+    <section class="forum-hero">
+        <h1>🌐 Форум Gaduka Gang</h1>
+        <p>Присоединяйтесь к обсуждениям, создавайте сообщества, делитесь знаниями</p>
+
+        <!-- Search Bar -->
+        <div class="search-bar">
+            <input type="search" placeholder="Поиск по форуму..." id="forum-search">
+            <button class="search-btn">🔍 Найти</button>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions">
+        {% if user.is_authenticated %}
+        <a href="{% url 'community_create' %}" class="action-btn primary">
+            ➕ Создать сообщество
+        </a>
+        <a href="{% url 'activity_feed' %}" class="action-btn">
+            📰 Моя лента
+        </a>
+        {% else %}
+        <a href="{% url 'account_login' %}" class="action-btn primary">
+            🔐 Войти
+        </a>
+        {% endif %}
+        <a href="{% url 'community_list' %}" class="action-btn">
+            🏘️ Все сообщества
+        </a>
+    </section>
+
+    <!-- Official Sections -->
+    <section class="forum-section">
+        <div class="section-header">
+            <h2>📚 Официальные разделы</h2>
+            <a href="{% url 'sections_list' %}" class="view-all">Все разделы →</a>
+        </div>
+
+        <div class="sections-grid">
+            {% for section in sections %}
+            <a href="{% url 'topics_list' section.id %}" class="section-card">
+                <div class="section-icon">📖</div>
+                <h3>{{ section.name }}</h3>
+                <p>{{ section.description|truncatewords:15 }}</p>
+                <div class="section-stats">
+                    <span>💬 {{ section.topic_count }} тем</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <p>Разделы пока не созданы</p>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Popular Communities -->
+    <section class="forum-section">
+        <div class="section-header">
+            <h2>🔥 Популярные сообщества</h2>
+            <a href="{% url 'community_list' %}" class="view-all">Все сообщества →</a>
+        </div>
+
+        <div class="communities-grid">
+            {% for community in popular_communities %}
+            <a href="{% url 'community_detail' community.id %}" class="community-card">
+                <div class="community-header">
+                    {% if community.icon_url %}
+                    <img src="{{ community.icon_url }}" alt="{{ community.name }}" class="community-icon">
+                    {% else %}
+                    <div class="community-icon-placeholder">{{ community.name|first|upper }}</div>
+                    {% endif %}
+                    <div class="community-info">
+                        <h3>{{ community.name }}</h3>
+                        {% if community.is_private %}
+                        <span class="badge private">🔒 Приватное</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <p>{{ community.description|truncatewords:20 }}</p>
+                <div class="community-stats">
+                    <span>👥 {{ community.member_count }} участников</span>
+                </div>
+            </a>
+            {% empty %}
+            <div class="empty-state">
+                <p>Сообществ пока нет</p>
+                {% if user.is_authenticated %}
+                <a href="{% url 'community_create' %}" class="btn-primary">Создать первое сообщество</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- User Communities (if authenticated) -->
+    {% if user.is_authenticated and user_communities %}
+    <section class="forum-section">
+        <div class="section-header">
+            <h2>🏠 Мои сообщества</h2>
+        </div>
+
+        <div class="communities-grid">
+            {% for community in user_communities %}
+            <a href="{% url 'community_detail' community.id %}" class="community-card my-community">
+                <div class="community-header">
+                    {% if community.icon_url %}
+                    <img src="{{ community.icon_url }}" alt="{{ community.name }}" class="community-icon">
+                    {% else %}
+                    <div class="community-icon-placeholder">{{ community.name|first|upper }}</div>
+                    {% endif %}
+                    <div class="community-info">
+                        <h3>{{ community.name }}</h3>
+                    </div>
+                </div>
+                <p>{{ community.description|truncatewords:15 }}</p>
+                <div class="community-stats">
+                    <span>💬 {{ community.topic_count }} тем</span>
+                    <span>👥 {{ community.member_count }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+</div>
+
+<script>
+    // Поиск по форуму
+    document.getElementById('forum-search').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            const query = this.value;
+            if (query.trim()) {
+                window.location.href = `/communities/?search=${encodeURIComponent(query)}`;
+            }
+        }
+    });
+
+    document.querySelector('.search-btn').addEventListener('click', function () {
+        const query = document.getElementById('forum-search').value;
+        if (query.trim()) {
+            window.location.href = `/communities/?search=${encodeURIComponent(query)}`;
+        }
+    });
+</script>
+{% endblock %}
