@@ -15,12 +15,10 @@ import os
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# Загружаем переменные окружения из .env файла
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -31,21 +29,24 @@ SECRET_KEY = 'django-insecure-%$@d1xu!u^apvv$=vq+u5#&sybzj(^gcudek2zy5o_^(f(!+l(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
 
+DEBUG = True
+
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'django_prometheus',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # Required for allauth
+    'django.contrib.sites',  # Нужен для allauth
     
-    # allauth apps (без провайдеров OAuth)
+    # allauth apps (OAuth)
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -55,7 +56,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'django_filters',
-    'drf_yasg',  # API documentation
+    'drf_yasg',  # API документация
     
     'GadukaGang.apps.GadukaGangConfig'
 ]
@@ -64,16 +65,18 @@ INSTALLED_APPS = [
 SITE_ID = 1
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',  # CORS middleware должен быть перед CommonMiddleware
+    'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'allauth.account.middleware.AccountMiddleware',  # Требуется для django-allauth
+    'allauth.account.middleware.AccountMiddleware', 
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'GadukaGang.middleware.AdminActionLoggingMiddleware'  # ��������,  # Логирование действий администраторов
+    # 'GadukaGang.middleware.AdminActionLoggingMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'GadukaGang.urls'
@@ -103,12 +106,14 @@ WSGI_APPLICATION = 'GadukaGang.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
         'NAME': os.getenv('POSTGRES_DB', 'forum_database'),
         'USER': os.getenv('POSTGRES_USER', 'forum_owner'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', '1111'),
+        # По умолчанию подключаемся к postgres из docker-compose (порт 4545 проброшен на хост).
+        # В контейнере значение переопределяется переменными окружения compose.
         'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-        'PORT': os.getenv('POSTGRES_PORT', '5432'),
+        'PORT': os.getenv('POSTGRES_PORT', '4545'),
     }
 }
 
@@ -163,43 +168,47 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login settings
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-# Email settings (для восстановления пароля и верификации)
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Для разработки - выводит в консоль
-# Для production используйте:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.gmail.com'
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your-email@gmail.com'
-# EMAIL_HOST_PASSWORD = 'your-password'
+# Email settings (для разработки и production)
+# Используем SMTP если настроены переменные окружения, иначе console для разработки
+if os.getenv('EMAIL_HOST'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'true').lower() == 'true'
+    EMAIL_USE_SSL = os.getenv('EMAIL_USE_SSL', 'false').lower() == 'true'
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Для разработки - выводит в консоль
+
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@gadukagang.com')
+SITE_URL = os.getenv('SITE_URL', 'http://127.0.0.1:8000')
 
 # django-allauth settings
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',  # Стандартная аутентификация
+    'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',  # allauth
 ]
 
-# Настройки allauth
-ACCOUNT_AUTHENTICATION_METHOD = 'username_email'  # Можно входить по username или email
+ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # Обязательная верификация email
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = True
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300  # 5 минут
+ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300 
 
 # Social account settings (OAuth)
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_EMAIL_REQUIRED = True
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
-# Отключаем провайдеры OAuth (GitHub/Google удалены)
 SOCIALACCOUNT_PROVIDERS = {}
 
 # ==================== Django REST Framework Settings ====================
@@ -297,3 +306,7 @@ SWAGGER_SETTINGS = {
         }
     }
 }
+
+# Prometheus / monitoring
+PROMETHEUS_METRIC_NAMESPACE = 'gadukagang'
+PROMETHEUS_EXPORT_MIGRATIONS = False

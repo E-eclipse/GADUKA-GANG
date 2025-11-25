@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.forms import AuthenticationForm, PasswordResetForm, SetPasswordForm
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
@@ -11,7 +12,15 @@ from django.core.paginator import Paginator
 from django.db.models import Count, Q, Avg
 from django.views.decorators.csrf import csrf_protect
 from django.utils.safestring import mark_safe
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
 import markdown
+import json
+import logging
 from .forms import CustomUserCreationForm, SectionForm, TopicForm, PostForm
 from .models import (
     User, UserProfile, Section, Topic, Post, Tag, TopicTag, 
@@ -20,8 +29,34 @@ from .models import (
 )
 from django.urls import reverse
 from .decorators import admin_required
+from django.http import Http404
+from rest_framework.authtoken.models import Token
 
 User = get_user_model()
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
+
+ADMIN_ROLES = {
+    'admin_level_1',
+    'admin_level_2',
+    'admin_level_3',
+    'super_admin',
+}
+
+def _is_admin_user(user):
+    """Checks both custom role and default Django flags."""
+    return (
+        getattr(user, 'role', None) in ADMIN_ROLES
+        or user.is_staff
+        or user.is_superuser
+    )
+
+def custom_404_view(request, exception):
+    """
+    Кастомная страница 404 ошибки
+    """
+    return render(request, '404.html', status=404)
 
 def index(request):
     """
@@ -36,7 +71,7 @@ def index(request):
     }
     
     # Получаем последние темы с тегами
-    latest_topics = Topic.objects.select_related('section', 'author').prefetch_related('topic_tags__tag').order_by('-created_date')[:5]
+    latest_topics = Topic.objects.select_related('section', 'author').prefetch_related('topic_tags__tag').order_by('-created_date')[:6]
     
     # Получаем активных пользователей
     active_users = User.objects.order_by('-last_login')[:10]
@@ -105,6 +140,106 @@ def register_view(request):
     
     return render(request, 'register.html', {'form': form})
 
+def privacy_policy_view(request):
+    """
+    View function for displaying privacy policy
+    """
+    return render(request, 'privacy_policy.html')
+
+@require_http_methods(["GET", "POST"])
+def password_reset_request(request):
+    """
+    View function for handling password reset requests
+    """
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            email = form.cleaned_data['email']
+            # Используем filter().first() вместо get() для обработки случаев с несколькими пользователями
+            user = User.objects.filter(email=email).first()
+            
+            if user:
+                # Генерируем токен
+                token = default_token_generator.make_token(user)
+                # Кодируем ID пользователя в base64
+                uid_bytes = force_bytes(str(user.pk))
+                uid = urlsafe_base64_encode(uid_bytes)
+                
+                # Создаем ссылку для сброса пароля
+                reset_url = request.build_absolute_uri(
+                    reverse('password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+                )
+                
+                # Отправляем email
+                subject = 'Восстановление пароля - Gaduka Gang'
+                message = render_to_string('password_reset_email.html', {
+                    'user': user,
+                    'reset_url': reset_url,
+                    'site_name': 'Gaduka Gang',
+                })
+                
+                try:
+                    send_mail(
+                        subject,
+                        message,
+                        settings.DEFAULT_FROM_EMAIL if hasattr(settings, 'DEFAULT_FROM_EMAIL') else 'noreply@gadukagang.com',
+                        [email],
+                        html_message=message,
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    # Логируем ошибку, но не показываем пользователю (безопасность)
+                    logger.error(f'Ошибка отправки email для восстановления пароля: {str(e)}', exc_info=True)
+                    # В режиме разработки можно показать предупреждение администратору
+                    if settings.DEBUG:
+                        messages.warning(request, f'Ошибка отправки email. Проверьте настройки SMTP. Ошибка: {str(e)}')
+            
+            # Не показываем, что пользователь не существует (безопасность)
+            # Всегда показываем успешное сообщение, даже если пользователь не найден
+            messages.success(request, 'Если аккаунт с таким email существует, инструкции по восстановлению пароля отправлены.')
+            return redirect('password_reset_done')
+    else:
+        form = PasswordResetForm()
+    
+    return render(request, 'password_reset_form.html', {'form': form})
+
+def password_reset_done_view(request):
+    """
+    View function for displaying password reset done message
+    """
+    return render(request, 'password_reset_done.html')
+
+@require_http_methods(["GET", "POST"])
+def password_reset_confirm(request, uidb64, token):
+    """
+    View function for handling password reset confirmation
+    """
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+    
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Пароль успешно изменен. Теперь вы можете войти с новым паролем.')
+                return redirect('password_reset_complete')
+        else:
+            form = SetPasswordForm(user)
+        
+        return render(request, 'password_reset_confirm.html', {'form': form, 'validlink': True})
+    else:
+        return render(request, 'password_reset_confirm.html', {'validlink': False})
+
+def password_reset_complete_view(request):
+    """
+    View function for displaying password reset complete message
+    """
+    return render(request, 'password_reset_complete.html')
+
 @login_required
 def profile_view(request):
     """Просмотр профиля пользователя"""
@@ -114,6 +249,9 @@ def profile_view(request):
     # Получаем сертификаты пользователя
     user_certificates = UserCertificate.objects.filter(user=request.user).select_related('certificate')
     
+    # Получаем достижения пользователя
+    user_achievements = UserAchievement.objects.filter(user=request.user).select_related('achievement').order_by('-earned_date')
+    
     # Обновляем количество сообщений пользователя
     post_count = Post.objects.filter(author=request.user, is_deleted=False).count()
     user_profile.post_count = post_count
@@ -122,6 +260,8 @@ def profile_view(request):
     context = {
         'user_profile': user_profile,
         'user_certificates': user_certificates,
+        'user_achievements': user_achievements,
+        'is_admin_user': _is_admin_user(request.user),
     }
     return render(request, 'profile.html', context)
 
@@ -180,6 +320,28 @@ def profile_detail_view(request, user_id):
         'viewed_user': user,
     }
     return render(request, 'profile_guest.html', context)
+
+@login_required
+@require_POST
+def unlock_admin_token(request):
+    """Возвращает админский токен после подтверждения пароля"""
+    if not _is_admin_user(request.user):
+        return JsonResponse({'error': 'Доступ запрещен'}, status=403)
+
+    try:
+        payload = json.loads(request.body.decode('utf-8'))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        payload = request.POST
+
+    password = payload.get('password', '').strip()
+    if not password:
+        return JsonResponse({'error': 'Введите пароль'}, status=400)
+
+    if not request.user.check_password(password):
+        return JsonResponse({'error': 'Неверный пароль'}, status=400)
+
+    token, _ = Token.objects.get_or_create(user=request.user)
+    return JsonResponse({'token': token.key})
 
 @login_required
 def edit_profile_view(request):
@@ -478,6 +640,16 @@ def topic_detail(request, topic_id):
     # Получаем теги темы
     topic_tags = Tag.objects.filter(topic_tags__topic=topic)
     
+    # Проверяем, связана ли тема с сообществом
+    community = None
+    try:
+        from .models import CommunityTopic
+        community_topic = CommunityTopic.objects.filter(topic=topic).select_related('community').first()
+        if community_topic:
+            community = community_topic.community
+    except:
+        pass
+    
     # Конвертируем сообщения в Markdown
     for post in page_obj:
         post.content_html = mark_safe(markdown.markdown(post.content, extensions=['fenced_code', 'tables', 'nl2br']))
@@ -487,6 +659,7 @@ def topic_detail(request, topic_id):
         'page_obj': page_obj,
         'user_rating': user_rating,
         'topic_tags': topic_tags,
+        'community': community,
     }
     return render(request, 'forum/topic_detail.html', context)
 
@@ -584,10 +757,22 @@ def topic_delete(request, topic_id):
         messages.error(request, 'У вас нет прав для удаления этой темы.')
         return redirect('topic_detail', topic_id=topic_id)
     
+    # Проверяем, связана ли тема с сообществом
+    from .models import CommunityTopic
+    community_topic = CommunityTopic.objects.filter(topic=topic).first()
+    
     section_id = topic.section.id
     topic.delete()
     messages.success(request, 'Тема успешно удалена!')
-    return redirect('topics_list', section_id=section_id)
+    
+    # Редиректим обратно
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+    elif community_topic:
+        return redirect('community_detail', community_id=community_topic.community.id)
+    else:
+        return redirect('topics_list', section_id=section_id)
 
 # ========== СООБЩЕНИЯ (POSTS) ==========
 
@@ -629,6 +814,17 @@ def post_edit(request, post_id):
         messages.error(request, 'У вас нет прав для редактирования этого сообщения.')
         return redirect('topic_detail', topic_id=post.topic.id)
     
+    # Проверяем, связана ли тема с сообществом
+    from .models import CommunityTopic
+    community_topic = CommunityTopic.objects.filter(topic=post.topic).first()
+    redirect_url = 'topic_detail'
+    redirect_kwargs = {'topic_id': post.topic.id}
+    
+    if community_topic:
+        # Если тема в сообществе, редиректим на страницу сообщества после редактирования
+        redirect_url = 'community_detail'
+        redirect_kwargs = {'community_id': community_topic.community.id}
+    
     if request.method == 'POST':
         form = PostForm(request.POST, instance=post)
         if form.is_valid():
@@ -639,11 +835,23 @@ def post_edit(request, post_id):
             post.save()
             
             messages.success(request, 'Сообщение успешно обновлено!')
-            return redirect('topic_detail', topic_id=post.topic.id)
+            # Редиректим обратно на тему, но если есть next параметр - используем его
+            next_url = request.GET.get('next') or request.POST.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect(redirect_url, **redirect_kwargs)
     else:
         form = PostForm(instance=post)
     
-    return render(request, 'forum/post_form.html', {'form': form, 'post': post, 'action': 'Редактировать'})
+    # Передаем информацию о сообществе в контекст
+    context = {
+        'form': form, 
+        'post': post, 
+        'action': 'Редактировать',
+        'community': community_topic.community if community_topic else None,
+        'topic': post.topic
+    }
+    return render(request, 'forum/post_form.html', context)
 
 @login_required
 @require_POST
@@ -657,12 +865,24 @@ def post_delete(request, post_id):
         messages.error(request, 'У вас нет прав для удаления этого сообщения.')
         return redirect('topic_detail', topic_id=topic_id)
     
+    # Проверяем, связана ли тема с сообществом
+    from .models import CommunityTopic
+    community_topic = CommunityTopic.objects.filter(topic=post.topic).first()
+    
     # Мягкое удаление
     post.is_deleted = True
     post.save(update_fields=['is_deleted'])
     
     messages.success(request, 'Сообщение успешно удалено!')
-    return redirect('topic_detail', topic_id=topic_id)
+    
+    # Редиректим обратно на тему
+    next_url = request.GET.get('next') or request.POST.get('next')
+    if next_url:
+        return redirect(next_url)
+    elif community_topic:
+        return redirect('community_detail', community_id=community_topic.community.id)
+    else:
+        return redirect('topic_detail', topic_id=topic_id)
 
 # ========== API ДЛЯ ЛАЙКОВ И ОЦЕНОК ==========
 
@@ -886,8 +1106,176 @@ def topics_by_tag(request, tag_id):
 
 
 def practice_view(request):
-    """Страница практики"""
-    return render(request, 'practice.html')
+    """Страница образования (заменяет практику)"""
+    return render(request, 'education.html')
+
+def education_view(request):
+    """Страница обучения/образования с курсами"""
+    from .models import Course, CourseProgress
+    
+    courses = Course.objects.filter(is_active=True).order_by('order').prefetch_related('lessons')
+    
+    # Получить прогресс пользователя по курсам и добавить к каждому курсу
+    courses_with_progress = []
+    user_progress_dict = {}
+    
+    if request.user.is_authenticated:
+        progresses = CourseProgress.objects.filter(user=request.user).select_related('course').prefetch_related('completed_lessons')
+        for progress in progresses:
+            total_lessons = progress.course.lessons.count()
+            completed_count = progress.completed_lessons.count()
+            user_progress_dict[progress.course.id] = {
+                'progress': progress.get_progress_percentage(),
+                'is_completed': progress.is_completed,
+                'completed_lessons_count': completed_count,
+                'total_lessons': total_lessons,
+            }
+    
+    for course in courses:
+        progress_data = user_progress_dict.get(course.id)
+        courses_with_progress.append({
+            'course': course,
+            'progress': progress_data
+        })
+    
+    context = {
+        'courses_with_progress': courses_with_progress,
+    }
+    return render(request, 'education/education.html', context)
+
+def course_detail_view(request, course_id):
+    """Детальная страница курса"""
+    from .models import Course, Lesson, CourseProgress
+    
+    course = get_object_or_404(Course, id=course_id, is_active=True)
+    lessons = course.lessons.all().order_by('order')
+    
+    user_progress = None
+    if request.user.is_authenticated:
+        user_progress, created = CourseProgress.objects.get_or_create(
+            user=request.user,
+            course=course
+        )
+    
+    context = {
+        'course': course,
+        'lessons': lessons,
+        'user_progress': user_progress,
+    }
+    return render(request, 'education/course_detail.html', context)
+
+@login_required
+def lesson_detail_view(request, lesson_id):
+    """Детальная страница урока"""
+    from .models import Lesson, CourseProgress, Achievement, UserAchievement
+    
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    course = lesson.course
+    
+    user_progress, created = CourseProgress.objects.get_or_create(
+        user=request.user,
+        course=course
+    )
+    
+    is_completed = user_progress.completed_lessons.filter(id=lesson_id).exists()
+    
+    # Конвертируем контент урока в Markdown
+    lesson.content_html = mark_safe(markdown.markdown(lesson.content, extensions=['fenced_code', 'tables', 'nl2br', 'codehilite']))
+    
+    # Получаем следующий урок
+    next_lesson = None
+    if is_completed:
+        lessons = course.lessons.all().order_by('order')
+        current_index = list(lessons).index(lesson)
+        if current_index + 1 < len(lessons):
+            next_lesson = lessons[current_index + 1]
+    
+    context = {
+        'lesson': lesson,
+        'course': course,
+        'is_completed': is_completed,
+        'user_progress': user_progress,
+        'next_lesson': next_lesson,
+    }
+    return render(request, 'education/lesson_detail.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def complete_lesson(request, lesson_id):
+    """Отметить урок как пройденный"""
+    from .models import Lesson, CourseProgress, Achievement, UserAchievement, Certificate, UserCertificate
+    
+    lesson = get_object_or_404(Lesson, id=lesson_id)
+    course = lesson.course
+    
+    user_progress, created = CourseProgress.objects.get_or_create(
+        user=request.user,
+        course=course
+    )
+    
+    if not user_progress.completed_lessons.filter(id=lesson_id).exists():
+        user_progress.completed_lessons.add(lesson)
+        
+        # Получаем следующий урок
+        lessons = course.lessons.all().order_by('order')
+        current_index = list(lessons).index(lesson)
+        next_lesson_id = None
+        if current_index + 1 < len(lessons):
+            next_lesson_id = lessons[current_index + 1].id
+        
+        # Проверить, завершен ли курс
+        total_lessons = course.lessons.count()
+        completed_count = user_progress.completed_lessons.count()
+        is_course_completed = False
+        
+        if completed_count >= total_lessons and not user_progress.is_completed:
+            user_progress.is_completed = True
+            user_progress.completed_date = timezone.now()
+            user_progress.save()
+            is_course_completed = True
+            
+            # Наградить достижением за завершение курса
+            achievement_name = f"Завершен курс: {course.title}"
+            achievement, _ = Achievement.objects.get_or_create(
+                name=achievement_name,
+                defaults={
+                    'description': f'Вы успешно завершили курс "{course.title}"',
+                    'criteria': {'course_id': course.id}
+                }
+            )
+            
+            UserAchievement.objects.get_or_create(
+                user=request.user,
+                achievement=achievement
+            )
+            
+            # Выдать сертификат за завершение курса
+            certificate_name = f"Сертификат о прохождении курса: {course.title}"
+            certificate, _ = Certificate.objects.get_or_create(
+                name=certificate_name,
+                defaults={
+                    'description': f'Сертификат подтверждает успешное прохождение курса "{course.title}"',
+                    'criteria': {'course_id': course.id}
+                }
+            )
+            
+            UserCertificate.objects.get_or_create(
+                user=request.user,
+                certificate=certificate
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Урок отмечен как пройденный',
+            'progress': user_progress.get_progress_percentage(),
+            'is_course_completed': is_course_completed,
+            'next_lesson_id': next_lesson_id,
+        })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'Урок уже пройден'
+    })
 
 
 @login_required
@@ -895,3 +1283,207 @@ def achievements_view(request):
     """Страница достижений пользователя"""
     user_achievements = UserAchievement.objects.filter(user=request.user).select_related('achievement')
     return render(request, 'achievements_list.html', {'user_achievements': user_achievements})
+
+@login_required
+@require_http_methods(["POST"])
+def run_python_code(request):
+    """Выполнение Python кода на сервере с проверкой на нескольких тестовых случаях"""
+    import subprocess
+    import sys
+    import io
+    from contextlib import redirect_stdout, redirect_stderr
+    from .models import Lesson
+    
+    try:
+        data = json.loads(request.body)
+        code = data.get('code', '')
+        lesson_id = data.get('lesson_id', None)
+        
+        if not code:
+            return JsonResponse({
+                'success': False,
+                'error': 'Код не предоставлен'
+            })
+        
+        # Получаем урок, если указан lesson_id
+        lesson = None
+        test_cases = []
+        if lesson_id:
+            try:
+                lesson = Lesson.objects.get(id=lesson_id)
+                # Получаем тестовые случаи из нового поля test_cases
+                if lesson.test_cases and isinstance(lesson.test_cases, list):
+                    test_cases = lesson.test_cases
+                # Поддержка старого формата для обратной совместимости
+                elif hasattr(lesson, 'test_input') and lesson.test_input and hasattr(lesson, 'test_output') and lesson.test_output:
+                    test_cases = [{
+                        'input': lesson.test_input,
+                        'output': lesson.test_output
+                    }]
+            except Lesson.DoesNotExist:
+                pass
+        
+        # Если нет тестовых случаев, просто выполняем код без проверки
+        if not test_cases:
+            import tempfile
+            import os
+            
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                f.write('# -*- coding: utf-8 -*-\n')
+                f.write('import sys\n')
+                f.write('try:\n')
+                f.write('    sys.stdout.reconfigure(encoding="utf-8")\n')
+                f.write('except:\n')
+                f.write('    pass\n')
+                f.write(code)
+                temp_file = f.name
+            
+            try:
+                result = subprocess.run(
+                    [sys.executable, temp_file],
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    timeout=5,
+                    cwd=tempfile.gettempdir()
+                )
+                
+                output = result.stdout.strip()
+                error = result.stderr
+                
+                if result.returncode != 0:
+                    return JsonResponse({
+                        'success': False,
+                        'error': error or 'Ошибка выполнения кода',
+                        'output': output
+                    })
+                
+                return JsonResponse({
+                    'success': True,
+                    'output': output
+                })
+            finally:
+                if os.path.exists(temp_file):
+                    os.unlink(temp_file)
+        
+        # Выполняем код для каждого тестового случая
+        test_results = []
+        all_passed = True
+        import tempfile
+        import os
+        
+        for i, test_case in enumerate(test_cases):
+            test_input = test_case.get('input', '')
+            expected_output = test_case.get('output', '')
+            
+            # Создаем временный файл для выполнения
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, encoding='utf-8') as f:
+                # Добавляем объявление кодировки UTF-8 в начало файла
+                f.write('# -*- coding: utf-8 -*-\n')
+                f.write('import sys\n')
+                f.write('try:\n')
+                f.write('    sys.stdout.reconfigure(encoding="utf-8")\n')
+                f.write('except:\n')
+                f.write('    pass\n')
+                
+                # Если есть тестовые входные данные, добавляем их
+                if test_input:
+                    # Экранируем специальные символы для многострочной строки
+                    test_input_escaped = test_input.replace('\\', '\\\\').replace('"""', '\\"\\"\\"')
+                    f.write('from io import StringIO\n')
+                    f.write(f'sys.stdin = StringIO("""{test_input_escaped}""")\n')
+                
+                f.write(code)
+                temp_file = f.name
+            
+            try:
+                # Выполняем код с ограничением времени
+                result = subprocess.run(
+                    [sys.executable, temp_file],
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    errors='replace',
+                    timeout=5,  # Максимум 5 секунд на тест
+                    cwd=tempfile.gettempdir()
+                )
+                
+                actual_output = result.stdout.strip()
+                error = result.stderr
+                
+                test_passed = False
+                if result.returncode == 0:
+                    # Сравниваем вывод с ожидаемым
+                    expected_output_stripped = str(expected_output).strip()
+                    actual_output_stripped = actual_output.strip()
+                    test_passed = (actual_output_stripped == expected_output_stripped)
+                else:
+                    error = error or 'Ошибка выполнения кода'
+                
+                test_results.append({
+                    'test_number': i + 1,
+                    'input': test_input,
+                    'expected': expected_output,
+                    'actual': actual_output,
+                    'passed': test_passed,
+                    'error': error if not test_passed and error else None
+                })
+                
+                if not test_passed:
+                    all_passed = False
+                    
+            except subprocess.TimeoutExpired:
+                test_results.append({
+                    'test_number': i + 1,
+                    'input': test_input,
+                    'expected': expected_output,
+                    'actual': '',
+                    'passed': False,
+                    'error': 'Превышено время выполнения (максимум 5 секунд)'
+                })
+                all_passed = False
+            except Exception as e:
+                test_results.append({
+                    'test_number': i + 1,
+                    'input': test_input,
+                    'expected': expected_output,
+                    'actual': '',
+                    'passed': False,
+                    'error': str(e)
+                })
+                all_passed = False
+            finally:
+                # Удаляем временный файл
+                if os.path.exists(temp_file):
+                    os.unlink(temp_file)
+        
+        # Формируем ответ
+        passed_count = sum(1 for tr in test_results if tr['passed'])
+        total_count = len(test_results)
+        
+        response_data = {
+            'success': True,
+            'all_passed': all_passed,
+            'passed_count': passed_count,
+            'total_count': total_count,
+            'test_results': test_results
+        }
+        
+        if all_passed:
+            response_data['message'] = f'✓ Все тесты пройдены! ({passed_count}/{total_count})'
+        else:
+            response_data['message'] = f'✗ Пройдено тестов: {passed_count}/{total_count}. Проверьте решение.'
+        
+        return JsonResponse(response_data)
+            
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'success': False,
+            'error': 'Неверный формат данных'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Ошибка сервера: {str(e)}'
+        })

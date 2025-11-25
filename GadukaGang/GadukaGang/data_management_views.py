@@ -4,6 +4,9 @@ Views for data management (CSV import/export, database backups)
 import os
 import csv
 import gzip
+import shutil
+import subprocess
+import tempfile
 from datetime import datetime
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -188,7 +191,6 @@ def create_backup(request):
             '--no-acl',
         ]
         
-        import subprocess
         env = os.environ.copy()
         env['PGPASSWORD'] = db_settings['PASSWORD']
         
@@ -208,6 +210,133 @@ def create_backup(request):
         messages.error(request, f'Ошибка создания бэкапа: {str(e)}')
     
     return redirect('backup_management')
+
+
+def _database_cli_env():
+    """Compose CLI params and env for pg_dump/psql calls."""
+    db_settings = settings.DATABASES['default']
+    cli_kwargs = {
+        'host': db_settings['HOST'],
+        'port': str(db_settings['PORT']),
+        'user': db_settings['USER'],
+        'name': db_settings['NAME'],
+    }
+    env = os.environ.copy()
+    env['PGPASSWORD'] = db_settings['PASSWORD']
+    return cli_kwargs, env
+
+
+@staff_member_required
+def export_full_database(request):
+    """Create full database dump and stream to user (gziped SQL)."""
+    try:
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_exports')
+        os.makedirs(temp_dir, exist_ok=True)
+        raw_sql_path = os.path.join(temp_dir, f'full_export_{timestamp}.sql')
+        gzip_path = f'{raw_sql_path}.gz'
+
+        cli, env = _database_cli_env()
+        dump_cmd = [
+            'pg_dump',
+            '-h', cli['host'],
+            '-p', cli['port'],
+            '-U', cli['user'],
+            '-d', cli['name'],
+            '-F', 'p',
+            '--no-owner',
+            '--no-acl',
+        ]
+
+        with open(raw_sql_path, 'w', encoding='utf-8') as sql_file:
+            subprocess.run(dump_cmd, stdout=sql_file, env=env, check=True)
+
+        with open(raw_sql_path, 'rb') as src, gzip.open(gzip_path, 'wb') as dest:
+            shutil.copyfileobj(src, dest)
+
+        os.remove(raw_sql_path)
+
+        response = FileResponse(open(gzip_path, 'rb'))
+        response['Content-Disposition'] = f'attachment; filename="gadukagang_full_{timestamp}.sql.gz"'
+        return response
+    except subprocess.CalledProcessError as exc:
+        messages.error(request, f'Ошибка экспорта БД: {exc.stderr or exc}')
+    except Exception as exc:
+        messages.error(request, f'Ошибка экспорта БД: {exc}')
+    return redirect('csv_operations')
+
+
+@staff_member_required
+def import_full_database(request):
+    """Restore full database from uploaded SQL(.gz)."""
+    if request.method != 'POST':
+        return redirect('csv_operations')
+
+    dump_file = request.FILES.get('dump_file')
+    replace_data = request.POST.get('replace_data') == 'on'
+
+    if not dump_file:
+        messages.error(request, 'Прикрепите файл дампа (.sql или .sql.gz)')
+        return redirect('csv_operations')
+
+    if not dump_file.name.endswith(('.sql', '.sql.gz')):
+        messages.error(request, 'Поддерживаются только файлы .sql или .sql.gz')
+        return redirect('csv_operations')
+
+    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_uploads')
+    os.makedirs(temp_dir, exist_ok=True)
+    saved_path = os.path.join(temp_dir, dump_file.name)
+
+    with open(saved_path, 'wb+') as destination:
+        for chunk in dump_file.chunks():
+            destination.write(chunk)
+
+    if saved_path.endswith('.gz'):
+        decompressed_path = saved_path[:-3]
+        try:
+            with gzip.open(saved_path, 'rb') as src, open(decompressed_path, 'wb') as dest:
+                shutil.copyfileobj(src, dest)
+        except OSError as exc:
+            messages.error(request, f'Не удалось распаковать архив: {exc}')
+            if os.path.exists(saved_path):
+                os.remove(saved_path)
+            return redirect('csv_operations')
+    else:
+        decompressed_path = saved_path
+
+    cli, env = _database_cli_env()
+    psql_base_cmd = [
+        'psql',
+        '-h', cli['host'],
+        '-p', cli['port'],
+        '-U', cli['user'],
+        '-d', cli['name'],
+    ]
+
+    try:
+        if replace_data:
+            reset_sql = (
+                "DROP SCHEMA public CASCADE;"
+                "CREATE SCHEMA public;"
+                f"GRANT ALL ON SCHEMA public TO {cli['user']};"
+                "GRANT ALL ON SCHEMA public TO public;"
+            )
+            subprocess.run(psql_base_cmd + ['-c', reset_sql], env=env, check=True)
+
+        with open(decompressed_path, 'rb') as dump_stream:
+            subprocess.run(psql_base_cmd, stdin=dump_stream, env=env, check=True)
+
+        messages.success(request, '✅ Импорт БД завершён успешно')
+    except subprocess.CalledProcessError as exc:
+        messages.error(request, f'Ошибка импорта БД: {exc.stderr or exc}')
+    except Exception as exc:
+        messages.error(request, f'Ошибка импорта БД: {exc}')
+    finally:
+        for path in {saved_path, decompressed_path}:
+            if os.path.exists(path):
+                os.remove(path)
+
+    return redirect('csv_operations')
 
 
 @staff_member_required

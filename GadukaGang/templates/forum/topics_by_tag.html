@@ -77,8 +77,7 @@
             </div>
             <div class="topic-meta">
                 <div class="topic-author">
-                    <span>Раздел: <a href="{% url 'topics_list' topic.section.id %}" class="section-link">{{
-                            topic.section.name }}</a></span>
+                    <span>Раздел: <a href="{% url 'topics_list' topic.section.id %}" class="section-link">{{ topic.section.name }}</a></span>
                     <span>Автор: <a href="#" class="author-link">{{ topic.author.username }}</a></span>
                     <span>Создано: {{ topic.created_date|date:"d.m.Y H:i" }}</span>
                 </div>

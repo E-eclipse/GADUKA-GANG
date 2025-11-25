@@ -7,3 +7,6 @@ class GadukaGangConfig(AppConfig):
     
     def ready(self):
         import GadukaGang.signals
+        from . import prometheus_metrics
+
+        prometheus_metrics.initialize_custom_metrics()

@@ -16,21 +16,6 @@ import json
 def analytics_dashboard(request):
     """Главная страница аналитического дашборда"""
     
-    # Получаем фильтры из GET параметров
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    
-    # Устанавливаем даты по умолчанию (последние 30 дней)
-    if not date_to:
-        date_to = datetime.now()
-    else:
-        date_to = datetime.strptime(date_to, '%Y-%m-%d')
-    
-    if not date_from:
-        date_from = date_to - timedelta(days=30)
-    else:
-        date_from = datetime.strptime(date_from, '%Y-%m-%d')
-    
     # Общая статистика
     stats = {
         'total_users': User.objects.count(),
@@ -42,8 +27,6 @@ def analytics_dashboard(request):
     
     context = {
         'stats': stats,
-        'date_from': date_from.strftime('%Y-%m-%d'),
-        'date_to': date_to.strftime('%Y-%m-%d'),
     }
     
     return render(request, 'analytics_dashboard.html', context)
@@ -54,25 +37,14 @@ def analytics_api_data(request):
     """API endpoint для получения данных графиков"""
     
     chart_type = request.GET.get('type', 'daily_activity')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-    
-    # Парсим даты
-    if date_to:
-        date_to = datetime.strptime(date_to, '%Y-%m-%d')
-    else:
-        date_to = datetime.now()
-    
-    if date_from:
-        date_from = datetime.strptime(date_from, '%Y-%m-%d')
-    else:
-        date_from = date_to - timedelta(days=30)
     
     data = {}
     
     if chart_type == 'daily_activity':
         # Активность по дням
         activity = DatabaseViews.get_daily_activity(days=30)
+        # Переворачиваем порядок для отображения слева направо (от старых к новым)
+        activity = list(reversed(activity))
         data = {
             'labels': [str(item['activity_date']) for item in activity],
             'datasets': [
@@ -159,6 +131,8 @@ def analytics_api_data(request):
     
     elif chart_type == 'analytics_report':
         # Аналитический отчёт
+        date_to = datetime.now()
+        date_from = date_to - timedelta(days=30)
         report = DatabaseProcedures.generate_analytics_report(date_from, date_to)
         data = {
             'labels': [r['metric_name'] for r in report],

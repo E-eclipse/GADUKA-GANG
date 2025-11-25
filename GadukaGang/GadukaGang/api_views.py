@@ -178,6 +178,19 @@ class TopicViewSet(viewsets.ModelViewSet):
         
         serializer = self.get_serializer(topics, many=True)
         return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to allow only author to delete their topic"""
+        instance = self.get_object()
+        
+        # Check if user is the author
+        if instance.author != request.user:
+            return Response(
+                {'error': 'You can only delete your own topics.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().destroy(request, *args, **kwargs)
 
 
 class PostViewSet(viewsets.ModelViewSet):
@@ -258,6 +271,23 @@ class PostViewSet(viewsets.ModelViewSet):
                 post.dislike_count += 1
             post.save()
             return Response({'status': 'added', 'like_count': post.like_count, 'dislike_count': post.dislike_count})
+    
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to allow only author to delete their post (soft delete)"""
+        instance = self.get_object()
+        
+        # Check if user is the author
+        if instance.author != request.user:
+            return Response(
+                {'error': 'You can only delete your own posts.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Soft delete
+        instance.is_deleted = True
+        instance.save(update_fields=['is_deleted'])
+        
+        return Response({'status': 'deleted'}, status=status.HTTP_200_OK)
 
 
 class TagViewSet(viewsets.ModelViewSet):

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Образование - Gaduka Gang{% endblock %}
+
+{% block content %}
+<div class="education-container">
+    <div class="education-header">
+        <h1>Образование Python</h1>
+        <p>Изучайте Python с помощью структурированных курсов, лекций и практических заданий</p>
+    </div>
+    
+    <div class="education-content">
+        <div class="education-section">
+            <h2>Курсы и обучение</h2>
+            <p>Получите доступ к подробным курсам по Python с лекциями и практическими заданиями</p>
+            <a href="{% url 'education_courses' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-book"></i> Перейти к курсам
+            </a>
+        </div>
+        
+        <div class="education-features">
+            <div class="feature-card">
+                <h3><i class="fas fa-graduation-cap"></i> Структурированные курсы</h3>
+                <p>Пошаговое обучение от основ до продвинутых тем</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3><i class="fas fa-chalkboard-teacher"></i> Лекции и теория</h3>
+                <p>Подробные объяснения концепций с примерами</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3><i class="fas fa-code"></i> Практические задания</h3>
+                <p>Закрепляйте знания на реальных задачах</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3><i class="fas fa-trophy"></i> Достижения</h3>
+                <p>Получайте награды за прохождение курсов</p>
+            </div>
+        </div>
+        
+        <div class="external-resources">
+            <h2>Дополнительные ресурсы</h2>
+            <div class="resources-grid">
+                <a href="https://roadmap.sh/" target="_blank" class="resource-card">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h3>Roadmap.sh</h3>
+                    <p>Узнайте, что изучать дальше. Понятные карты развития для программистов</p>
+                </a>
+                
+                <a href="https://www.codewars.com/kata/search/python" target="_blank" class="resource-card">
+                    <i class="fas fa-dumbbell"></i>
+                    <h3>CodeWars</h3>
+                    <p>Практикуйтесь на реальных задачах и улучшайте свои навыки программирования</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .education-container {
+        padding: 40px 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .education-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .education-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        margin-bottom: 20px;
+    }
+    
+    .education-header p {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    
+    .education-content {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 40px;
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .education-section {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    
+    .education-section h2 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+    }
+    
+    .education-section p {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+    
+    .btn {
+        display: inline-block;
+        padding: 12px 24px;
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--neon-glow);
+    }
+    
+    .btn-lg {
+        padding: 15px 30px;
+        font-size: 1.1rem;
+    }
+    
+    .btn-primary {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+    }
+    
+    .education-features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+    
+    .feature-card {
+        background-color: rgba(18, 18, 18, 0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .feature-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 15px;
+        font-size: 1.4rem;
+    }
+    
+    .feature-card h3 i {
+        margin-right: 10px;
+    }
+    
+    .feature-card p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    
+    .external-resources {
+        margin-top: 50px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border-color);
+    }
+    
+    .external-resources h2 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2rem;
+    }
+    
+    .resources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+    
+    .resource-card {
+        background-color: rgba(18, 18, 18, 0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 30px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        display: block;
+    }
+    
+    .resource-card:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .resource-card i {
+        font-size: 3rem;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+        display: block;
+    }
+    
+    .resource-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+    
+    .resource-card p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+    
+    @media (max-width: 768px) {
+        .education-container {
+            padding: 20px 10px;
+        }
+        
+        .education-content {
+            padding: 20px;
+        }
+        
+        .education-header h1 {
+            font-size: 2rem;
+        }
+        
+        .education-features,
+        .resources-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+

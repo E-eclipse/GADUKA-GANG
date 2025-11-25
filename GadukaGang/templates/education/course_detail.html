@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ course.title }} - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .course-detail-page {
+        padding: 40px 0;
+    }
+
+    .course-header {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .course-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .course-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        margin-bottom: 15px;
+        text-shadow: var(--neon-shadow);
+    }
+
+    .course-header p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        line-height: 1.6;
+    }
+
+    .lessons-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .lesson-item {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 25px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .lesson-item::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-green);
+        box-shadow: var(--neon-glow);
+    }
+
+    .lesson-item:hover {
+        transform: translateX(5px);
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .lesson-number {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2rem;
+        color: var(--accent-green);
+        min-width: 60px;
+        text-align: center;
+    }
+
+    .lesson-content {
+        flex: 1;
+    }
+
+    .lesson-content h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 10px;
+        font-size: 1.4rem;
+    }
+
+    .lesson-content p {
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .lesson-type-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        background: rgba(18, 18, 18, 0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-top: 10px;
+    }
+
+    .lesson-type-badge.lecture {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+    }
+
+    .lesson-type-badge.practice {
+        border-color: var(--metallic-1);
+        color: var(--metallic-1);
+    }
+
+    .completed-icon {
+        color: var(--accent-green);
+        font-size: 1.5rem;
+        min-width: 30px;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        padding: 10px 20px;
+        background: rgba(18, 18, 18, 0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+        border-color: var(--accent-green);
+        color: var(--accent-green);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="course-detail-page">
+    <a href="{% url 'education_courses' %}" class="back-link">
+        <i class="fas fa-arrow-left"></i> Назад к курсам
+    </a>
+
+    <div class="course-header">
+        <h1>{{ course.title }}</h1>
+        <p>{{ course.description }}</p>
+        {% if user.is_authenticated and user_progress %}
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="flex: 1;">
+                    <div style="width: 100%; height: 8px; background-color: rgba(18, 18, 18, 0.7); border-radius: 4px; overflow: hidden;">
+                        <div style="height: 100%; background: linear-gradient(to right, var(--accent-green), var(--metallic-1)); width: {{ user_progress.get_progress_percentage }}%;"></div>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px;">
+                        Прогресс: {{ user_progress.get_progress_percentage }}% ({{ user_progress.completed_lessons.count }}/{{ lessons.count }} уроков)
+                    </div>
+                </div>
+                {% if user_progress.is_completed %}
+                <div style="padding: 5px 12px; background: var(--accent-green); color: var(--darker-bg); border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                    ✓ Завершено
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="lessons-list">
+        {% for lesson in lessons %}
+        <a href="{% url 'lesson_detail' lesson.id %}" class="lesson-item">
+            <div class="lesson-number">{{ forloop.counter }}</div>
+            <div class="lesson-content">
+                <h3>{{ lesson.title }}</h3>
+                <span class="lesson-type-badge {{ lesson.lesson_type }}">
+                    {% if lesson.lesson_type == 'lecture' %}
+                        📖 Лекция
+                    {% else %}
+                        💻 Практика
+                    {% endif %}
+                </span>
+            </div>
+            {% if user.is_authenticated and user_progress %}
+                {% for completed_lesson in user_progress.completed_lessons.all %}
+                    {% if completed_lesson.id == lesson.id %}
+                    <div class="completed-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+

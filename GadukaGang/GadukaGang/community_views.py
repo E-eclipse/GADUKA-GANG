@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.views.decorators.http import require_http_methods
-from .models import Community, CommunityMembership, CommunityTopic, Section, Topic, User, UserSubscription
+from .models import Community, CommunityMembership, CommunityTopic, Section, Topic, User, UserSubscription, Post
 from django.contrib import messages
 
 def forum_hub(request):
@@ -76,9 +76,8 @@ def community_detail(request, community_id):
             is_member = True
             user_role = membership.role
     
-    if community.is_private and not is_member:
-        messages.error(request, 'Это приватное сообщество. Требуется членство.')
-        return redirect('community_list')
+    # Для приватных сообществ показываем страницу, но ограничиваем доступ к контенту
+    # Пользователи могут использовать ссылку-приглашение для вступления
     
     # Темы сообщества
     community_topics = CommunityTopic.objects.filter(
@@ -264,20 +263,54 @@ def follow_user(request, user_id):
 
 @login_required
 def activity_feed(request):
-    """Персонализированная лента активности"""
-    # Получить пользователей, на которых подписан текущий пользователь
-    following_users = UserSubscription.objects.filter(
-        subscriber=request.user
-    ).values_list('subscribed_to', flat=True)
+    """Персонализированная лента активности по подпискам на сообщества"""
+    # Получить сообщества, на которые подписан текущий пользователь
+    user_communities = CommunityMembership.objects.filter(
+        user=request.user
+    ).values_list('community_id', flat=True)
     
-    # Получить темы от этих пользователей
-    feed_topics = Topic.objects.filter(
-        author_id__in=following_users
-    ).select_related('author', 'section').order_by('-created_date')[:50]
+    # Получить темы из этих сообществ через CommunityTopic
+    community_topics = CommunityTopic.objects.filter(
+        community_id__in=user_communities
+    ).select_related('topic', 'community', 'topic__author', 'topic__section')
+    
+    # Извлечь сами темы
+    feed_topics = [ct.topic for ct in community_topics]
+    
+    # Применить фильтры
+    filter_type = request.GET.get('filter', 'all')
+    filter_community = request.GET.get('community', None)
+    
+    if filter_type == 'recent':
+        feed_topics = sorted(feed_topics, key=lambda t: t.created_date, reverse=True)
+    elif filter_type == 'popular':
+        feed_topics = sorted(feed_topics, key=lambda t: t.view_count, reverse=True)
+    elif filter_type == 'rated':
+        feed_topics = sorted(feed_topics, key=lambda t: t.average_rating, reverse=True)
+    
+    if filter_community:
+        try:
+            community_id = int(filter_community)
+            feed_topics = [t for t in feed_topics if any(
+                ct.community_id == community_id for ct in community_topics if ct.topic_id == t.id
+            )]
+        except (ValueError, TypeError):
+            pass
+    
+    # Ограничить количество
+    feed_topics = feed_topics[:50]
+    
+    # Получить список сообществ для фильтра
+    user_communities_list = Community.objects.filter(
+        id__in=user_communities
+    ).order_by('name')
     
     context = {
         'feed_topics': feed_topics,
-        'following_count': len(following_users),
+        'communities_count': len(user_communities),
+        'user_communities': user_communities_list,
+        'current_filter': filter_type,
+        'current_community': filter_community,
     }
     return render(request, 'forum/activity_feed.html', context)
 
@@ -332,11 +365,11 @@ def community_topic_create(request, community_id):
             messages.error(request, 'Название и содержание обязательны')
             return render(request, 'forum/community_topic_create.html', {'community': community})
         
-        # Создаем тему (используем первый раздел как временный)
-        section = Section.objects.first()
-        if not section:
-            messages.error(request, 'Системная ошибка: нет доступных разделов')
-            return redirect('community_detail', community_id=community_id)
+        # Создаем или получаем специальный раздел для тем сообществ
+        section, created = Section.objects.get_or_create(
+            name='Сообщества',
+            defaults={'description': 'Темы из сообществ'}
+        )
         
         topic = Topic.objects.create(
             section=section,
@@ -345,7 +378,7 @@ def community_topic_create(request, community_id):
         )
         
         # Создаем первый пост
-        Post.objects.create(
+        post = Post.objects.create(
             topic=topic,
             author=request.user,
             content=content
@@ -356,6 +389,16 @@ def community_topic_create(request, community_id):
             community=community,
             topic=topic
         )
+        
+        # Отправляем email-уведомления участникам сообщества
+        try:
+            from .email_notifications import send_community_topic_notification
+            send_community_topic_notification(community, topic, post)
+        except Exception as e:
+            # Логируем ошибку, но не прерываем выполнение
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Ошибка отправки email-уведомлений: {str(e)}')
         
         messages.success(request, 'Тема успешно создана!')
         return redirect('topic_detail', topic_id=topic.id)
@@ -413,29 +456,42 @@ def toggle_community_notifications(request, community_id):
         })
     
     # Переключаем подписку
+    # По умолчанию все участники получают уведомления
+    # Для отключения создаем запись с notify_on_new_post=False
     subscription = CommunityNotificationSubscription.objects.filter(
         community=community,
         user=request.user
     ).first()
     
     if subscription:
-        # Отключаем уведомления
-        subscription.delete()
+        # Если есть запись с notify_on_new_post=False - удаляем её (включаем уведомления)
+        if not subscription.notify_on_new_post:
+            subscription.delete()
+            return JsonResponse({
+                'success': True,
+                'subscribed': True,
+                'message': 'Уведомления включены'
+            })
+        else:
+            # Если есть запись с notify_on_new_post=True - меняем на False (отключаем)
+            subscription.notify_on_new_post = False
+            subscription.save()
+            return JsonResponse({
+                'success': True,
+                'subscribed': False,
+                'message': 'Уведомления отключены'
+            })
+    else:
+        # Нет записи - значит уведомления включены по умолчанию
+        # Создаем запись с notify_on_new_post=False для отключения
+        CommunityNotificationSubscription.objects.create(
+            community=community,
+            user=request.user,
+            notify_on_new_post=False
+        )
         return JsonResponse({
             'success': True,
             'subscribed': False,
             'message': 'Уведомления отключены'
-        })
-    else:
-        # Включаем уведомления
-        CommunityNotificationSubscription.objects.create(
-            community=community,
-            user=request.user,
-            notify_on_new_post=True
-        )
-        return JsonResponse({
-            'success': True,
-            'subscribed': True,
-            'message': 'Уведомления включены'
         })
 

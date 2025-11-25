@@ -23,10 +23,14 @@ from . import api
 from . import analytics_views as analytics
 from . import data_management_views as data_mgmt
 from . import community_views as community
+from . import settings_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', views.index, name='home'),
+
+    # Prometheus metrics endpoint
+    path('', include('django_prometheus.urls')),
     
     # Custom admin panel (direct URL only)
     path('admin-panel/', views.admin_panel_view, name='admin_panel'),
@@ -45,11 +49,22 @@ urlpatterns = [
     path('data-management/backups/create/', data_mgmt.create_backup, name='backup_create'),
     path('data-management/backups/delete/<str:filename>/', data_mgmt.delete_backup, name='backup_delete'),
     path('data-management/backups/download/<str:filename>/', data_mgmt.download_backup, name='backup_download'),
+    path('data-management/db/export/', data_mgmt.export_full_database, name='db_export_full'),
+    path('data-management/db/import/', data_mgmt.import_full_database, name='db_import_full'),
     
     # Старые пути для обратной совместимости (перенаправляют на allauth)
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('register/', views.register_view, name='register'),
+    
+    # Политика конфиденциальности
+    path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
+    
+    # Восстановление пароля
+    path('password-reset/', views.password_reset_request, name='password_reset'),
+    path('password-reset/done/', views.password_reset_done_view, name='password_reset_done'),
+    path('password-reset/confirm/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
+    path('password-reset/complete/', views.password_reset_complete_view, name='password_reset_complete'),
     
     # allauth URLs (включает login, logout, signup, password reset, email verification, OAuth)
     path('accounts/', include('allauth.urls')),
@@ -61,7 +76,13 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
     path('profile/achievements/', views.achievements_view, name='achievements'),
+    path('profile/unlock-admin-token/', views.unlock_admin_token, name='unlock_admin_token'),
     path('profile/<int:user_id>/', views.profile_detail_view, name='profile_detail'),
+    
+    # Настройки пользователя
+    path('settings/', settings_views.user_settings, name='user_settings'),
+    path('settings/save/', settings_views.save_settings, name='save_settings'),
+    path('settings/filters/save/', settings_views.save_filter_preset, name='save_filter_preset'),
     
     # Форум и сообщества
     path('forum/', community.forum_hub, name='forum_hub'),
@@ -230,12 +251,23 @@ urlpatterns = [
     path('tags/<int:tag_id>/delete/', views.tag_delete, name='tag_delete'),
     path('tags/<int:tag_id>/topics/', views.topics_by_tag, name='topics_by_tag'),
     
-    # Практика
-    path('', views.practice_view, name='practice'),
+    # Образование (заменяет практику)
+    path('education/', views.practice_view, name='education'),
+    
+    # Обучение/Образование (курсы)
+    path('learning/', views.education_view, name='education_courses'),
+    path('learning/course/<int:course_id>/', views.course_detail_view, name='course_detail'),
+    path('learning/lesson/<int:lesson_id>/', views.lesson_detail_view, name='lesson_detail'),
+    path('learning/lesson/<int:lesson_id>/complete/', views.complete_lesson, name='complete_lesson'),
+    path('learning/run-code/', views.run_python_code, name='run_python_code'),
     
     # Участники форума
     path('members/', views.members_list, name='members_list'),
 ]
+
+# Кастомный обработчик 404 ошибки
+handler404 = views.custom_404_view
+
 # Serve static files during development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

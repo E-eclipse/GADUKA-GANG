@@ -147,15 +147,73 @@
                     <a href="{% url 'community_edit' community.id %}" class="btn btn-primary">⚙️ Настройки</a>
                     {% endif %}
                     {% else %}
+                    {% if community.is_private %}
+                    <div style="padding: 15px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-top: 10px;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
+                            Это приватное сообщество. Для вступления нужна ссылка-приглашение от владельца или модератора.
+                        </p>
+                        <form onsubmit="return handleInviteSubmit(event);" style="display: flex; gap: 10px;">
+                            <input type="text" id="invite-token-input" placeholder="Введите токен приглашения" required
+                                style="flex: 1; padding: 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary);">
+                            <button type="submit" class="btn btn-primary" style="white-space: nowrap;">🔗 Присоединиться</button>
+                        </form>
+                    </div>
+                    {% else %}
                     <button class="btn btn-primary" onclick="toggleMembership({{ community.id }})">➕ Вступить</button>
                     {% endif %}
+                    {% endif %}
+                    {% else %}
+                    {% if community.is_private %}
+                    <div style="padding: 15px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 4px; margin-top: 10px;">
+                        <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
+                            Это приватное сообщество. Войдите, чтобы использовать ссылку-приглашение.
+                        </p>
+                        <a href="{% url 'account_login' %}" class="btn btn-primary">Войти</a>
+                    </div>
                     {% else %}
                     <a href="{% url 'account_login' %}" class="btn btn-primary">Войти чтобы вступить</a>
                     {% endif %}
+                    {% endif %}
                 </div>
+                
+                {% if community.is_private and is_member and user_role == 'owner' or community.is_private and is_member and user_role == 'moderator' %}
+                <div style="margin-top: 20px; padding: 15px; background: var(--darker-bg); border: 1px solid var(--border-color); border-radius: 4px;">
+                    <h3 style="color: var(--accent-green); margin-bottom: 10px; font-size: 1rem;">🔗 Ссылка-приглашение</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 10px;">
+                        Поделитесь этой ссылкой, чтобы пригласить пользователей в сообщество:
+                    </p>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="invite-link" readonly 
+                            value="{{ request.scheme }}://{{ request.get_host }}{% url 'community_invite' community.invite_token %}"
+                            style="flex: 1; padding: 8px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 4px; color: var(--text-primary); font-size: 0.9rem;">
+                        <button class="btn btn-primary" onclick="copyInviteLink()" style="white-space: nowrap;">📋 Копировать</button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
+
+    {% if community.is_private and not is_member %}
+    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 40px; text-align: center; margin-bottom: 30px;">
+        <h2 style="color: var(--accent-green); margin-bottom: 15px;">🔒 Приватное сообщество</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Это приватное сообщество. Для доступа к темам и участия в обсуждениях необходимо быть участником.
+        </p>
+        {% if user.is_authenticated %}
+        <p style="color: var(--text-secondary); margin-bottom: 20px;">
+            Попросите владельца или модератора сообщества отправить вам ссылку-приглашение.
+        </p>
+        <p style="color: var(--text-primary); margin-bottom: 20px;">
+            Если у вас есть ссылка-приглашение, нажмите кнопку выше "🔗 Присоединиться по приглашению".
+        </p>
+        {% else %}
+        <a href="{% url 'account_login' %}?next={% url 'community_invite' community.invite_token %}" class="btn btn-primary">
+            Войти и присоединиться по приглашению
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
 
     <div class="topics-section">
         <div class="topics-header">
@@ -165,6 +223,11 @@
             {% endif %}
         </div>
 
+        {% if not is_member and community.is_private %}
+        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <p>Для просмотра тем необходимо быть участником сообщества.</p>
+        </div>
+        {% else %}
         {% for ct in community_topics %}
         <a href="{% url 'topic_detail' ct.topic.id %}" class="topic-item">
             <h3>{{ ct.topic.title }}</h3>
@@ -183,6 +246,7 @@
             {% endif %}
         </div>
         {% endfor %}
+        {% endif %}
     </div>
 </div>
 
@@ -208,6 +272,34 @@
                 console.error('Error:', error);
                 alert('Произошла ошибка');
             });
+    }
+    
+    function copyInviteLink() {
+        const input = document.getElementById('invite-link');
+        input.select();
+        input.setSelectionRange(0, 99999); // Для мобильных устройств
+        document.execCommand('copy');
+        
+        // Показываем уведомление
+        const button = event.target;
+        const originalText = button.textContent;
+        button.textContent = '✓ Скопировано!';
+        button.style.background = '#4caf50';
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.style.background = '';
+        }, 2000);
+    }
+    
+    function handleInviteSubmit(event) {
+        event.preventDefault();
+        const token = document.getElementById('invite-token-input').value.trim();
+        if (!token) {
+            alert('Введите токен приглашения');
+            return false;
+        }
+        window.location.href = `/communities/invite/${token}/`;
+        return false;
     }
 </script>
 {% endblock %}

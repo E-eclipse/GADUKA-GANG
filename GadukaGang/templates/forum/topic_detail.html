@@ -7,11 +7,19 @@
 <div class="cyber-container">
     <!-- Breadcrumbs -->
     <nav class="cyber-breadcrumbs">
-        <a href="{% url 'sections_list' %}">Разделы</a>
-        <span class="breadcrumb-separator">/</span>
-        <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
-        <span class="breadcrumb-separator">/</span>
-        <span class="current-page">{{ topic.title }}</span>
+        {% if community %}
+            <a href="{% url 'community_list' %}">Сообщества</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{% url 'community_detail' community.id %}">{{ community.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current-page">{{ topic.title }}</span>
+        {% else %}
+            <a href="{% url 'sections_list' %}">Разделы</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
+            <span class="breadcrumb-separator">/</span>
+            <span class="current-page">{{ topic.title }}</span>
+        {% endif %}
     </nav>
 
     <!-- Topic Header -->
@@ -59,7 +67,7 @@
             <a href="{% url 'topic_edit' topic.id %}" class="cyber-button secondary">
                 <i class="fas fa-edit"></i> Редактировать
             </a>
-            <form method="post" action="{% url 'topic_delete' topic.id %}"
+            <form method="post" action="{% url 'topic_delete' topic.id %}?next={{ request.get_full_path|urlencode }}"
                 onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');" style="display: inline;">
                 {% csrf_token %}
                 <button type="submit" class="cyber-button danger">
@@ -109,10 +117,10 @@
             <div class="post-links">
                 {% if user.is_authenticated %}
                 {% if post.author == user or user.is_staff or user.is_superuser %}
-                <a href="{% url 'post_edit' post.id %}" class="cyber-button small secondary">
+                <a href="{% url 'post_edit' post.id %}?next={{ request.get_full_path|urlencode }}" class="cyber-button small secondary">
                     <i class="fas fa-edit"></i>
                 </a>
-                <form method="post" action="{% url 'post_delete' post.id %}"
+                <form method="post" action="{% url 'post_delete' post.id %}?next={{ request.get_full_path|urlencode }}"
                     onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');"
                     style="display: inline;">
                     {% csrf_token %}

@@ -7,6 +7,11 @@ User = get_user_model()
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
+    privacy_policy_accepted = forms.BooleanField(
+        required=True,
+        label='Я согласен с политикой конфиденциальности',
+        error_messages={'required': 'Необходимо принять политику конфиденциальности для регистрации.'}
+    )
     
     class Meta:
         model = User

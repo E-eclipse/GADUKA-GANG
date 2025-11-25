@@ -510,3 +510,63 @@ class CommunityNotificationSubscription(models.Model):
     class Meta:
         unique_together = ('community', 'user')
         app_label = 'GadukaGang'
+
+# Модель курса обучения
+class Course(models.Model):
+    title = models.CharField(max_length=200)
+    description = models.TextField()
+    icon_url = models.URLField(max_length=500, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    order = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return self.title
+    
+    class Meta:
+        ordering = ['order']
+        app_label = 'GadukaGang'
+
+# Модель урока/лекции
+class Lesson(models.Model):
+    LESSON_TYPES = [
+        ('lecture', 'Лекция'),
+        ('practice', 'Практическое задание'),
+    ]
+    
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    lesson_type = models.CharField(max_length=20, choices=LESSON_TYPES, default='lecture')
+    order = models.IntegerField(default=0)
+    created_date = models.DateTimeField(auto_now_add=True)
+    practice_code_template = models.TextField(blank=True)  # Шаблон кода для практики
+    practice_solution = models.TextField(blank=True)  # Решение для проверки
+    test_cases = models.JSONField(default=list, blank=True)  # Массив тестовых случаев: [{"input": "...", "output": "..."}, ...]
+    
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+    
+    class Meta:
+        ordering = ['order']
+        app_label = 'GadukaGang'
+
+# Модель прогресса пользователя по курсу
+class CourseProgress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_progresses')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='progresses')
+    completed_lessons = models.ManyToManyField(Lesson, blank=True, related_name='completed_by')
+    started_date = models.DateTimeField(auto_now_add=True)
+    completed_date = models.DateTimeField(null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('user', 'course')
+        app_label = 'GadukaGang'
+    
+    def get_progress_percentage(self):
+        total_lessons = self.course.lessons.count()
+        if total_lessons == 0:
+            return 0
+        completed_count = self.completed_lessons.count()
+        return int((completed_count / total_lessons) * 100)

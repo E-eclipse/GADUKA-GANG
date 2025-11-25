@@ -45,15 +45,9 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'practice' %}" id="sidebar-practice-link" class="sidebar-link">
-                        <i class="fas fa-code"></i>
-                        <span>Практика</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" id="sidebar-chat-link" class="sidebar-link">
-                        <i class="fas fa-comment-dots"></i>
-                        <span>Чат</span>
+                    <a href="{% url 'education' %}" id="sidebar-education-link" class="sidebar-link">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span>Образование</span>
                     </a>
                 </li>
                 <li>
@@ -124,7 +118,7 @@
                 <ul>
                     <li><a href="{% url 'home' %}">Главная</a></li>
                     <li><a href="{% url 'sections_list' %}">Форум</a></li>
-                    <li><a href="#">Чат</a></li>
+                    <li><a href="{% url 'education' %}">Туториалы</a></li>
                     <li><a href="{% url 'members_list' %}">Участники</a></li>
                 </ul>
             </div>
@@ -132,8 +126,7 @@
                 <h4>Ресурсы</h4>
                 <ul>
                     <li><a href="https://docs.python.org/3/" target="_blank">Документация</a></li>
-                    <li><a href="#">Туториалы</a></li>
-                    <li><a href="#">Блог</a></li>
+                    <li><a href="https://roadmap.sh" target="_blank">Roadmap</a></li>
                     <li><a href="https://www.codewars.com/kata/search/python" target="_blank">Практика</a></li>
                 </ul>
             </div>

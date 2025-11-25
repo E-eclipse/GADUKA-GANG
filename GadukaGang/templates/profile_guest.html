@@ -196,8 +196,7 @@
             </div>
 
             <div style="margin-top: 15px;">
-                <span style="color: var(--text-secondary);">Зарегистрирован: {{ user_profile.join_date|date:"d.m.Y"
-                    }}</span>
+                <span style="color: var(--text-secondary);">Зарегистрирован: {% if user_profile.join_date %}{{ user_profile.join_date|date:"d.m.Y" }}{% else %}{{ viewed_user.date_joined|date:"d.m.Y" }}{% endif %}</span>
             </div>
         </div>
     </div>

@@ -173,6 +173,34 @@
     .terms a:hover {
         text-decoration: underline;
     }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: auto;
+        margin-top: 3px;
+        cursor: pointer;
+        accent-color: var(--accent-green);
+    }
+    
+    .checkbox-label a {
+        color: var(--accent-green);
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .checkbox-label a:hover {
+        text-decoration: underline;
+        text-shadow: var(--neon-shadow);
+    }
 </style>
 {% endblock %}
 
@@ -233,11 +261,17 @@
                 {% endif %}
             </div>
             
-            <button type="submit" class="btn-register">Зарегистрироваться</button>
-            
-            <div class="terms">
-                <p>Регистрируясь, вы соглашаетесь с тем, что python - лучший язык программирования</a></p>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    {{ form.privacy_policy_accepted }}
+                    <span>Я согласен с <a href="{% url 'privacy_policy' %}" target="_blank">политикой конфиденциальности</a></span>
+                </label>
+                {% if form.privacy_policy_accepted.errors %}
+                    <div class="error-message">{{ form.privacy_policy_accepted.errors }}</div>
+                {% endif %}
             </div>
+            
+            <button type="submit" class="btn-register">Зарегистрироваться</button>
         </form>
         
         <div class="registration-footer">

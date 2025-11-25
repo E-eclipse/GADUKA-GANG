@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}404 - Страница не найдена | Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 70vh;
+        padding: 60px 20px;
+        text-align: center;
+    }
+    
+    .error-code {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 8rem;
+        font-weight: 700;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: var(--neon-shadow);
+        margin-bottom: 20px;
+        line-height: 1;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.8;
+            transform: scale(1.05);
+        }
+    }
+    
+    .error-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        text-shadow: var(--neon-shadow);
+    }
+    
+    .error-message {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin-bottom: 40px;
+        line-height: 1.8;
+    }
+    
+    .error-actions {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 30px;
+    }
+    
+    .error-btn {
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        font-family: 'Orbitron', sans-serif;
+        border: 2px solid var(--accent-green);
+        background: transparent;
+        color: var(--accent-green);
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .error-btn:hover {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        box-shadow: var(--neon-glow);
+        transform: translateY(-2px);
+    }
+    
+    .error-btn-primary {
+        background: var(--accent-green);
+        color: var(--darker-bg);
+    }
+    
+    .error-btn-primary:hover {
+        background: var(--metallic-1);
+        border-color: var(--metallic-1);
+    }
+    
+    .error-code-snippet {
+        margin-top: 50px;
+        padding: 30px;
+        background: var(--darker-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        max-width: 500px;
+        box-shadow: var(--neon-shadow);
+    }
+    
+    .error-code-snippet pre {
+        color: var(--accent-green);
+        font-family: 'Roboto Mono', monospace;
+        font-size: 1rem;
+        margin: 0;
+        text-align: left;
+    }
+    
+    .error-icon {
+        font-size: 4rem;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .error-code {
+            font-size: 5rem;
+        }
+        
+        .error-title {
+            font-size: 1.8rem;
+        }
+        
+        .error-message {
+            font-size: 1rem;
+        }
+        
+        .error-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .error-btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+    </div>
+    
+    <div class="error-code">404</div>
+    
+    <h1 class="error-title">Страница не найдена</h1>
+    
+    <p class="error-message">
+        К сожалению, запрашиваемая страница не существует. Возможно, она была удалена, 
+        перемещена или вы ввели неправильный адрес.
+    </p>
+    
+    <div class="error-actions">
+        <a href="{% url 'home' %}" class="error-btn error-btn-primary">
+            <i class="fas fa-home"></i> На главную
+        </a>
+        <a href="{% url 'forum_hub' %}" class="error-btn">
+            <i class="fas fa-comments"></i> К форуму
+        </a>
+        <button onclick="history.back()" class="error-btn">
+            <i class="fas fa-arrow-left"></i> Назад
+        </button>
+    </div>
+    
+    <div class="error-code-snippet">
+        <pre># Ошибка 404
+try:
+    page = get_page(request.path)
+except PageNotFound:
+    return render_404()</pre>
+    </div>
+</div>
+{% endblock %}
+

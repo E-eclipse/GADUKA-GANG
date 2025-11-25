@@ -8,7 +8,11 @@
     <div class="forum-header">
         <h1>{{ action }} сообщение</h1>
         {% if post %}
-        <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Назад к теме</a>
+            {% if community %}
+            <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">Назад к сообществу</a>
+            {% else %}
+            <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Назад к теме</a>
+            {% endif %}
         {% else %}
         <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Назад к теме</a>
         {% endif %}
@@ -29,7 +33,11 @@
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">{{ action }}</button>
                 {% if post %}
-                <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Отмена</a>
+                    {% if community %}
+                    <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">Отмена</a>
+                    {% else %}
+                    <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Отмена</a>
+                    {% endif %}
                 {% else %}
                 <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Отмена</a>
                 {% endif %}

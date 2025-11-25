@@ -1,7 +1,7 @@
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db.models import Count
-from .models import Post, UserAchievement, Achievement, UserRankProgress
+from .models import Post, UserAchievement, Achievement, UserRankProgress, CommunityTopic
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -43,6 +43,24 @@ def check_post_achievements(sender, instance, created, **kwargs):
                             current_points=10,
                             progress_percentage=0
                         )
+        
+        # Отправляем email-уведомления для сообществ
+        try:
+            # Проверяем, связана ли тема с каким-либо сообществом
+            community_topics = CommunityTopic.objects.filter(topic=instance.topic).select_related('community')
+            if community_topics.exists():
+                from .email_notifications import send_community_post_notification
+                for community_topic in community_topics:
+                    send_community_post_notification(
+                        community_topic.community,
+                        instance.topic,
+                        instance
+                    )
+        except Exception as e:
+            # Логируем ошибку, но не прерываем выполнение
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f'Ошибка отправки email-уведомлений для сообщества: {str(e)}')
 
 
 def check_upvotes_achievements(user):

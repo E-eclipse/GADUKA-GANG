@@ -135,8 +135,55 @@
 <div class="activity-feed-page">
     <div class="page-header">
         <h1>📰 Моя лента</h1>
-        <p>Новые темы от пользователей, на которых вы подписаны ({{ following_count }})</p>
+        <p>Новые темы из сообществ, на которые вы подписаны ({{ communities_count }})</p>
     </div>
+
+    {% if feed_topics or user_communities %}
+    <div class="feed-filters" style="background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="font-family: 'Orbitron', sans-serif; color: var(--accent-green); margin-bottom: 15px; font-size: 1.2rem;">Фильтры</h3>
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; align-items: center;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <a href="?filter=all{% if current_community %}&community={{ current_community }}{% endif %}" 
+                   style="padding: 8px 16px; background: {% if current_filter == 'all' %}var(--accent-green){% else %}rgba(18, 18, 18, 0.7){% endif %}; color: {% if current_filter == 'all' %}var(--darker-bg){% else %}var(--text-primary){% endif %}; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; transition: all 0.3s ease;"
+                   onmouseover="this.style.borderColor='var(--accent-green)'"
+                   onmouseout="this.style.borderColor='var(--border-color)'">
+                    Все
+                </a>
+                <a href="?filter=recent{% if current_community %}&community={{ current_community }}{% endif %}" 
+                   style="padding: 8px 16px; background: {% if current_filter == 'recent' %}var(--accent-green){% else %}rgba(18, 18, 18, 0.7){% endif %}; color: {% if current_filter == 'recent' %}var(--darker-bg){% else %}var(--text-primary){% endif %}; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; transition: all 0.3s ease;"
+                   onmouseover="this.style.borderColor='var(--accent-green)'"
+                   onmouseout="this.style.borderColor='var(--border-color)'">
+                    Новые
+                </a>
+                <a href="?filter=popular{% if current_community %}&community={{ current_community }}{% endif %}" 
+                   style="padding: 8px 16px; background: {% if current_filter == 'popular' %}var(--accent-green){% else %}rgba(18, 18, 18, 0.7){% endif %}; color: {% if current_filter == 'popular' %}var(--darker-bg){% else %}var(--text-primary){% endif %}; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; transition: all 0.3s ease;"
+                   onmouseover="this.style.borderColor='var(--accent-green)'"
+                   onmouseout="this.style.borderColor='var(--border-color)'">
+                    Популярные
+                </a>
+                <a href="?filter=rated{% if current_community %}&community={{ current_community }}{% endif %}" 
+                   style="padding: 8px 16px; background: {% if current_filter == 'rated' %}var(--accent-green){% else %}rgba(18, 18, 18, 0.7){% endif %}; color: {% if current_filter == 'rated' %}var(--darker-bg){% else %}var(--text-primary){% endif %}; border: 1px solid var(--border-color); border-radius: 4px; text-decoration: none; transition: all 0.3s ease;"
+                   onmouseover="this.style.borderColor='var(--accent-green)'"
+                   onmouseout="this.style.borderColor='var(--border-color)'">
+                    По рейтингу
+                </a>
+            </div>
+            {% if user_communities %}
+            <div style="margin-left: auto;">
+                <select onchange="window.location.href='?filter={{ current_filter }}&community=' + (this.value || '')" 
+                        style="padding: 8px 16px; background: rgba(18, 18, 18, 0.7); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem;">
+                    <option value="">Все сообщества</option>
+                    {% for community in user_communities %}
+                    <option value="{{ community.id }}" {% if current_community == community.id|stringformat:"s" %}selected{% endif %}>
+                        {{ community.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 
     {% if feed_topics %}
     <div class="feed-topics">
@@ -158,8 +205,8 @@
     {% else %}
     <div class="empty-state">
         <h2>Лента пуста</h2>
-        <p>Подпишитесь на интересных авторов, чтобы видеть их новые темы здесь</p>
-        <a href="{% url 'members_list' %}">Найти пользователей</a>
+        <p>Подпишитесь на сообщества, чтобы видеть их новые темы здесь</p>
+        <a href="{% url 'community_list' %}">Найти сообщества</a>
     </div>
     {% endif %}
 </div>

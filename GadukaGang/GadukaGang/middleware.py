@@ -18,9 +18,9 @@ class AdminActionLoggingMiddleware(MiddlewareMixin):
         '/admin/jsi18n/',
         '/static/',
         '/media/',
-        '/accounts/login/',
-        '/accounts/logout/',
-        '/accounts/signup/',
+        '/login/',
+        '/logout/',
+        '/register/',
     ]
     
     # Список методов HTTP, которые нужно логировать

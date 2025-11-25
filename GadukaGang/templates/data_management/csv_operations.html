@@ -222,9 +222,21 @@
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('import')">📥 Импорт CSV</div>
-            <div class="tab" onclick="switchTab('export')">📤 Экспорт CSV</div>
+            <div class="tab active" onclick="switchTab(event, 'import')">📥 Импорт CSV</div>
+            <div class="tab" onclick="switchTab(event, 'export')">📤 Экспорт CSV</div>
+            <div class="tab" onclick="switchTab(event, 'database')">🗄️ Полная БД</div>
         </div>
+
+        {% if messages %}
+        <div style="margin-bottom: 20px;">
+            {% for message in messages %}
+            <div
+                style="padding: 15px; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--accent-green); border-radius: 8px; color: var(--text-primary); margin-bottom: 10px;">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
 
         <!-- Import Tab -->
         <div id="import-tab" class="tab-content active">
@@ -264,16 +276,6 @@
                     </button>
                 </form>
 
-                {% if messages %}
-                <div style="margin-top: 30px;">
-                    {% for message in messages %}
-                    <div
-                        style="padding: 15px; background: rgba(0, 255, 65, 0.1); border: 1px solid var(--accent-green); border-radius: 8px; color: var(--text-primary); margin-bottom: 10px;">
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
             </div>
         </div>
 
@@ -297,11 +299,45 @@
                 </div>
             </div>
         </div>
+
+        <!-- Full DB Tab -->
+        <div id="database-tab" class="tab-content">
+            <div class="operation-card">
+                <h2 class="card-title">🗄️ Экспорт/Импорт всей базы</h2>
+
+                <div class="export-grid" style="margin-bottom: 30px;">
+                    <a href="{% url 'db_export_full' %}" class="export-btn" style="grid-column: 1 / -1;">
+                        <div class="export-icon">💾</div>
+                        <div class="export-label">Скачать полный дамп (.sql.gz)</div>
+                    </a>
+                </div>
+
+                <form method="post" action="{% url 'db_import_full' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="form-group">
+                        <label class="form-label">Файл дампа (.sql или .sql.gz)</label>
+                        <input type="file" name="dump_file" class="form-input" accept=".sql,.gz" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="replace_data">
+                            <span>Полностью заменить данные (очистить БД перед импортом)</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-database"></i> Импортировать дамп
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </section>
 
 <script>
-    function switchTab(tabName) {
+    function switchTab(event, tabName) {
         // Hide all tabs
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));

@@ -1,52 +1,123 @@
-version: '3.9'
-
 services:
-  frontend:
-    restart: always
-    build: ./GadukaGang
-    ports:
-      - "9876:8000"
-    working_dir: /app
-    environment:
-      - DJANGO_DEBUG=true
-      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,frontend
-      - POSTGRES_DB=forum_database
-      - POSTGRES_USER=forum_owner
-      - POSTGRES_PASSWORD=1111
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-    volumes:
-      - ./GadukaGang:/app
-    depends_on:
-      postgres:
-        condition: service_healthy
-    command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
-
   postgres:
     restart: always
     build: ./database
+    image: gadukagang-postgres:latest
+    container_name: gadukagang-postgres
     environment:
       - POSTGRES_DB=forum_database
       - POSTGRES_USER=forum_owner
       - POSTGRES_PASSWORD=1111
+      - PGDATA=/var/lib/postgresql/data/pgdata
     ports:
       - "4545:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U forum_owner -d forum_database"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 10s
+
+  frontend:
+    restart: always
+    build: 
+      context: ./GadukaGang
+      dockerfile: Dockerfile
+    image: gadukagang-frontend:latest
+    container_name: gadukagang-frontend
+    ports:
+      - "9876:8000"
+    working_dir: /app
+    environment:
+      - DJANGO_DEBUG=true
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,frontend,0.0.0.0
+      - POSTGRES_DB=forum_database
+      - POSTGRES_USER=forum_owner
+      - POSTGRES_PASSWORD=1111
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-%$@d1xu!u^apvv$=vq+u5#&sybzj(^gcudek2zy5o_^(f(!+l(}
+    volumes:
+      - ./GadukaGang:/app
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for PostgreSQL...' &&
+        sleep 5 &&
+        echo 'Running migrations...' &&
+        python manage.py migrate --noinput &&
+        echo 'Collecting static files...' &&
+        python manage.py collectstatic --noinput &&
+        echo 'Starting server...' &&
+        python manage.py runserver 0.0.0.0:8000
+      "
 
   adminer:
     restart: always
-    image: adminer
+    image: adminer:latest
+    container_name: gadukagang-adminer
     ports:
       - "5567:8080"
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
     depends_on:
       - postgres
 
+  prometheus:
+    restart: always
+    image: prom/prometheus:latest
+    container_name: gadukagang-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    depends_on:
+      - frontend
+
+
+  grafana:
+    restart: always
+    image: grafana/grafana:latest
+    container_name: gadukagang-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_DEFAULT_THEME=dark
+      # SMTP настройки
+      - GF_SMTP_ENABLED=true
+      - GF_SMTP_HOST=smtp.gmail.com
+      - GF_SMTP_PORT=587
+      - GF_SMTP_USER=simernin.mat@gmail.com
+      - GF_SMTP_PASSWORD=ydae ufiv renc wrml
+      - GF_SMTP_FROM_ADDRESS=simernin.mat@gmail.com
+      - GF_SMTP_FROM_NAME=GadukaGang Monitoring
+      - GF_SMTP_SKIP_VERIFY=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+    depends_on:
+      - prometheus
+
 volumes:
   pg_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
 

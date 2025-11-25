@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Обучение - Gaduka Gang{% endblock %}
+
+{% block extra_css %}
+<style>
+    .education-page {
+        padding: 40px 0;
+    }
+
+    .page-header {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 40px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+    }
+
+    .page-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 2.5rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        text-shadow: var(--neon-shadow);
+    }
+
+    .page-header p {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+
+    .courses-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+    }
+
+    .course-card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 30px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .course-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-green);
+        box-shadow: var(--neon-glow);
+    }
+
+    .course-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-green);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .course-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+
+    .course-card p {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .course-progress {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: rgba(18, 18, 18, 0.7);
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+    }
+
+    .completed-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        background: var(--accent-green);
+        color: var(--darker-bg);
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+
+    .external-resources {
+        margin-top: 50px;
+        padding-top: 40px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .external-resources h2 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 30px;
+        text-align: center;
+        font-size: 2rem;
+    }
+
+    .resources-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+    }
+
+    .resource-card {
+        background-color: rgba(18, 18, 18, 0.7);
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        padding: 30px;
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all 0.3s ease;
+        display: block;
+    }
+
+    .resource-card:hover {
+        border-color: var(--accent-green);
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow);
+    }
+
+    .resource-card i {
+        font-size: 3rem;
+        color: var(--accent-green);
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .resource-card h3 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+
+    .resource-card p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="education-page">
+    <div class="page-header">
+        <h1>📚 Обучение Python</h1>
+        <p>Изучайте Python с помощью структурированных курсов, лекций и практических заданий</p>
+    </div>
+
+    {% if courses_with_progress %}
+    <div class="courses-grid">
+        {% for item in courses_with_progress %}
+        <a href="{% url 'course_detail' item.course.id %}" class="course-card">
+            <h3>{{ item.course.title }}</h3>
+            <p>{{ item.course.description|truncatewords:30 }}</p>
+            <div class="course-progress">
+                {% if item.progress %}
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ item.progress.progress }}%"></div>
+                </div>
+                <div class="progress-text">
+                    Прогресс: {{ item.progress.progress }}% ({{ item.progress.completed_lessons_count }}/{{ item.progress.total_lessons }} уроков)
+                </div>
+                {% if item.progress.is_completed %}
+                <div class="completed-badge">✓ Завершено</div>
+                {% endif %}
+                {% elif user.is_authenticated %}
+                <div class="progress-text">Начать обучение</div>
+                {% else %}
+                <div class="progress-text">Войдите, чтобы начать обучение</div>
+                {% endif %}
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; padding: 80px 20px; color: var(--text-secondary); background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+        <h2 style="font-family: 'Orbitron', sans-serif; color: var(--text-primary); margin-bottom: 15px;">Курсы пока не доступны</h2>
+        <p>Курсы будут добавлены в ближайшее время</p>
+        <p style="margin-top: 20px;">
+            <a href="{% url 'education' %}" style="color: var(--accent-green); text-decoration: none;">← Вернуться к образованию</a>
+        </p>
+    </div>
+    {% endif %}
+
+    <div class="external-resources">
+        <h2>Дополнительные ресурсы</h2>
+        <div class="resources-grid">
+            <a href="https://roadmap.sh/" target="_blank" class="resource-card">
+                <i class="fas fa-map-marked-alt"></i>
+                <h3>Roadmap.sh</h3>
+                <p>Узнайте, что изучать дальше. Понятные карты развития для программистов</p>
+            </a>
+            
+            <a href="https://www.codewars.com/kata/search/python" target="_blank" class="resource-card">
+                <i class="fas fa-dumbbell"></i>
+                <h3>CodeWars</h3>
+                <p>Практикуйтесь на реальных задачах и улучшайте свои навыки программирования</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
