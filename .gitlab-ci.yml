@@ -47,7 +47,7 @@ linter-check:
   script:
     - echo "Запуск flake8"
     - python -m pip install flake8
-    - flake8 GadukaGang/
+    - flake8 GadukaGang/ --exclude=views_old_backup.py
     - echo "Проверка линтером завершена"
 
 # Основные unit-тесты
