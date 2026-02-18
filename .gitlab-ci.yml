@@ -23,10 +23,10 @@ cache:
 
 default:
   before_script:
-    - python --version
-    - python -m pip install --upgrade pip
+    - python3 --version
+    - python3 -m pip install --upgrade pip
     - cd GadukaGang
-    - pip install -r requirements.txt
+    - pip3 install -r requirements.txt
     - cp .env.example .env
 
 # Проверка сборки проекта
@@ -34,8 +34,8 @@ build-check:
   stage: build
   script:
     - echo "Проверка сборки началась"
-    - python manage.py check
-    - python manage.py makemigrations --check --dry-run
+    - python3 manage.py check
+    - python3 manage.py makemigrations --check --dry-run
     - echo "Проверка сборки завершена"
 
 # Проверка синтаксиса и базовых ошибок
@@ -44,7 +44,7 @@ linter-check:
   allow_failure: true
   script:
     - echo "Запуск flake8"
-    - pip install flake8
+    - pip3 install flake8
     - flake8 . --exclude=.venv,myenv,migrations,staticfiles --count --statistics
     - echo "Проверка линтером завершена"
 
@@ -53,7 +53,7 @@ unit-tests:
   stage: test
   script:
     - echo "Запуск unit-тестов"
-    - python manage.py test GadukaGang.tests --verbosity 2
+    - python3 manage.py test GadukaGang.tests --verbosity 2
 
 # Анализ качества кода
 code-quality:
@@ -61,7 +61,7 @@ code-quality:
   allow_failure: true
   script:
     - echo "Анализ качества кода"
-    - pip install radon
+    - pip3 install radon
     - radon cc . -a
     - radon raw .
     - echo "Анализ качества кода завершен"
@@ -72,6 +72,6 @@ security-check:
   allow_failure: true
   script:
     - echo "Проверка безопасности"
-    - pip install bandit
+    - pip3 install bandit
     - bandit -r . -ll -x migrations
     - echo "Проверка безопасности завершена"
