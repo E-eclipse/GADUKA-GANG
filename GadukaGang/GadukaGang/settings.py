@@ -31,7 +31,10 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'true').lower() == 'true'
 
 DEBUG = True
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv(
+    'DJANGO_ALLOWED_HOSTS',
+    'localhost,127.0.0.1,127.20.10.2'
+).split(',')
 
 
 # Application definition
@@ -75,7 +78,6 @@ MIDDLEWARE = [
     'allauth.account.middleware.AccountMiddleware', 
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'GadukaGang.middleware.AdminActionLoggingMiddleware',
     'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
@@ -104,18 +106,27 @@ WSGI_APPLICATION = 'GadukaGang.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Use SQLite for local development
 DATABASES = {
     'default': {
-        'ENGINE': 'django_prometheus.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'forum_database'),
-        'USER': os.getenv('POSTGRES_USER', 'forum_owner'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', '1111'),
-        # По умолчанию подключаемся к postgres из docker-compose (порт 4545 проброшен на хост).
-        # В контейнере значение переопределяется переменными окружения compose.
-        'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
-        'PORT': os.getenv('POSTGRES_PORT', '4545'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# For production with PostgreSQL, uncomment the following:
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django_prometheus.db.backends.postgresql',
+#         'NAME': os.getenv('POSTGRES_DB', 'forum_database'),
+#         'USER': os.getenv('POSTGRES_USER', 'forum_owner'),
+#         'PASSWORD': os.getenv('POSTGRES_PASSWORD', '1111'),
+#         # По умолчанию подключаемся к postgres из docker-compose (порт 4545 проброшен на хост).
+#         # В контейнере значение переопределяется переменными окружения compose.
+#         'HOST': os.getenv('POSTGRES_HOST', 'localhost'),
+#         'PORT': os.getenv('POSTGRES_PORT', '4545'),
+#     }
+# }
 
 
 # Custom User Model
@@ -161,6 +172,8 @@ STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -171,6 +184,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+PASSWORD_RESET_TIMEOUT = 5 * 60
 
 # Email settings (для разработки и production)
 # Используем SMTP если настроены переменные окружения, иначе console для разработки
@@ -271,6 +285,17 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://127.20.10.2:8000",
+    "http://127.20.10.2:9876",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:9876",
+    "http://127.0.0.1:9876",
+    "http://127.20.10.2:8000",
+    "http://127.20.10.2:9876",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -307,6 +332,13 @@ SWAGGER_SETTINGS = {
     }
 }
 
-# Prometheus / monitoring
+# Prometheus / monitoring (legacy, kept for compatibility)
 PROMETHEUS_METRIC_NAMESPACE = 'gadukagang'
 PROMETHEUS_EXPORT_MIGRATIONS = False
+
+# InfluxDB settings
+INFLUXDB_ENABLED = os.getenv('INFLUXDB_ENABLED', 'false').lower() in ['1', 'true', 'yes', 'on']
+INFLUXDB_URL = os.getenv('INFLUXDB_URL', 'http://host.docker.internal:8086')
+INFLUXDB_TOKEN = os.getenv('INFLUXDB_TOKEN', 'oj0qaaG3i5hLCtxBAb4W3Pb5dKR6xFQohOrt08gQrPZ3gqgTW5hGWtJWekhKyMKJrVODgO9_DaLXhMU6pCjXkw==')
+INFLUXDB_ORG = os.getenv('INFLUXDB_ORG', 'MPT')
+INFLUXDB_BUCKET = os.getenv('INFLUXDB_BUCKET', 'metrics')

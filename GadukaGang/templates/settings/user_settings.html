@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Настройки - Gaduka Gang{% endblock %}
+{% block title %}Настройки - Plekhanov CourseHub{% endblock %}
 
 {% block content %}
 <div class="settings-container">
@@ -389,9 +389,9 @@
 
             if (data.success) {
                 alert('✅ ' + data.message);
-                // Apply theme immediately
-                if (settings.theme) {
-                    document.body.className = `theme-${settings.theme}`;
+                if (settings.theme && (settings.theme === 'light' || settings.theme === 'dark')) {
+                    try { localStorage.setItem('pch_theme', settings.theme); } catch (e) {}
+                    document.documentElement.setAttribute('data-theme', settings.theme);
                 }
             } else {
                 alert('❌ ' + data.message);
@@ -408,3 +408,6 @@
     }
 </script>
 {% endblock %}
+
+
+

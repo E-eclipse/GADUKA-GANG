@@ -1,183 +1,146 @@
-{% extends "admin/base_site.html" %}
+﻿{% extends "admin/base_site.html" %}
 {% load i18n static %}
 
+{% block extrahead %}
+{{ block.super }}
+<script>
+(function () {
+    try {
+        var stored = localStorage.getItem('pch_theme');
+        var theme = (stored === 'dark' || stored === 'light')
+            ? stored
+            : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.setAttribute('data-theme', theme);
+    } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+    }
+})();
+</script>
+{% endblock %}
+
 {% block extrastyle %}
-    {{ block.super }}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-    <style>
-        /* Override Django admin styles with our custom styles */
-        body {
-            background-color: var(--dark-bg);
-            color: var(--text-primary);
-            font-family: 'Roboto Mono', monospace;
-        }
-        
-        #container {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: var(--neon-shadow);
-            max-width: 500px;
-            margin: 100px auto;
-            padding: 40px;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        #container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-        }
-        
-        #content-main {
-            padding: 0;
-        }
-        
-        .form-row {
-            margin-bottom: 25px;
-            position: relative;
-        }
-        
-        .form-row label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-            font-weight: 400;
-            font-size: 1rem;
-        }
-        
-        .form-row input {
-            width: 100%;
-            padding: 14px;
-            border: 1px solid var(--border-color);
-            background-color: var(--darker-bg);
-            color: var(--text-primary);
-            font-family: 'Roboto Mono', monospace;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            border-left: 3px solid var(--accent-green);
-        }
-        
-        .form-row input:focus {
-            outline: none;
-            border-color: var(--accent-green);
-            box-shadow: var(--neon-shadow);
-            background-color: rgba(0, 255, 65, 0.05);
-        }
-        
-        .submit-row {
-            padding: 0;
-            margin-top: 20px;
-            text-align: center;
-        }
-        
-        .submit-row input {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--accent-green);
-            color: var(--dark-bg);
-            border: none;
-            border-radius: 4px;
-            font-family: 'Roboto Mono', monospace;
-            font-weight: 500;
-            font-size: 1.1rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--neon-shadow);
-        }
-        
-        .submit-row input:hover {
-            background-color: var(--accent-green-dark);
-            box-shadow: var(--neon-glow);
-            transform: translateY(-2px);
-        }
-        
-        .errornote {
-            background-color: rgba(255, 68, 68, 0.1);
-            color: #ff4444;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            border: 1px solid #ff4444;
-            font-size: 0.9rem;
-        }
-        
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
-            color: var(--accent-green);
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: var(--neon-shadow);
-            letter-spacing: 1px;
-        }
-        
-        .password-reset-link {
-            text-align: center;
-            margin-top: 20px;
-        }
-        
-        .password-reset-link a {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .password-reset-link a:hover {
-            color: var(--accent-green);
-            text-shadow: var(--neon-shadow);
-        }
-    </style>
+{{ block.super }}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<style>
+    body {
+        background: var(--bg-page);
+        color: var(--text-primary);
+        font-family: var(--font-body);
+    }
+
+    #container {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        box-shadow: var(--shadow-soft);
+        max-width: 520px;
+        margin: 90px auto;
+        padding: 32px;
+    }
+
+    h1 {
+        font-family: var(--font-heading);
+        color: var(--accent-blue);
+        text-align: center;
+        margin-bottom: 18px;
+    }
+
+    #content-main {
+        padding: 0;
+    }
+
+    .form-row {
+        margin-bottom: 16px;
+    }
+
+    .form-row label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .form-row input {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid var(--border-color);
+        background: var(--bg-surface);
+        color: var(--text-primary);
+    }
+
+    .submit-row {
+        margin-top: 20px;
+        padding: 0;
+    }
+
+    .submit-row input {
+        width: 100%;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 18px;
+        font-weight: 700;
+        color: var(--accent-contrast);
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-green));
+        cursor: pointer;
+    }
+
+    .errornote {
+        border-radius: 10px;
+        border: 1px solid rgba(200, 71, 71, 0.35);
+        background: rgba(200, 71, 71, 0.08);
+        color: var(--danger);
+        padding: 12px 14px;
+    }
+
+    .password-reset-link {
+        margin-top: 12px;
+        text-align: center;
+    }
+
+    .password-reset-link a {
+        color: var(--accent-blue);
+        text-decoration: none;
+    }
+
+    .password-reset-link a:hover {
+        color: var(--accent-green);
+    }
+</style>
 {% endblock %}
 
 {% block bodyclass %}{{ block.super }} login{% endblock %}
-
 {% block usertools %}{% endblock %}
-
 {% block nav-global %}{% endblock %}
-
 {% block nav-sidebar %}{% endblock %}
-
 {% block content_title %}{% endblock %}
-
 {% block breadcrumbs %}{% endblock %}
 
 {% block content %}
 {% if form.errors and not form.non_field_errors %}
-    <p class="errornote">
-        {% if form.errors.items|length == 1 %}
-            {% translate "Please correct the error below." %}
-        {% else %}
-            {% translate "Please correct the errors below." %}
-        {% endif %}
-    </p>
+<p class="errornote">
+    {% if form.errors.items|length == 1 %}
+    {% translate "Please correct the error below." %}
+    {% else %}
+    {% translate "Please correct the errors below." %}
+    {% endif %}
+</p>
 {% endif %}
 
 {% if form.non_field_errors %}
-    {% for error in form.non_field_errors %}
-        <p class="errornote">
-            {{ error }}
-        </p>
-    {% endfor %}
+{% for error in form.non_field_errors %}
+<p class="errornote">{{ error }}</p>
+{% endfor %}
 {% endif %}
 
 <div id="content-main">
     {% if user.is_authenticated %}
-        <p class="errornote">
-            {% blocktranslate trimmed %}
-                You are authenticated as {{ username }}, but are not authorized to
-                access this page. Would you like to login to a different account?
-            {% endblocktranslate %}
-        </p>
+    <p class="errornote">
+        {% blocktranslate trimmed %}
+        You are authenticated as {{ username }}, but are not authorized to
+        access this page. Would you like to login to a different account?
+        {% endblocktranslate %}
+    </p>
     {% endif %}
 
     <form action="{{ app_path }}" method="post" id="login-form">
@@ -192,19 +155,25 @@
             {{ form.password.label_tag }} {{ form.password }}
             <input type="hidden" name="next" value="{{ next }}">
         </div>
+
         {% url 'admin_password_reset' as password_reset_url %}
         {% if password_reset_url %}
-            <div class="password-reset-link">
-                <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
-            </div>
+        <div class="password-reset-link">
+            <a href="{{ password_reset_url }}">{% translate 'Forgotten your password or username?' %}</a>
+        </div>
         {% endif %}
+
         <div class="submit-row">
             <input type="submit" value="{% translate 'Log in' %}">
         </div>
     </form>
 </div>
+
+<button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false">
+    <span class="theme-toggle__icon" aria-hidden="true">☀</span>
+    <span class="theme-toggle__label">Светлая</span>
+</button>
+<script src="{% static 'js/theme.js' %}"></script>
 {% endblock %}
 
-{% block footer %}
-    <div id="footer"></div>
-{% endblock %}
+{% block footer %}<div id="footer"></div>{% endblock %}

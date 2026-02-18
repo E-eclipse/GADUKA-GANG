@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install system dependencies
+# Установка зависимостей
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     gcc \
@@ -14,21 +14,21 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
+# Копируем зависимости и убираем кэш
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
+# Копируем директорию app
 COPY . /app/
 
-# Create necessary directories
+# Создание необходимых дирректорий
 RUN mkdir -p /app/staticfiles /app/media /app/backups /app/temp_exports
 
-# Set permissions
+# Разраничение прав (чтение и выполнение для всех)
 RUN chmod -R 755 /app
 
 EXPOSE 8000
 
-# Default command can be overridden in docker-compose
+# Перезапись сервера в докер компоуз
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Проверка сертификата{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verify-page {
+        max-width: 900px;
+        margin: 36px auto;
+        display: grid;
+        gap: 16px;
+    }
+
+    .verify-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .verify-form {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .verify-status {
+        display: inline-flex;
+        padding: 6px 12px;
+        border-radius: 999px;
+        margin-bottom: 14px;
+        font-weight: 600;
+    }
+
+    .verify-status.valid {
+        background: rgba(31, 122, 140, 0.15);
+        color: var(--accent-green-dark);
+    }
+
+    .verify-status.invalid {
+        background: rgba(200, 71, 71, 0.15);
+        color: var(--danger);
+    }
+
+    .verify-grid {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 10px 16px;
+        margin-top: 12px;
+    }
+
+    .verify-label {
+        color: var(--text-secondary);
+    }
+
+    code {
+        word-break: break-all;
+    }
+
+    @media (max-width: 760px) {
+        .verify-form {
+            grid-template-columns: 1fr;
+        }
+        .verify-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="verify-page">
+    <div class="verify-card">
+        <h1 style="margin-bottom: 10px;">Проверка сертификата по коду</h1>
+        <p class="help-text" style="margin-bottom: 12px;">Введите код верификации, например: <code>4d8c4e5404094b10ad7e62fbe73d913b</code></p>
+        <form method="get" action="{% url 'certificate_verify_lookup' %}" class="verify-form">
+            <input type="text" name="code" value="{{ lookup_code|default:'' }}" placeholder="Код верификации" required>
+            <button type="submit" class="btn btn-primary">Проверить</button>
+        </form>
+    </div>
+
+    {% if valid is not None %}
+    <div class="verify-card">
+        {% if valid %}
+            <span class="verify-status valid">Сертификат действителен</span>
+            <h2>{{ user_certificate.certificate.name }}</h2>
+            <div class="verify-grid">
+                <div class="verify-label">Владелец</div>
+                <div>{{ user_certificate.user.username }}</div>
+                <div class="verify-label">Дата выдачи</div>
+                <div>{{ user_certificate.awarded_date|date:"d.m.Y H:i" }}</div>
+                <div class="verify-label">Код верификации</div>
+                <div><code>{{ user_certificate.verification_code }}</code></div>
+            </div>
+        {% else %}
+            <span class="verify-status invalid">Сертификат не найден</span>
+            <h2>Проверка не пройдена</h2>
+            <p>Сертификат с таким кодом отсутствует в системе.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

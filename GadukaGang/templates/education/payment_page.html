@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}Оплата курса — {{ course.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payment-page {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 36px 0;
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 1.3fr 1fr;
+    }
+
+    .payment-card, .summary-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 18px;
+        padding: 24px;
+        box-shadow: 0 16px 30px rgba(19, 32, 62, 0.06);
+    }
+
+    .payment-grid {
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .payment-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .payment-card label {
+        display: block;
+        font-size: 0.92rem;
+        margin-bottom: 4px;
+        color: var(--text-secondary);
+    }
+
+    .payment-method {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        width: 100%;
+        margin-top: 8px;
+        color: var(--text-secondary);
+    }
+
+    .payment-method input[type="radio"] {
+        order: 2;
+        width: 16px;
+        height: 16px;
+        margin: 0 0 0 12px;
+        padding: 0;
+        border: none;
+        background: none;
+        appearance: auto;
+        -webkit-appearance: radio;
+        flex-shrink: 0;
+    }
+
+    .payment-method span {
+        order: 1;
+    }
+
+    .payment-card input {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 10px 12px;
+    }
+
+    .payment-actions {
+        margin-top: 16px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 920px) {
+        .payment-page {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">← Назад к курсу</a>
+
+<section class="payment-page">
+    <div class="payment-card">
+        {% if is_admin_user %}
+            <h1>Режим администратора</h1>
+            <p>Для администратора доступ подтверждается без платежного процесса.</p>
+            <form method="post" action="{% url 'course_purchase' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Автоподтвердить оплату</button>
+            </form>
+        {% elif enrollment and enrollment.is_paid %}
+            <h1>Оплата выполнена</h1>
+            <p>Курс уже оплачен. Чек и история доступны в разделе заказов.</p>
+            <div class="payment-actions">
+                {% if latest_order %}
+                <a href="{% url 'order_detail' latest_order.id %}" class="btn btn-primary">Перейти к чеку</a>
+                {% endif %}
+                <a href="{% url 'course_detail' course.id %}" class="btn btn-secondary">Перейти к курсу</a>
+            </div>
+        {% else %}
+            <h1>Оплата курса</h1>
+            <p>Выберите способ оплаты. Сейчас доступен только тестовый вариант.</p>
+            <form method="post" action="{% url 'course_purchase' course.id %}">
+                {% csrf_token %}
+                <div class="payment-grid">
+                    <div class="full">
+                        <label>Способ оплаты</label>
+                        <label class="payment-method">
+                            <input type="radio" name="payment_method" value="stub" checked>
+                            <span>Тестовая оплата (заглушка)</span>
+                        </label>
+                    </div>
+                    <div>
+                        <label for="billing_name">ФИО плательщика</label>
+                        <input id="billing_name" name="billing_name" value="{{ user.get_full_name|default:user.username }}">
+                    </div>
+                    <div>
+                        <label for="billing_phone">Телефон</label>
+                        <input id="billing_phone" name="billing_phone" placeholder="+7 900 000-00-00">
+                    </div>
+                    <div class="full">
+                        <label for="email_pay">Email для чека</label>
+                        <input id="email_pay" name="email_for_receipt" type="email" value="{{ default_email }}" required>
+                    </div>
+                </div>
+                <div class="payment-actions">
+                    <button type="submit" class="btn btn-primary">Оплатить {{ course.price }} ₽</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+
+    <aside class="summary-card">
+        <h2>{{ course.title }}</h2>
+        <p>{{ course.description }}</p>
+        <hr>
+        <p><strong>Категория:</strong> {% if course.category %}{{ course.category.name }}{% else %}—{% endif %}</p>
+        <p><strong>Уровень:</strong> {{ course.level }}</p>
+        <p><strong>Длительность:</strong> {{ course.duration_weeks }} недель</p>
+        <p><strong>Стоимость:</strong> {{ course.price }} ₽</p>
+        {% if latest_order %}
+            <hr>
+            <p><strong>Последний платёж:</strong> {{ latest_order.paid_at|date:"d.m.Y H:i" }}</p>
+            <p><strong>Способ:</strong> {{ latest_order.payment_method }}</p>
+        {% endif %}
+    </aside>
+</section>
+{% endblock %}

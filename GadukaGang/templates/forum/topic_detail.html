@@ -1,104 +1,94 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ topic.title }} - Gaduka Gang{% endblock %}
+{% block title %}{{ topic.title }} - Plekhanov CourseHub{% endblock %}
 
 {% block content %}
-<div class="cyber-container">
-    <!-- Breadcrumbs -->
-    <nav class="cyber-breadcrumbs">
-        {% if community %}
-            <a href="{% url 'community_list' %}">Сообщества</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="{% url 'community_detail' community.id %}">{{ community.name }}</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="current-page">{{ topic.title }}</span>
-        {% else %}
-            <a href="{% url 'sections_list' %}">Разделы</a>
-            <span class="breadcrumb-separator">/</span>
-            <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
-            <span class="breadcrumb-separator">/</span>
-            <span class="current-page">{{ topic.title }}</span>
-        {% endif %}
-    </nav>
-
-    <!-- Topic Header -->
-    <header class="cyber-topic-header">
-        <div class="topic-title-section">
-            <h1 class="topic-title">{{ topic.title }}</h1>
-            <div class="topic-meta-info">
-                <div class="meta-item">
-                    <i class="fas fa-user cyber-icon"></i>
-                    <span>Автор: <a href="#" class="author-link">{{ topic.author.username }}</a></span>
-                </div>
-                <div class="meta-item">
-                    <i class="far fa-clock cyber-icon"></i>
-                    <span>{{ topic.created_date|date:"d.m.Y H:i" }}</span>
-                </div>
-                <div class="meta-item">
-                    <i class="far fa-eye cyber-icon"></i>
-                    <span>Просмотров: {{ topic.view_count }}</span>
-                </div>
+<div class="forum-container topic-detail-page">
+    <div class="forum-header">
+        <div class="forum-header-content">
+            <nav class="breadcrumb">
+                {% if community %}
+                <a href="{% url 'community_list' %}">Сообщества</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'community_detail' community.id %}">{{ community.name }}</a>
+                {% else %}
+                <a href="{% url 'sections_list' %}">Разделы</a>
+                <span class="breadcrumb-separator">/</span>
+                <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a>
+                {% endif %}
+                <span class="breadcrumb-separator">/</span>
+                <span>{{ topic.title }}</span>
+            </nav>
+            <h1 class="forum-title">{{ topic.title }}</h1>
+            <div class="topic-meta-row">
+                <span><i class="fas fa-user"></i> {{ topic.author.username }}</span>
+                <span><i class="far fa-clock"></i> {{ topic.created_date|date:"d.m.Y H:i" }}</span>
+                <span><i class="far fa-eye"></i> {{ topic.view_count }}</span>
                 {% if topic.average_rating > 0 %}
-                <div class="meta-item">
-                    <i class="fas fa-star cyber-icon"></i>
-                    <span>{{ topic.average_rating|floatformat:1 }} ({{ topic.rating_count }} оценок)</span>
-                </div>
+                <span><i class="fas fa-star"></i> {{ topic.average_rating|floatformat:1 }} ({{ topic.rating_count }})</span>
                 {% endif %}
             </div>
+            {% if topic_tags %}
+            <div class="topic-tags" style="margin-top:10px;">
+                {% for tag in topic_tags %}
+                <a href="{% url 'topics_by_tag' tag.id %}" class="tag-badge">#{{ tag.name }}</a>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
-
-        {% if topic_tags %}
-        <div class="topic-tags-section">
-            {% for tag in topic_tags %}
-            <a href="{% url 'topics_by_tag' tag.id %}" class="cyber-tag" style="--tag-color: {{ tag.color }}">
-                <span class="tag-hash">#</span> {{ tag.name }}
-            </a>
-            {% endfor %}
-        </div>
-        {% endif %}
-
         {% if user.is_authenticated %}
-        <div class="topic-actions">
-            <a href="#reply-form" class="cyber-button primary">
+        <div class="forum-actions">
+            <a href="{% url 'post_create' topic.id %}" class="btn btn-primary">
                 <i class="fas fa-reply"></i> Ответить
             </a>
             {% if topic.author == user or user.is_staff or user.is_superuser %}
-            <a href="{% url 'topic_edit' topic.id %}" class="cyber-button secondary">
+            <a href="{% url 'topic_edit' topic.id %}" class="btn btn-secondary">
                 <i class="fas fa-edit"></i> Редактировать
             </a>
             <form method="post" action="{% url 'topic_delete' topic.id %}?next={{ request.get_full_path|urlencode }}"
-                onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');" style="display: inline;">
+                onsubmit="return confirm('Вы уверены, что хотите удалить эту тему?');" style="display:inline;">
                 {% csrf_token %}
-                <button type="submit" class="cyber-button danger">
+                <button type="submit" class="btn btn-outline">
                     <i class="fas fa-trash-alt"></i> Удалить
                 </button>
             </form>
             {% endif %}
         </div>
         {% endif %}
-    </header>
+    </div>
 
-    <!-- Posts List -->
-    <div class="cyber-posts-container">
+    <div class="topic-posts">
         {% for post in page_obj %}
-        <article class="cyber-post-card" id="post-{{ post.id }}">
-            <div class="post-header">
-                <div class="post-author-info">
-                    <div class="author-avatar">
-                        {{ post.author.username|first|upper }}
-                    </div>
-                    <div class="author-details">
-                        <a href="#" class="author-name">{{ post.author.username }}</a>
+        <article class="topic-post-card" id="post-{{ post.id }}">
+            <header class="topic-post-header">
+                <div class="topic-post-author">
+                    <div class="author-avatar">{{ post.author.username|first|upper }}</div>
+                    <div class="author-meta">
+                        <a href="#" class="author-link">{{ post.author.username }}</a>
                         <span class="post-date">{{ post.created_date|date:"d.m.Y H:i" }}</span>
                     </div>
                 </div>
-                <div class="post-actions">
-                    <a href="#post-{{ post.id }}" class="cyber-button small outline">#{{ forloop.counter }}</a>
+                <div class="topic-post-tools">
+                    <a href="#post-{{ post.id }}" class="btn btn-secondary btn-sm">#{{ forloop.counter }}</a>
+                    {% if user.is_authenticated %}
+                    {% if post.author == user or user.is_staff or user.is_superuser %}
+                    <a href="{% url 'post_edit' post.id %}?next={{ request.get_full_path|urlencode }}" class="btn btn-secondary btn-sm">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="post" action="{% url 'post_delete' post.id %}?next={{ request.get_full_path|urlencode }}"
+                        onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline btn-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% endif %}
                 </div>
-            </div>
+            </header>
 
-            <div class="post-content">
+            <div class="topic-post-content">
                 {% if post.content_html %}
                 {{ post.content_html|safe }}
                 {% else %}
@@ -106,107 +96,80 @@
                 {% endif %}
             </div>
 
-            {% if post.last_edited_date %}
-            <div class="post-edit-info">
-                <i class="fas fa-pencil-alt"></i> Редактировано {{ post.last_edited_date|date:"d.m.Y H:i" }} (всего
-                правок: {{ post.edit_count }})
-                </span>
+            {% if post.attachments %}
+            <div class="attachment-list">
+                {% for a in post.attachments %}
+                {% if a.kind == 'link' %}
+                <a class="attachment-chip" href="{{ a.external_url }}" target="_blank" rel="noopener">{{ a.title|default:a.external_url }}</a>
+                {% elif a.kind == 'image' %}
+                <a class="attachment-chip" href="{{ a.file.url }}" data-attachment-kind="image" data-attachment-title="{{ a.title|default:'Изображение' }}">🖼 {{ a.title|default:'Изображение' }}</a>
+                {% elif a.kind == 'video' %}
+                <a class="attachment-chip" href="{{ a.file.url }}" data-attachment-kind="video" data-attachment-title="{{ a.title|default:'Видео' }}">🎬 {{ a.title|default:'Видео' }}</a>
+                {% else %}
+                <a class="attachment-chip" href="{% url 'attachment_download' a.id %}" data-attachment-kind="file" data-attachment-title="{{ a.title|default:'Файл' }}">📎 {{ a.title|default:'Файл' }}</a>
                 {% endif %}
+                {% endfor %}
             </div>
+            {% endif %}
 
-            <div class="post-links">
-                {% if user.is_authenticated %}
-                {% if post.author == user or user.is_staff or user.is_superuser %}
-                <a href="{% url 'post_edit' post.id %}?next={{ request.get_full_path|urlencode }}" class="cyber-button small secondary">
-                    <i class="fas fa-edit"></i>
-                </a>
-                <form method="post" action="{% url 'post_delete' post.id %}?next={{ request.get_full_path|urlencode }}"
-                    onsubmit="return confirm('Вы уверены, что хотите удалить это сообщение?');"
-                    style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="cyber-button small danger">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </form>
-                {% endif %}
-                {% endif %}
-            </div>
+            {% if post.last_edited_date %}
+            <footer class="topic-post-footer">
+                <i class="fas fa-pencil-alt"></i> Редактировано {{ post.last_edited_date|date:"d.m.Y H:i" }} (правок: {{ post.edit_count }})
             </footer>
+            {% endif %}
         </article>
         {% empty %}
-        <div class="cyber-empty-state">
-            <div class="empty-icon">
-                <i class="far fa-comment-dots"></i>
-            </div>
+        <div class="empty-state">
+            <div class="empty-state-icon"><i class="far fa-comment-dots"></i></div>
             <h3>Нет сообщений</h3>
-            <p>В этой теме пока никто не ответил. Будьте первым!</p>
+            <p>В этой теме пока никто не ответил.</p>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Pagination -->
     {% if page_obj.has_other_pages %}
-    <div class="cyber-pagination">
-        <div class="pagination-info">
-            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
-        </div>
+    <div class="pagination">
+        <div class="pagination-info">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</div>
         <div class="pagination-controls">
             {% if page_obj.has_previous %}
-            <a href="?page=1" class="cyber-button small secondary">Первая</a>
-            <a href="?page={{ page_obj.previous_page_number }}" class="cyber-button small secondary">Назад</a>
+            <a href="?page=1" class="btn btn-secondary btn-sm"><i class="fas fa-angle-double-left"></i></a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="btn btn-secondary btn-sm"><i class="fas fa-angle-left"></i></a>
             {% endif %}
-
-            <span class="current-page-info">{{ page_obj.number }}</span>
-
             {% if page_obj.has_next %}
-            <a href="?page={{ page_obj.next_page_number }}" class="cyber-button small secondary">Вперед</a>
-            <a href="?page={{ page_obj.paginator.num_pages }}" class="cyber-button small secondary">Последняя</a>
+            <a href="?page={{ page_obj.next_page_number }}" class="btn btn-secondary btn-sm"><i class="fas fa-angle-right"></i></a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="btn btn-secondary btn-sm"><i class="fas fa-angle-double-right"></i></a>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- Rating Section -->
     {% if user.is_authenticated %}
-    <section class="cyber-topic-rating">
-        <h3 class="rating-title">Оцените тему</h3>
+    <section class="topic-rating-card card">
+        <h3>Оцените тему</h3>
         <div class="rating-container">
             <div class="stars-container" data-topic-id="{{ topic.id }}">
                 {% for i in "12345" %}
-                <button class="star-button" data-rating="{{ i }}">
-                    <i class="fas fa-star"></i>
-                </button>
+                <button class="star-button" type="button" data-rating="{{ i }}"><i class="fas fa-star"></i></button>
                 {% endfor %}
             </div>
-            <div class="rating-info">
-                {{ topic.average_rating|floatformat:1 }} из 5 • {{ topic.rating_count }} оценок
-            </div>
+            <div class="rating-info">{{ topic.average_rating|floatformat:1 }} из 5 • {{ topic.rating_count }} оценок</div>
         </div>
     </section>
     {% endif %}
 
-    <!-- Reply Form -->
     {% if user.is_authenticated %}
-    <section id="reply-form" class="cyber-reply-form">
-        <h3 class="form-title">Ваш ответ</h3>
-        <form method="post" action="{% url 'post_create' topic.id %}">
-            {% csrf_token %}
-            <div class="form-group">
-                <p style="color: var(--text-secondary); margin-bottom: 15px;">Нажмите кнопку ниже, чтобы написать ответ.
-                </p>
-                <a href="{% url 'post_create' topic.id %}" class="cyber-button primary">Написать ответ</a>
-            </div>
-        </form>
+    <section class="card">
+        <h3>Ваш ответ</h3>
+        <p class="help-text">Нажмите кнопку ниже, чтобы написать ответ.</p>
+        <a href="{% url 'post_create' topic.id %}" class="btn btn-primary">Написать ответ</a>
     </section>
     {% else %}
-    <div class="cyber-login-prompt">
-        <div class="empty-icon">
-            <i class="fas fa-lock"></i>
-        </div>
+    <div class="empty-state">
+        <div class="empty-state-icon"><i class="fas fa-lock"></i></div>
         <p>Чтобы отвечать в темах и ставить оценки, необходимо авторизоваться.</p>
-        <div style="display: flex; gap: 15px; justify-content: center;">
-            <a href="{% url 'login' %}?next={{ request.path }}" class="cyber-button primary">Войти</a>
-            <a href="{% url 'register' %}" class="cyber-button secondary">Регистрация</a>
+        <div class="forum-actions" style="justify-content:center; margin-top:10px;">
+            <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-primary">Войти</a>
+            <a href="{% url 'register' %}" class="btn btn-secondary">Регистрация</a>
         </div>
     </div>
     {% endif %}
@@ -215,75 +178,31 @@
 
 {% block extra_js %}
 <script>
-    // Обработка лайков/дизлайков
-    document.querySelectorAll('.like-btn, .dislike-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            const postId = this.dataset.postId;
-            const likeType = this.dataset.likeType;
-            const formData = new FormData();
-            formData.append('like_type', likeType);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+document.querySelectorAll('.star-button').forEach(star => {
+    star.addEventListener('click', function () {
+        const container = this.closest('.stars-container');
+        const topicId = container.dataset.topicId;
+        const rating = this.dataset.rating;
+        const formData = new FormData();
+        formData.append('rating', rating);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
 
-            fetch(`/api/posts/${postId}/like/`, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update counts
-                        const postCard = document.getElementById(`post-${postId}`);
-                        postCard.querySelector('.like-count').textContent = data.like_count;
-                        postCard.querySelector('.dislike-count').textContent = data.dislike_count;
-
-                        // Toggle active class
-                        if (likeType === 'like') {
-                            this.classList.toggle('active');
-                            postCard.querySelector('.dislike-btn').classList.remove('active');
-                        } else {
-                            this.classList.toggle('active');
-                            postCard.querySelector('.like-btn').classList.remove('active');
-                        }
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        });
+        fetch(`/api/topics/${topicId}/rating/`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.querySelector('.rating-info').textContent = `${data.average_rating} из 5 • ${data.rating_count} оценок`;
+                container.querySelectorAll('.star-button').forEach((s, idx) => {
+                    if (idx < rating) s.classList.add('active');
+                    else s.classList.remove('active');
+                });
+            }
+        })
+        .catch(() => {});
     });
-
-    // Обработка рейтинга тем
-    document.querySelectorAll('.star-button').forEach(star => {
-        star.addEventListener('click', function () {
-            const container = this.closest('.stars-container');
-            const topicId = container.dataset.topicId;
-            const rating = this.dataset.rating;
-            const formData = new FormData();
-            formData.append('rating', rating);
-            formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-            fetch(`/api/topics/${topicId}/rating/`, {
-                method: 'POST',
-                body: formData
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        document.querySelector('.rating-info').textContent =
-                            `${data.average_rating} из 5 • ${data.rating_count} оценок`;
-
-                        // Подсветка выбранных звезд
-                        container.querySelectorAll('.star-button').forEach((s, idx) => {
-                            if (idx < rating) {
-                                s.classList.add('active');
-                                s.style.color = 'var(--warning)';
-                            } else {
-                                s.classList.remove('active');
-                                s.style.color = 'var(--text-secondary)';
-                            }
-                        });
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        });
-    });
+});
 </script>
 {% endblock %}

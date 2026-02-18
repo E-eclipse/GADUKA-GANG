@@ -1,0 +1,39 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Очередь курсов{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>Курсы на модерации</h2>
+        </div>
+        {% if courses %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Курс</th>
+                        <th>Автор</th>
+                        <th>Дата</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for course in courses %}
+                    <tr>
+                        <td>{{ course.title }}</td>
+                        <td>{{ course.creator.username }}</td>
+                        <td>{{ course.submitted_at|date:"d.m.Y H:i" }}</td>
+                        <td><a class="btn btn-secondary" href="{% url 'moderator_course_review' course.id %}">Проверить</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>Очередь пуста.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

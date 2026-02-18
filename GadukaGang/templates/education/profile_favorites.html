@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Избранные курсы{% endblock %}
+
+{% block extra_css %}
+<style>
+    .favorites-page {
+        padding: 40px 0;
+    }
+
+    .favorites-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .favorites-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+    }
+
+    .favorite-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .favorite-meta {
+        margin-top: 8px;
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+    }
+
+    .favorite-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .favorite-disabled {
+        margin-top: 10px;
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(200, 71, 71, 0.15);
+        color: var(--danger);
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="favorites-page">
+    <div class="container">
+        <div class="favorites-header">
+            <h1>Избранные курсы</h1>
+            <a href="{% url 'profile' %}" class="btn btn-secondary">← Назад в профиль</a>
+        </div>
+
+        <div class="favorites-grid">
+            {% for favorite in favorites %}
+                <div class="favorite-card">
+                    <h3>{{ favorite.course.title }}</h3>
+                    <p>{{ favorite.course.description }}</p>
+                    <div class="favorite-meta">
+                        {% if favorite.course.category %}{{ favorite.course.category.name }} • {% endif %}
+                        {{ favorite.course.level }} • {{ favorite.course.price }} ₽
+                    </div>
+                    {% if not favorite.course.is_active or favorite.course.status != 'approved' and favorite.course.creator_id %}
+                        <span class="favorite-disabled">Курс сейчас недоступен</span>
+                    {% endif %}
+                    <div class="favorite-actions">
+                        <a href="{% url 'course_detail' favorite.course.id %}" class="btn btn-primary">Открыть курс</a>
+                        <form method="post" action="{% url 'toggle_favorite_course' favorite.course.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline">Убрать из избранного</button>
+                        </form>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="favorite-card">
+                    <h3>Избранное пусто</h3>
+                    <p>Пока нет сохраненных курсов.</p>
+                    <a href="{% url 'education_courses' %}" class="btn btn-primary">Перейти в каталог</a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

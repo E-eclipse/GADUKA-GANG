@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Профиль - Gaduka Gang{% endblock %}
+{% block title %}Профиль - Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -386,6 +386,10 @@
                         <div class="stat-label">Достижений</div>
                     </div>
                     <div class="stat-card">
+                        <div class="stat-value">{{ favorites_count|default:0 }}</div>
+                        <div class="stat-label">В избранном</div>
+                    </div>
+                    <div class="stat-card">
                         <div class="stat-value">
                             {% if user.user_rank_progress.rank %}
                                 {{ user.user_rank_progress.rank.name }}
@@ -441,6 +445,21 @@
                                         | Действует до: {{ cert.expiration_date|date:"d.m.Y" }}
                                     {% endif %}
                                 </div>
+                                {% if cert.verification_code %}
+                                <div class="certificate-date">
+                                    Код верификации: <code>{{ cert.verification_code }}</code>
+                                </div>
+                                {% endif %}
+                                <div style="margin-top: 10px;">
+                                    <a href="{% url 'download_certificate_pdf' cert.id %}" class="btn btn-edit" style="text-decoration: none; padding: 8px 15px; font-size: 0.9rem;">
+                                        Скачать PDF
+                                    </a>
+                                    {% if cert.verification_code %}
+                                    <a href="{% url 'certificate_verify' cert.verification_code %}" class="btn btn-secondary" style="text-decoration: none; padding: 8px 15px; font-size: 0.9rem;">
+                                        Публичная верификация
+                                    </a>
+                                    {% endif %}
+                                </div>
                             </div>
                         {% endfor %}
                     {% else %}
@@ -453,6 +472,8 @@
         <div class="profile-actions">
             <a href="{% url 'edit_profile' %}" class="btn btn-outline">Редактировать профиль</a>
             <a href="{% url 'achievements' %}" class="btn btn-edit">Мои достижения</a>
+            <a href="{% url 'order_list' %}" class="btn btn-secondary">История заказов</a>
+            <a href="{% url 'profile_favorites' %}" class="btn btn-primary">Избранные курсы</a>
         </div>
         
         <div style="margin-top: 40px;">
@@ -581,3 +602,6 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 {% endif %}
 {% endblock %}
+
+
+

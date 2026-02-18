@@ -1,0 +1,148 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Панель модератора - Plekhanov CourseHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .moderator-panel {
+        padding: 60px 0;
+        min-height: calc(100vh - 300px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .moderator-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--accent-green);
+        text-shadow: var(--neon-shadow);
+        letter-spacing: 2px;
+        margin-bottom: 40px;
+        font-size: 2.5rem;
+        text-align: center;
+    }
+
+    .moderator-links-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 30px;
+        width: 100%;
+        max-width: 1200px;
+        padding: 0 20px;
+    }
+
+
+    .moderator-link-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 40px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .moderator-link-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--accent-green);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .moderator-link-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--neon-glow);
+        border-color: var(--accent-green);
+    }
+
+    .moderator-link-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .card-icon {
+        font-size: 3rem;
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 10px rgba(0, 255, 65, 0.3));
+    }
+
+    .card-title {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+
+    .card-desc {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="moderator-panel">
+    <h1 class="moderator-title">ПАНЕЛЬ МОДЕРАТОРА</h1>
+
+    <div class="moderator-links-grid">
+        <a href="{% url 'analytics_dashboard' %}" class="moderator-link-card">
+            <div class="card-icon">📊</div>
+            <h3 class="card-title">Аналитика</h3>
+            <p class="card-desc">Дашборд с метриками, графиками активности и отчётами по форуму.</p>
+        </a>
+
+        <a href="/api/v1/docs/" class="moderator-link-card">
+            <div class="card-icon">📜</div>
+            <h3 class="card-title">Документация API</h3>
+            <p class="card-desc">Полная интерактивная документация Swagger UI для всех эндпоинтов.</p>
+        </a>
+
+        <a href="{% url 'csv_operations' %}" class="moderator-link-card">
+            <div class="card-icon">📦</div>
+            <h3 class="card-title">Импорт/Экспорт CSV</h3>
+            <p class="card-desc">Загрузка и выгрузка данных в формате CSV для всех сущностей.</p>
+        </a>
+
+        <a href="{% url 'moderator_courses_queue' %}" class="moderator-link-card">
+            <div class="card-icon">✅</div>
+            <h3 class="card-title">Курсы на модерации</h3>
+            <p class="card-desc">Проверка пользовательских курсов, комментарии и решения.</p>
+        </a>
+
+        <a href="/api/v1/" class="moderator-link-card">
+            <div class="card-icon">🔌</div>
+            <h3 class="card-title">API Root (v1)</h3>
+            <p class="card-desc">Прямой доступ к корню API v1 для навигации по ресурсам.</p>
+        </a>
+
+        <a href="{% url 'moderator_purchases' %}" class="moderator-link-card">
+            <div class="card-icon">🧾</div>
+            <h3 class="card-title">Покупки курсов</h3>
+            <p class="card-desc">История заказов пользователей и финансы по курсам.</p>
+        </a>
+
+        <a href="{% url 'moderator_course_analytics' %}" class="moderator-link-card">
+            <div class="card-icon">📈</div>
+            <h3 class="card-title">Глубокая аналитика курсов</h3>
+            <p class="card-desc">Продажи, вовлеченность, рейтинг курсов и показатели завершения по каждому курсу.</p>
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+
+

@@ -1,0 +1,113 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Редактирование курса{% else %}Создание курса{% endif %}{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>{% if is_edit %}Редактирование курса{% else %}Создание курса{% endif %}</h2>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Название</label>
+                <input id="title" name="title" value="{{ course.title|default:'' }}" required>
+                <small class="help-text">Коротко и понятно: о чем курс.</small>
+            </div>
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" rows="5" required>{{ course.description|default:'' }}</textarea>
+                <small class="help-text">2–4 предложения: для кого курс и какой результат.</small>
+            </div>
+            <div class="form-group">
+                <label for="price">Цена</label>
+                <input id="price" name="price" type="number" step="0.01" value="{{ course.price|default:0 }}">
+                <small class="help-text">Комиссия платформы 20% будет вычтена автоматически.</small>
+            </div>
+            <div class="form-group">
+                <label for="category">Категория</label>
+                <select id="category" name="category">
+                    <option value="">—</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if course.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="level">Уровень</label>
+                <input id="level" name="level" value="{{ course.level|default:'Начальный' }}">
+            </div>
+            <div class="form-group">
+                <label for="duration_weeks">Длительность (недели)</label>
+                <input id="duration_weeks" name="duration_weeks" type="number" value="{{ course.duration_weeks|default:0 }}">
+            </div>
+
+            <h3 style="margin-top: 30px;">Реквизиты для выплат</h3>
+            <div class="form-group">
+                <label for="payout_method">Способ выплаты</label>
+                <select id="payout_method" name="payout_method" required>
+                    <option value="">Выберите</option>
+                    <option value="sbp" {% if course.payout_method == 'sbp' %}selected{% endif %}>СБП (телефон)</option>
+                    <option value="card" {% if course.payout_method == 'card' %}selected{% endif %}>Карта (16 цифр)</option>
+                    <option value="bank" {% if course.payout_method == 'bank' %}selected{% endif %}>Реквизиты (БИК/р/с)</option>
+                </select>
+                <small class="help-text">Выберите один способ получения выплат.</small>
+            </div>
+            <div class="form-group" id="payout_sbp_group" style="display:none;">
+                <label for="payout_sbp_phone">Телефон для СБП</label>
+                <input id="payout_sbp_phone" name="payout_sbp_phone" value="{% if course.payout_method == 'sbp' %}{{ course.payout_details }}{% endif %}">
+                <small class="help-text">Номер телефона, привязанный к СБП.</small>
+            </div>
+            <div class="form-group" id="payout_card_group" style="display:none;">
+                <label for="payout_card_number">Номер карты</label>
+                <input id="payout_card_number" name="payout_card_number" maxlength="19" placeholder="0000 0000 0000 0000" value="{% if course.payout_method == 'card' %}{{ course.payout_details }}{% endif %}">
+                <small class="help-text">16 цифр, пробелы поставятся сами.</small>
+            </div>
+            <div class="form-group" id="payout_bank_group" style="display:none;">
+                <label for="payout_details">Реквизиты</label>
+                <textarea id="payout_details" name="payout_details" rows="3">{{ course.payout_details|default:'' }}</textarea>
+                <small class="help-text">БИК, счет, банк. В свободной форме.</small>
+            </div>
+            <div class="form-group">
+                <label for="contact_email">Контактный email</label>
+                <input id="contact_email" name="contact_email" type="email" value="{{ course.contact_email|default:'' }}">
+            </div>
+            <div class="form-group">
+                <label for="contact_phone">Контактный телефон</label>
+                <input id="contact_phone" name="contact_phone" value="{{ course.contact_phone|default:'' }}">
+            </div>
+
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-secondary" href="{% url 'creator_courses' %}">Назад</a>
+        </form>
+    </div>
+</section>
+<script>
+    const payoutMethod = document.getElementById('payout_method');
+    const sbpGroup = document.getElementById('payout_sbp_group');
+    const cardGroup = document.getElementById('payout_card_group');
+    const bankGroup = document.getElementById('payout_bank_group');
+    const cardInput = document.getElementById('payout_card_number');
+
+    function maskCard(value) {
+        const digits = value.replace(/\D/g, '').slice(0, 16);
+        return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+    }
+
+    function applyPayoutVisibility() {
+        const value = payoutMethod.value;
+        sbpGroup.style.display = value === 'sbp' ? 'block' : 'none';
+        cardGroup.style.display = value === 'card' ? 'block' : 'none';
+        bankGroup.style.display = value === 'bank' ? 'block' : 'none';
+    }
+
+    payoutMethod.addEventListener('change', applyPayoutVisibility);
+    cardInput.addEventListener('input', () => {
+        cardInput.value = maskCard(cardInput.value);
+    });
+
+    cardInput.value = maskCard(cardInput.value);
+    applyPayoutVisibility();
+</script>
+{% endblock %}

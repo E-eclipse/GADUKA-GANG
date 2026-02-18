@@ -1,0 +1,6 @@
+﻿name,description,icon_url,criteria
+Первый шаг,Создать первую тему на форуме,/static/images/achievements/first-step.png,"{""type"": ""topic_count"", ""value"": 1}"
+Активист,Создать 10 тем на форуме,/static/images/achievements/active.png,"{""type"": ""topic_count"", ""value"": 10}"
+Писатель,Написать 50 сообщений на форуме,/static/images/achievements/writer.png,"{""type"": ""post_count"", ""value"": 50}"
+Завершен курс: Python для начинающих,"Вы успешно завершили курс ""Python для начинающих""",,"{""course_id"": 1}"
+Завершен курс: Python для продвинутых,"Вы успешно завершили курс ""Python для продвинутых""",,"{""course_id"": 2}"

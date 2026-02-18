@@ -1,0 +1,44 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Редактирование вопроса{% else %}Добавление вопроса{% endif %}{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <h2>{% if is_edit %}Редактирование вопроса{% else %}Добавление вопроса{% endif %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="prompt">Текст вопроса</label>
+                <textarea id="prompt" name="prompt" rows="4">{{ question.prompt|default:'' }}</textarea>
+            </div>
+            <div class="form-group">
+                <label for="question_type">Тип</label>
+                <select id="question_type" name="question_type">
+                    <option value="single" {% if question.question_type == 'single' %}selected{% endif %}>Один вариант</option>
+                    <option value="multiple" {% if question.question_type == 'multiple' %}selected{% endif %}>Несколько вариантов</option>
+                    <option value="text" {% if question.question_type == 'text' %}selected{% endif %}>Текстовый ответ</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="order">Порядок</label>
+                <input id="order" name="order" type="number" value="{{ question.order|default:0 }}">
+            </div>
+            <div class="form-group">
+                <label for="weight">Вес</label>
+                <input id="weight" name="weight" type="number" value="{{ question.weight|default:1 }}">
+            </div>
+            <div class="form-group">
+                <label for="min_words">Минимум слов (для текстового)</label>
+                <input id="min_words" name="min_words" type="number" value="{{ question.min_words|default:20 }}">
+            </div>
+            <div class="form-group">
+                <label for="required_keywords">Ключевые слова (через запятую)</label>
+                <input id="required_keywords" name="required_keywords" value="{{ question.required_keywords|join:', ' }}">
+            </div>
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-secondary" href="{% url 'creator_lesson_edit' lesson.id %}">Назад</a>
+        </form>
+    </div>
+</section>
+{% endblock %}

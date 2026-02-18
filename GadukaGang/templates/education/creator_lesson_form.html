@@ -1,0 +1,650 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Редактирование урока{% else %}Добавление урока{% endif %}{% endblock %}
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <h2>{% if is_edit %}Редактирование урока{% else %}Добавление урока{% endif %}</h2>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Название</label>
+                <input id="title" name="title" value="{{ lesson.title|default:'' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="lesson_type">Тип</label>
+                <select id="lesson_type" name="lesson_type">
+                    <option value="lecture" {% if lesson.lesson_type == 'lecture' or not lesson.lesson_type %}selected{% endif %}>Лекция</option>
+                    <option value="practice" {% if lesson.lesson_type == 'practice' %}selected{% endif %}>Практика</option>
+                    <option value="control" {% if lesson.lesson_type == 'control' %}selected{% endif %}>Контрольная (тест)</option>
+                </select>
+                <small class="help-text">Выберите формат: лекция — текст, практика — задания, контрольная — итоговый тест.</small>
+            </div>
+            <div class="form-group">
+                <label for="section">Блок</label>
+                <select id="section" name="section">
+                    <option value="">Без блока</option>
+                    {% for section in sections %}
+                    <option value="{{ section.id }}" {% if lesson.section_id == section.id %}selected{% endif %}>{{ section.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="order">Порядок</label>
+                <input id="order" name="order" type="number" value="{{ lesson.order|default:0 }}">
+            </div>
+            <div class="form-group">
+                <label for="content">Контент</label>
+                <textarea id="content" name="content" rows="8" hidden>{{ lesson.content|default:'' }}</textarea>
+                <div id="content_editor" class="wysiwyg-editor">{{ lesson.content|default:'' }}</div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                    <button type="button" class="btn btn-secondary" id="insert_image_btn">Вставить фото</button>
+                    <button type="button" class="btn btn-secondary" id="insert_video_btn">Вставить видео</button>
+                    <button type="button" class="btn btn-secondary" id="insert_file_btn">Вставить файл</button>
+                    <span id="editor_upload_status" class="help-text" style="margin:0;"></span>
+                </div>
+                <input id="inline_image_input" type="file" accept="image/*,.webp" hidden>
+                <input id="inline_video_input" type="file" accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogv,.ogg,.m4v" hidden>
+                <input id="inline_file_input" type="file" hidden>
+                <small class="help-text">Поддерживается форматирование текста, ссылки, списки и выделение.</small>
+            </div>
+            <div class="form-group">
+                <label for="attachments">Вложения (фото, видео, файлы)</label>
+                <input id="attachments" name="attachments" type="file" multiple>
+                <small class="help-text">Вложения доступны на странице урока после сохранения.</small>
+            </div>
+
+            <div id="practice_fields">
+                <div class="form-group" id="practice_mode_group">
+                    <label>Тип практики</label>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <label class="btn btn-secondary">
+                            <input type="radio" name="practice_mode" value="code" {% if lesson.practice_mode == 'code' or not lesson.practice_mode %}checked{% endif %}>
+                            Код
+                        </label>
+                        <label class="btn btn-secondary">
+                            <input type="radio" name="practice_mode" value="quiz" {% if lesson.practice_mode == 'quiz' %}checked{% endif %}>
+                            Тест
+                        </label>
+                    </div>
+                    <small class="help-text">Код — для IT курсов, тест — для теоретических дисциплин.</small>
+                </div>
+                <div class="form-group">
+                    <label for="practice_task">Задание для практики</label>
+                    <textarea id="practice_task" name="practice_task" rows="5" hidden>{{ lesson.practice_task|default:'' }}</textarea>
+                    <div id="practice_task_editor" class="wysiwyg-editor">{{ lesson.practice_task|default:'' }}</div>
+                    <small class="help-text">Опишите, что должен сделать студент. Пример: “Напишите программу, которая зеркалит слово”.</small>
+                </div>
+                <div class="form-group">
+                    <label for="practice_code_template">Код-шаблон (для практики)</label>
+                    <textarea id="practice_code_template" name="practice_code_template" rows="6">{{ lesson.practice_code_template|default:'' }}</textarea>
+                    <small class="help-text">Например: заготовка функции или начальный код.</small>
+                </div>
+                <div class="form-group">
+                    <label>Тесты для проверки решения</label>
+                    <div id="testcases_list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                    <button type="button" class="btn btn-secondary" id="add_testcase_btn">Добавить тест</button>
+                    <small class="help-text">Платформа сама соберет JSON для проверки.</small>
+                </div>
+                <input type="hidden" id="test_cases" name="test_cases" value='{{ lesson.test_cases|default:"[]"|escapejs }}'>
+                {{ lesson.test_cases|default:"[]"|json_script:"testCasesSeed" }}
+            </div>
+
+            <div id="control_fields">
+                <div class="form-group">
+                    <label for="control_pass_threshold">Порог контрольной (%)</label>
+                    <input id="control_pass_threshold" name="control_pass_threshold" type="number" value="{{ lesson.control_pass_threshold|default:70 }}">
+                    <small class="help-text">Сколько процентов нужно для зачета.</small>
+                </div>
+                <div class="form-group">
+                    <label for="control_lock_minutes">Блокировка (мин.)</label>
+                    <input id="control_lock_minutes" name="control_lock_minutes" type="number" value="{{ lesson.control_lock_minutes|default:10 }}">
+                    <small class="help-text">Если не сдал, контрольная блокируется на это время.</small>
+                </div>
+                <div class="form-group">
+                    <label for="control_time_limit_minutes">Лимит времени (мин.)</label>
+                    <input id="control_time_limit_minutes" name="control_time_limit_minutes" type="number" value="{{ lesson.control_time_limit_minutes|default:30 }}">
+                    <small class="help-text">По истечению времени все неотвеченные вопросы считаются неверными.</small>
+                </div>
+                <div class="form-group">
+                    <label>Вопросы контрольной</label>
+                    <div id="control_questions_list" style="display:flex; flex-direction:column; gap:12px;"></div>
+                    <button type="button" class="btn btn-secondary" id="add_control_question_btn">Добавить вопрос</button>
+                    <small class="help-text">Добавляйте вопросы и варианты — JSON создастся автоматически.</small>
+                </div>
+                <input type="hidden" id="control_questions_json" name="control_questions_json" value="[]">
+                {{ control_questions_json|default:"[]"|json_script:"controlQuestionsSeed" }}
+            </div>
+
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-secondary" href="{% url 'creator_course_builder' course.id %}">Назад</a>
+        </form>
+
+    </div>
+</section>
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+    const lessonType = document.getElementById('lesson_type');
+    const practiceFields = document.getElementById('practice_fields');
+    const controlFields = document.getElementById('control_fields');
+    const testCasesInput = document.getElementById('test_cases');
+    const testList = document.getElementById('testcases_list');
+    const addTestBtn = document.getElementById('add_testcase_btn');
+    const lessonForm = document.querySelector('form');
+    const testCasesSeedNode = document.getElementById('testCasesSeed');
+    const uploadStatus = document.getElementById('editor_upload_status');
+
+    function showFields() {
+        const type = lessonType.value;
+        const isIt = {{ is_it_course|yesno:"true,false" }};
+        practiceFields.style.display = type === 'practice' ? 'block' : 'none';
+        const modeInputs = document.querySelectorAll('input[name="practice_mode"]');
+        let mode = 'code';
+        modeInputs.forEach((input) => { if (input.checked) mode = input.value; });
+
+        if (!isIt && type === 'practice') {
+            mode = 'quiz';
+            modeInputs.forEach((input) => { input.checked = input.value === 'quiz'; });
+        }
+
+        const showQuiz = type === 'control' || (type === 'practice' && mode === 'quiz');
+        controlFields.style.display = showQuiz ? 'block' : 'none';
+
+        const showCode = type === 'practice' && mode === 'code';
+        document.getElementById('practice_code_template').closest('.form-group').style.display = showCode ? 'block' : 'none';
+        document.getElementById('add_testcase_btn').closest('.form-group').style.display = showCode ? 'block' : 'none';
+        document.getElementById('practice_task').closest('.form-group').style.display = type === 'practice' ? 'block' : 'none';
+        document.getElementById('practice_mode_group').style.display = (type === 'practice' && isIt) ? 'block' : 'none';
+    }
+
+    function getTestCasesSeed() {
+        if (testCasesInput && testCasesInput.value && testCasesInput.value.trim().length > 0) {
+            try {
+                const parsed = JSON.parse(testCasesInput.value);
+                if (typeof parsed === 'string') {
+                    return JSON.parse(parsed);
+                }
+                return parsed;
+            } catch (e) {}
+        }
+        if (testCasesSeedNode) {
+            try {
+                const parsed = JSON.parse(testCasesSeedNode.textContent);
+                if (typeof parsed === 'string') {
+                    return JSON.parse(parsed);
+                }
+                return parsed;
+            } catch (e) {}
+        }
+        return [];
+    }
+
+    function setTestCases(items) {
+        if (testCasesInput) {
+            testCasesInput.value = JSON.stringify(items || []);
+        }
+    }
+
+    function renderTestCases() {
+        const items = getTestCasesSeed();
+        testList.innerHTML = '';
+        items.forEach((item, idx) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'card';
+            wrapper.style.padding = '16px';
+            wrapper.innerHTML = `
+                <div class="form-group">
+                    <label>Входные данные</label>
+                    <textarea rows="3" data-input name="testcase_input">${item.input || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Ожидаемый вывод</label>
+                    <textarea rows="3" data-output name="testcase_output">${item.output || ''}</textarea>
+                </div>
+                <button type="button" class="btn btn-outline" data-remove>Удалить тест</button>
+            `;
+            wrapper.querySelector('[data-remove]').addEventListener('click', () => {
+                items.splice(idx, 1);
+                setTestCases(items);
+                renderTestCases();
+            });
+            wrapper.querySelectorAll('textarea').forEach((ta) => {
+                ta.addEventListener('input', () => {
+                    const currentItems = [];
+                    testList.querySelectorAll('.card').forEach(card => {
+                        currentItems.push({
+                            input: card.querySelector('[data-input]').value,
+                            output: card.querySelector('[data-output]').value
+                        });
+                    });
+                    setTestCases(currentItems);
+                });
+            });
+            testList.appendChild(wrapper);
+        });
+    }
+
+    addTestBtn.addEventListener('click', () => {
+        let items = getTestCasesSeed();
+        items.push({ input: '', output: '' });
+        setTestCases(items);
+        renderTestCases();
+    });
+    
+    function syncTestCasesFromDom() {
+        const items = [];
+        testList.querySelectorAll('.card').forEach(card => {
+            items.push({
+                input: card.querySelector('[data-input]')?.value || '',
+                output: card.querySelector('[data-output]')?.value || ''
+            });
+        });
+        setTestCases(items);
+    }
+
+    lessonType.addEventListener('change', showFields);
+    document.querySelectorAll('input[name="practice_mode"]').forEach((input) => {
+        input.addEventListener('change', showFields);
+    });
+    showFields();
+    if (testCasesInput && (!testCasesInput.value || testCasesInput.value === '[]') && testCasesSeedNode) {
+        setTestCases(getTestCasesSeed());
+    }
+    renderTestCases();
+    if (lessonForm) {
+        lessonForm.addEventListener('submit', () => {
+            syncTestCasesFromDom();
+        });
+    }
+
+    // Control questions builder
+    const controlList = document.getElementById('control_questions_list');
+    const controlJsonInput = document.getElementById('control_questions_json');
+    const addControlBtn = document.getElementById('add_control_question_btn');
+    const controlSeedNode = document.getElementById('controlQuestionsSeed');
+
+    function getControlData() {
+        const currentValue = controlJsonInput.value;
+        if (currentValue && currentValue.trim().length > 0) {
+            try {
+                const parsed = JSON.parse(currentValue);
+                if (typeof parsed === 'string') {
+                    return JSON.parse(parsed);
+                }
+                return parsed;
+            } catch (e) {}
+        }
+        if (controlSeedNode) {
+            try {
+                const parsed = JSON.parse(controlSeedNode.textContent);
+                if (typeof parsed === 'string') {
+                    return JSON.parse(parsed);
+                }
+                return parsed;
+            } catch (e) {}
+        }
+        return [];
+    }
+
+    function setControlData(items) {
+        controlJsonInput.value = JSON.stringify(items);
+    }
+
+    function renderControlQuestions() {
+        const items = getControlData();
+        controlList.innerHTML = '';
+        items.forEach((q, idx) => {
+            const card = document.createElement('div');
+            card.className = 'card control-question-card';
+            card.style.padding = '16px';
+            card.draggable = true;
+            card.dataset.qIndex = String(idx);
+            card.innerHTML = `
+                <div class="form-group">
+                    <label>Текст вопроса</label>
+                    <textarea rows="3" data-q-prompt>${q.prompt || ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Тип</label>
+                    <select data-q-type>
+                        <option value="single" ${q.question_type === 'single' ? 'selected' : ''}>Один вариант</option>
+                        <option value="multiple" ${q.question_type === 'multiple' ? 'selected' : ''}>Несколько вариантов</option>
+                        <option value="text" ${q.question_type === 'text' ? 'selected' : ''}>Текстовый</option>
+                    </select>
+                </div>
+                <div class="form-group" data-q-kind-group>
+                    <label>Категория вопроса</label>
+                    <select data-q-kind>
+                        <option value="theory" ${q.question_kind === 'theory' ? 'selected' : ''}>Теоретический</option>
+                        <option value="practice" ${q.question_kind === 'practice' ? 'selected' : ''}>Практический</option>
+                    </select>
+                    <small class="help-text">Для IT курсов отмечайте практику, для остальных — теорию.</small>
+                </div>
+                <div class="form-group" data-q-practice-only>
+                    <label>Входные данные (для практики)</label>
+                    <textarea rows="3" data-q-practice-input>${q.practice_input || ''}</textarea>
+                </div>
+                <div class="form-group" data-q-practice-only>
+                    <label>Ожидаемый результат (для практики)</label>
+                    <textarea rows="3" data-q-practice-output>${q.practice_output || ''}</textarea>
+                    <small class="help-text">Используется как критерий ответа или эталон.</small>
+                </div>
+                <div class="form-group" data-q-shared>
+                    <label>Вес</label>
+                    <input type="number" value="${q.weight || 1}" data-q-weight>
+                </div>
+                <div class="form-group" data-q-text-only>
+                    <label>Минимум слов (для текста)</label>
+                    <input type="number" value="${q.min_words || 20}" data-q-minwords>
+                </div>
+                <div class="form-group" data-q-text-only>
+                    <label>Ключевые слова (через запятую)</label>
+                    <input value="${(q.required_keywords || []).join(', ')}" data-q-keywords>
+                </div>
+                <div class="form-group" data-q-options-only>
+                    <label>Варианты ответа</label>
+                    <div data-options style="display:flex; flex-direction:column; gap:8px;"></div>
+                    <button type="button" class="btn btn-secondary" data-add-option>Добавить вариант</button>
+                </div>
+                <button type="button" class="btn btn-outline" data-remove-question>Удалить вопрос</button>
+            `;
+
+            const optionsContainer = card.querySelector('[data-options]');
+            const options = q.options || [];
+            options.forEach((opt, optIdx) => {
+                const optRow = document.createElement('div');
+                optRow.style.display = 'flex';
+                optRow.style.gap = '8px';
+                optRow.innerHTML = `
+                    <input style="flex:1;" value="${opt.option_text || ''}" data-opt-text>
+                    <label style="display:flex; align-items:center; gap:6px;">
+                        <input type="checkbox" ${opt.is_correct ? 'checked' : ''} data-opt-correct> Правильный
+                    </label>
+                    <button type="button" class="btn btn-outline" data-remove-option>×</button>
+                `;
+                optRow.querySelector('[data-remove-option]').addEventListener('click', () => {
+                    options.splice(optIdx, 1);
+                    q.options = options;
+                    setControlData(items);
+                    renderControlQuestions();
+                });
+                optionsContainer.appendChild(optRow);
+            });
+
+            card.querySelector('[data-add-option]').addEventListener('click', () => {
+                options.push({ option_text: '', is_correct: false, order: options.length + 1 });
+                q.options = options;
+                setControlData(items);
+                renderControlQuestions();
+            });
+
+            card.querySelector('[data-remove-question]').addEventListener('click', () => {
+                items.splice(idx, 1);
+                setControlData(items);
+                renderControlQuestions();
+            });
+
+            function applyQuestionTypeVisibility() {
+                const type = card.querySelector('[data-q-type]').value;
+                const kindSelect = card.querySelector('[data-q-kind]');
+                const kindGroup = card.querySelector('[data-q-kind-group]');
+                const kind = kindSelect ? kindSelect.value : 'theory';
+                const textOnly = card.querySelectorAll('[data-q-text-only]');
+                const optionsOnly = card.querySelectorAll('[data-q-options-only]');
+                const practiceOnly = card.querySelectorAll('[data-q-practice-only]');
+                const isPracticeQuiz = (lessonType.value === 'practice' && document.querySelector('input[name="practice_mode"]:checked')?.value === 'quiz');
+
+                if (isPracticeQuiz && kindGroup && kindSelect) {
+                    kindGroup.style.display = 'none';
+                    kindSelect.value = 'theory';
+                } else if (kindGroup) {
+                    kindGroup.style.display = 'block';
+                }
+                if (kind === 'practice') {
+                    card.querySelector('[data-q-type]').value = 'text';
+                    textOnly.forEach(el => el.style.display = 'block');
+                    optionsOnly.forEach(el => el.style.display = 'none');
+                    practiceOnly.forEach(el => el.style.display = 'block');
+                    return;
+                }
+                practiceOnly.forEach(el => el.style.display = 'none');
+                if (type === 'text') {
+                    textOnly.forEach(el => el.style.display = 'block');
+                    optionsOnly.forEach(el => el.style.display = 'none');
+                } else {
+                    textOnly.forEach(el => el.style.display = 'none');
+                    optionsOnly.forEach(el => el.style.display = 'block');
+                }
+            }
+
+            card.querySelector('[data-q-type]').addEventListener('change', applyQuestionTypeVisibility);
+            card.querySelector('[data-q-kind]').addEventListener('change', applyQuestionTypeVisibility);
+            applyQuestionTypeVisibility();
+
+            card.querySelectorAll('input, textarea, select').forEach((input) => {
+                const evt = input.tagName === 'SELECT' ? 'change' : 'input';
+                input.addEventListener(evt, () => {
+                    q.prompt = card.querySelector('[data-q-prompt]').value;
+                    q.question_type = card.querySelector('[data-q-type]').value;
+                    q.question_kind = card.querySelector('[data-q-kind]').value;
+                    q.practice_input = card.querySelector('[data-q-practice-input]')?.value || '';
+                    q.practice_output = card.querySelector('[data-q-practice-output]')?.value || '';
+                    q.weight = parseInt(card.querySelector('[data-q-weight]').value || '1', 10);
+                    q.min_words = parseInt(card.querySelector('[data-q-minwords]').value || '20', 10);
+                    const keywordsRaw = card.querySelector('[data-q-keywords]').value;
+                    q.required_keywords = keywordsRaw.split(',').map(x => x.trim()).filter(Boolean);
+                    const optionRows = Array.from(optionsContainer.children);
+                    q.options = optionRows.map((row, i) => ({
+                        option_text: row.querySelector('[data-opt-text]').value,
+                        is_correct: row.querySelector('[data-opt-correct]').checked,
+                        order: i + 1
+                    }));
+                    setControlData(items);
+                });
+            });
+
+            card.addEventListener('dragstart', (e) => {
+                card.classList.add('dragging');
+                e.dataTransfer.setData('text/plain', card.dataset.qIndex || '0');
+            });
+            card.addEventListener('dragend', () => {
+                card.classList.remove('dragging');
+            });
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                card.style.outline = '2px dashed rgba(31, 122, 140, 0.6)';
+            });
+            card.addEventListener('dragleave', () => {
+                card.style.outline = '';
+            });
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                card.style.outline = '';
+                const fromIndex = parseInt(e.dataTransfer.getData('text/plain') || '0', 10);
+                const toIndex = idx;
+                if (fromIndex === toIndex) return;
+                const items = getControlData();
+                const [moved] = items.splice(fromIndex, 1);
+                items.splice(toIndex, 0, moved);
+                setControlData(items);
+                renderControlQuestions();
+            });
+
+            controlList.appendChild(card);
+        });
+    }
+
+    if (addControlBtn) {
+        addControlBtn.addEventListener('click', () => {
+            const items = getControlData();
+            items.push({
+                prompt: '',
+                question_type: 'single',
+                question_kind: 'theory',
+                practice_input: '',
+                practice_output: '',
+                weight: 1,
+                min_words: 20,
+                required_keywords: [],
+                options: [{ option_text: '', is_correct: true, order: 1 }]
+            });
+            setControlData(items);
+            renderControlQuestions();
+        });
+    }
+
+    if (controlSeedNode && (!controlJsonInput.value || controlJsonInput.value === '[]')) {
+        controlJsonInput.value = controlSeedNode.textContent || '[]';
+    }
+
+    function mountEditor(editorId, textareaId) {
+        if (!window.Quill) return null;
+        const editorElement = document.getElementById(editorId);
+        const textarea = document.getElementById(textareaId);
+        if (!editorElement || !textarea) return null;
+
+        const quill = new Quill(`#${editorId}`, {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ color: [] }, { background: [] }],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    ['link', 'blockquote', 'code-block'],
+                    ['clean']
+                ]
+            }
+        });
+        quill.root.innerHTML = textarea.value || '';
+        return { quill, textarea };
+    }
+
+    const contentEditor = mountEditor('content_editor', 'content');
+    const practiceTaskEditor = mountEditor('practice_task_editor', 'practice_task');
+
+    function getCsrfToken() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return input ? input.value : '';
+    }
+
+    async function uploadInlineFile(file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', file.name || '');
+        const response = await fetch("{% url 'upload_content_attachment' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCsrfToken() },
+            body: formData,
+            credentials: 'same-origin',
+        });
+        if (!response.ok) {
+            throw new Error(`upload_failed_${response.status}`);
+        }
+        return response.json();
+    }
+
+    function pasteHtmlAtCursor(quill, html) {
+        if (!quill) return;
+        const range = quill.getSelection(true);
+        const index = range ? range.index : quill.getLength();
+        quill.clipboard.dangerouslyPasteHTML(index, html);
+        quill.setSelection(index + 1, 0);
+    }
+
+    async function handleInlineInsert(file, targetKind) {
+        if (!file || !contentEditor || !contentEditor.quill) return;
+        uploadStatus.textContent = 'Загружаю файл...';
+        try {
+            const payload = await uploadInlineFile(file);
+            if (!payload || !payload.success || !payload.url) {
+                throw new Error('upload_invalid_response');
+            }
+            const safeTitle = (payload.title || file.name || '').replace(/"/g, '&quot;');
+            if (targetKind === 'image') {
+                pasteHtmlAtCursor(contentEditor.quill, `<p><img src="${payload.url}" alt="${safeTitle}" style="max-width:100%;height:auto;"></p>`);
+            } else if (targetKind === 'video') {
+                if (payload.kind !== 'video') {
+                    const fallbackHref = payload.download_url || payload.url;
+                    pasteHtmlAtCursor(
+                        contentEditor.quill,
+                        `<p><a href="${fallbackHref}" target="_blank" rel="noopener">${safeTitle || 'Скачать видеофайл'}</a></p>`
+                    );
+                    uploadStatus.textContent = 'Формат не поддерживается встроенным плеером. Используйте MP4/WebM.';
+                    syncEditors();
+                    return;
+                }
+                pasteHtmlAtCursor(
+                    contentEditor.quill,
+                    `<p><video controls preload="metadata" playsinline style="max-width:100%;height:auto;" src="${payload.url}">Ваш браузер не поддерживает встроенное видео. <a href="${payload.url}" target="_blank" rel="noopener">Открыть файл</a></video></p>`
+                );
+            } else {
+                const downloadHref = payload.download_url || (payload.id ? `/attachments/${payload.id}/download/` : payload.url);
+                pasteHtmlAtCursor(
+                    contentEditor.quill,
+                    `<p><a href="${downloadHref}" target="_blank" rel="noopener">${safeTitle || 'Скачать файл'}</a></p>`
+                );
+            }
+            uploadStatus.textContent = 'Файл вставлен в контент.';
+            syncEditors();
+        } catch (e) {
+            uploadStatus.textContent = 'Не удалось загрузить файл. Попробуйте еще раз.';
+        }
+    }
+
+    const inlineImageInput = document.getElementById('inline_image_input');
+    const inlineVideoInput = document.getElementById('inline_video_input');
+    const inlineFileInput = document.getElementById('inline_file_input');
+    document.getElementById('insert_image_btn')?.addEventListener('click', () => inlineImageInput.click());
+    document.getElementById('insert_video_btn')?.addEventListener('click', () => inlineVideoInput.click());
+    document.getElementById('insert_file_btn')?.addEventListener('click', () => inlineFileInput.click());
+
+    inlineImageInput?.addEventListener('change', () => {
+        const file = inlineImageInput.files && inlineImageInput.files[0];
+        handleInlineInsert(file, 'image').finally(() => { inlineImageInput.value = ''; });
+    });
+    inlineVideoInput?.addEventListener('change', () => {
+        const file = inlineVideoInput.files && inlineVideoInput.files[0];
+        handleInlineInsert(file, 'video').finally(() => { inlineVideoInput.value = ''; });
+    });
+    inlineFileInput?.addEventListener('change', () => {
+        const file = inlineFileInput.files && inlineFileInput.files[0];
+        handleInlineInsert(file, 'file').finally(() => { inlineFileInput.value = ''; });
+    });
+
+    function syncEditors() {
+        if (contentEditor) {
+            contentEditor.textarea.value = contentEditor.quill.root.innerHTML;
+        }
+        if (practiceTaskEditor) {
+            practiceTaskEditor.textarea.value = practiceTaskEditor.quill.root.innerHTML;
+        }
+    }
+
+    renderControlQuestions();
+    lessonType.addEventListener('change', renderControlQuestions);
+    document.querySelectorAll('input[name="practice_mode"]').forEach((input) => {
+        input.addEventListener('change', renderControlQuestions);
+    });
+
+    if (lessonForm) {
+        lessonForm.addEventListener('submit', () => {
+            syncTestCasesFromDom();
+            syncEditors();
+        });
+    }
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+

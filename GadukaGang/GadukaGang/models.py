@@ -1,6 +1,9 @@
-from django.db import models
+﻿from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+import uuid
 
 # Модель пользователя
 class User(AbstractUser):
@@ -28,6 +31,7 @@ class UserProfile(models.Model):
     bio = models.TextField(blank=True)
     signature = models.TextField(blank=True)
     post_count = models.IntegerField(default=0)
+    karma = models.IntegerField(default=0)  # Added karma field
     join_date = models.DateTimeField(auto_now_add=True)
     last_activity = models.DateTimeField(auto_now=True)
 
@@ -169,6 +173,12 @@ class UserCertificate(models.Model):
     awarded_date = models.DateTimeField(auto_now_add=True)
     awarded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='awarded_certificates')
     expiration_date = models.DateTimeField(null=True, blank=True)
+    verification_code = models.CharField(max_length=64, unique=True, db_index=True)
+
+    def save(self, *args, **kwargs):
+        if not self.verification_code:
+            self.verification_code = uuid.uuid4().hex
+        super().save(*args, **kwargs)
 
     class Meta:
         app_label = 'GadukaGang'
@@ -511,18 +521,71 @@ class CommunityNotificationSubscription(models.Model):
         unique_together = ('community', 'user')
         app_label = 'GadukaGang'
 
+# Модель категории курсов
+class CourseCategory(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    order = models.IntegerField(default=0)
+    is_it = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['order', 'name']
+        app_label = 'GadukaGang'
+
 # Модель курса обучения
 class Course(models.Model):
+    STATUS_CHOICES = [
+        ('draft', 'Черновик'),
+        ('pending_auto', 'Автопроверка'),
+        ('auto_rejected', 'Отклонен автоматически'),
+        ('pending_moderation', 'На модерации'),
+        ('rejected', 'Отклонен модератором'),
+        ('approved', 'Опубликован'),
+    ]
+
+    category = models.ForeignKey(CourseCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='courses')
+    creator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_courses')
     title = models.CharField(max_length=200)
     description = models.TextField()
     icon_url = models.URLField(max_length=500, blank=True)
+    price = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    duration_weeks = models.IntegerField(default=0)
+    level = models.CharField(max_length=50, default='Начальный')
+    has_practice = models.BooleanField(default=False)
     created_date = models.DateTimeField(auto_now_add=True)
     order = models.IntegerField(default=0)
     is_active = models.BooleanField(default=True)
-    
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='draft')
+    auto_reject_reason = models.TextField(blank=True)
+    moderator_comment = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    payout_method = models.CharField(max_length=30, blank=True)
+    payout_details = models.TextField(blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_phone = models.CharField(max_length=50, blank=True)
+
     def __str__(self):
         return self.title
-    
+
+    class Meta:
+        ordering = ['order']
+        app_label = 'GadukaGang'
+
+# Модель раздела курса
+class CourseSection(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='sections')
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    order = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.course.title} - {self.title}"
+
     class Meta:
         ordering = ['order']
         app_label = 'GadukaGang'
@@ -532,26 +595,36 @@ class Lesson(models.Model):
     LESSON_TYPES = [
         ('lecture', 'Лекция'),
         ('practice', 'Практическое задание'),
+        ('control', 'Контрольная работа'),
     ]
-    
+    PRACTICE_MODES = [
+        ('code', 'Код'),
+        ('quiz', 'Тест'),
+    ]
+
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='lessons')
+    section = models.ForeignKey(CourseSection, on_delete=models.SET_NULL, null=True, blank=True, related_name='lessons')
     title = models.CharField(max_length=200)
     content = models.TextField()
     lesson_type = models.CharField(max_length=20, choices=LESSON_TYPES, default='lecture')
+    practice_mode = models.CharField(max_length=20, choices=PRACTICE_MODES, default='code')
     order = models.IntegerField(default=0)
     created_date = models.DateTimeField(auto_now_add=True)
-    practice_code_template = models.TextField(blank=True)  # Шаблон кода для практики
-    practice_solution = models.TextField(blank=True)  # Решение для проверки
-    test_cases = models.JSONField(default=list, blank=True)  # Массив тестовых случаев: [{"input": "...", "output": "..."}, ...]
-    
+    practice_code_template = models.TextField(blank=True)
+    practice_solution = models.TextField(blank=True)
+    practice_task = models.TextField(blank=True)
+    control_time_limit_minutes = models.PositiveIntegerField(default=30)
+    test_cases = models.JSONField(default=list, blank=True)
+    control_pass_threshold = models.PositiveIntegerField(default=70)
+    control_lock_minutes = models.PositiveIntegerField(default=10)
+
     def __str__(self):
         return f"{self.course.title} - {self.title}"
-    
+
     class Meta:
         ordering = ['order']
         app_label = 'GadukaGang'
 
-# Модель прогресса пользователя по курсу
 class CourseProgress(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_progresses')
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='progresses')
@@ -570,3 +643,232 @@ class CourseProgress(models.Model):
             return 0
         completed_count = self.completed_lessons.count()
         return int((completed_count / total_lessons) * 100)
+
+# Модель доступа к куру (покупка)
+class CourseEnrollment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_enrollments')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='enrollments')
+    is_paid = models.BooleanField(default=False)
+    purchased_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+        app_label = 'GadukaGang'
+
+
+class CourseFavorite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorite_courses')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='favorited_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'course')
+        ordering = ['-created_at']
+        app_label = 'GadukaGang'
+
+
+class CourseRating(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='ratings')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='course_ratings')
+    rating = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('course', 'user')
+        ordering = ['-updated_at']
+        app_label = 'GadukaGang'
+
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='orders')
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='sold_orders')
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
+    commission_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    payout_amount = models.DecimalField(max_digits=9, decimal_places=2, default=0)
+    payout_status = models.CharField(max_length=20, default='pending')
+    currency = models.CharField(max_length=10, default='RUB')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payment_method = models.CharField(max_length=50, default='stub')
+    receipt_email = models.EmailField(blank=True)
+    billing_name = models.CharField(max_length=200, blank=True)
+    billing_phone = models.CharField(max_length=50, blank=True)
+    receipt_number = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        app_label = 'GadukaGang'
+
+
+class ControlQuestion(models.Model):
+    QUESTION_TYPES = [
+        ('single', 'Один вариант'),
+        ('multiple', 'Несколько вариантов'),
+        ('text', 'Текстовый ответ'),
+    ]
+    QUESTION_KINDS = [
+        ('theory', 'Теоретический'),
+        ('practice', 'Практический'),
+    ]
+
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='control_questions')
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES, default='single')
+    question_kind = models.CharField(max_length=20, choices=QUESTION_KINDS, default='theory')
+    prompt = models.TextField()
+    practice_input = models.TextField(blank=True)
+    practice_output = models.TextField(blank=True)
+    order = models.IntegerField(default=0)
+    weight = models.PositiveIntegerField(default=1)
+    min_words = models.PositiveIntegerField(default=20)
+    required_keywords = models.JSONField(default=list, blank=True)
+
+    def __str__(self):
+        return f"{self.lesson.title} - Q{self.order}"
+
+    class Meta:
+        ordering = ['order', 'id']
+        app_label = 'GadukaGang'
+
+
+class ControlQuestionOption(models.Model):
+    question = models.ForeignKey(ControlQuestion, on_delete=models.CASCADE, related_name='options')
+    option_text = models.TextField()
+    is_correct = models.BooleanField(default=False)
+    order = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"Option {self.order} for Q{self.question_id}"
+
+    class Meta:
+        ordering = ['order', 'id']
+        app_label = 'GadukaGang'
+
+
+class ControlAttempt(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='control_attempts')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='control_attempts')
+    score = models.IntegerField(default=0)
+    max_score = models.IntegerField(default=0)
+    percent = models.PositiveIntegerField(default=0)
+    passed = models.BooleanField(default=False)
+    answers = models.JSONField(default=dict, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} / {self.lesson.title} / {self.percent}%"
+
+    class Meta:
+        ordering = ['-created_date']
+        app_label = 'GadukaGang'
+
+
+class ControlLock(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='control_locks')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='control_locks')
+    locked_until = models.DateTimeField(null=True, blank=True)
+    failed_attempts = models.PositiveIntegerField(default=0)
+    last_score = models.PositiveIntegerField(default=0)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        app_label = 'GadukaGang'
+
+
+class ControlSession(models.Model):
+    STATUS_CHOICES = [
+        ('in_progress', 'In progress'),
+        ('completed', 'Completed'),
+    ]
+    PHASE_CHOICES = [
+        ('initial', 'Initial'),
+        ('review', 'Review'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='control_sessions')
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, related_name='control_sessions')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
+    phase = models.CharField(max_length=20, choices=PHASE_CHOICES, default='initial')
+    question_order = models.JSONField(default=list, blank=True)
+    answers = models.JSONField(default=dict, blank=True)
+    skipped = models.JSONField(default=list, blank=True)
+    time_limit_seconds = models.PositiveIntegerField(default=0)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'lesson')
+        app_label = 'GadukaGang'
+
+
+class CourseModerationLog(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='moderation_logs')
+    moderator = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    decision = models.CharField(max_length=20)
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        app_label = 'GadukaGang'
+
+
+class PayoutTransaction(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('processing', 'Processing'),
+        ('paid', 'Paid'),
+        ('failed', 'Failed'),
+    ]
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payout')
+    seller = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='payouts')
+    amount = models.DecimalField(max_digits=9, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    payout_details = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        app_label = 'GadukaGang'
+
+
+class ContentAttachment(models.Model):
+    KIND_CHOICES = [
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('file', 'File'),
+        ('link', 'Link'),
+    ]
+
+    owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='content_attachments')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True)
+    object_id = models.PositiveIntegerField(null=True, blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id')
+    kind = models.CharField(max_length=20, choices=KIND_CHOICES, default='file')
+    title = models.CharField(max_length=255, blank=True)
+    file = models.FileField(upload_to='attachments/%Y/%m/%d/', blank=True)
+    external_url = models.URLField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        app_label = 'GadukaGang'
+
+
+
+
+

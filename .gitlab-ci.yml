@@ -1,0 +1,77 @@
+﻿image: python:3.11
+
+stages:
+  - build
+  - linter
+  - test
+
+variables:
+  DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
+  DB_NAME: "forum_database"
+  DB_USER: "forum_owner"
+  DB_PASSWORD: "1111"
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+  ENCRYPTION_KEY: "KafqByaeRwSiijl2t7uRpPZKj6-4MgHEVILKiqZQKkM="
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+
+cache:
+  paths:
+    - .cache/pip
+
+default:
+  before_script:
+    - python --version
+    - python -m pip install --upgrade pip
+    - cd GadukaGang
+    - pip install -r requirements.txt
+    - cp .env.example .env
+
+# Проверка сборки проекта
+build-check:
+  stage: build
+  script:
+    - echo "Проверка сборки началась"
+    - python manage.py check
+    - python manage.py makemigrations --check --dry-run
+    - echo "Проверка сборки завершена"
+
+# Проверка синтаксиса и базовых ошибок
+linter-check:
+  stage: linter
+  allow_failure: true
+  script:
+    - echo "Запуск flake8"
+    - pip install flake8
+    - flake8 . --exclude=.venv,myenv,migrations,staticfiles --count --statistics
+    - echo "Проверка линтером завершена"
+
+# Основные unit-тесты
+unit-tests:
+  stage: test
+  script:
+    - echo "Запуск unit-тестов"
+    - python manage.py test GadukaGang.tests --verbosity 2
+
+# Анализ качества кода
+code-quality:
+  stage: test
+  allow_failure: true
+  script:
+    - echo "Анализ качества кода"
+    - pip install radon
+    - radon cc . -a
+    - radon raw .
+    - echo "Анализ качества кода завершен"
+
+# Проверка безопасности
+security-check:
+  stage: test
+  allow_failure: true
+  script:
+    - echo "Проверка безопасности"
+    - pip install bandit
+    - bandit -r . -ll -x migrations
+    - echo "Проверка безопасности завершена"

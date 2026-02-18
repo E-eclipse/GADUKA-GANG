@@ -1,0 +1,31 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}{% if is_edit %}Редактирование блока{% else %}Добавление блока{% endif %}{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <h2>{% if is_edit %}Редактирование блока{% else %}Добавление блока{% endif %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="title">Название</label>
+                <input id="title" name="title" value="{{ section.title|default:'' }}" required>
+                <small class="help-text">Например: «Блок 1. Основы».</small>
+            </div>
+            <div class="form-group">
+                <label for="description">Описание</label>
+                <textarea id="description" name="description" rows="3">{{ section.description|default:'' }}</textarea>
+                <small class="help-text">Кратко: что будет внутри блока.</small>
+            </div>
+            <div class="form-group">
+                <label for="order">Порядок</label>
+                <input id="order" name="order" type="number" value="{{ section.order|default:0 }}">
+                <small class="help-text">Можно оставить 0 — порядок можно перетаскивать.</small>
+            </div>
+            <button class="btn btn-primary" type="submit">Сохранить</button>
+            <a class="btn btn-secondary" href="{% url 'creator_course_builder' course.id %}">Назад</a>
+        </form>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Аналитика курсов — Plekhanov CourseHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-page { padding: 36px 0; display: grid; gap: 20px; max-width: 100%; overflow-x: hidden; }
+    .top-actions { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; }
+    .kpi-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; min-width: 0; }
+    .kpi-label { color: var(--text-secondary); font-size: 0.9rem; }
+    .kpi-value { font-size: 1.35rem; font-weight: 700; color: var(--text-primary); margin-top: 6px; }
+    .analytics-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; min-width: 0; }
+    .analytics-table-wrap { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .analytics-table { width: 100%; border-collapse: collapse; min-width: 1180px; }
+    .analytics-table th, .analytics-table td { padding: 10px 12px; border-bottom: 1px solid var(--border-color); text-align: left; }
+    .analytics-table th { color: var(--text-secondary); font-weight: 600; }
+    .text-good { color: var(--success); font-weight: 600; }
+    .text-warn { color: var(--warning); font-weight: 600; }
+    .tiny { color: var(--text-secondary); font-size: 0.85rem; }
+    .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
+    @media (max-width: 980px) { .chart-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="analytics-page">
+    <div class="top-actions">
+        <h1>Глубокая аналитика курсов</h1>
+        {% if is_admin_view %}
+            <a class="btn btn-secondary" href="{% url 'admin_panel' %}">← Назад в админ-панель</a>
+        {% else %}
+            <a class="btn btn-secondary" href="{% url 'moderator_panel' %}">← Назад в панель модератора</a>
+        {% endif %}
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card"><div class="kpi-label">Курсов в аналитике</div><div class="kpi-value">{{ totals.total_courses }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Покупателей</div><div class="kpi-value">{{ totals.total_buyers }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Оплат</div><div class="kpi-value">{{ totals.total_purchases }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Активно проходят сейчас</div><div class="kpi-value">{{ totals.total_active_learners }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Завершили</div><div class="kpi-value">{{ totals.total_completed_learners }}</div></div>
+        <div class="kpi-card"><div class="kpi-label">Доля завершения</div><div class="kpi-value">{{ totals.global_completion_rate }}%</div></div>
+        <div class="kpi-card"><div class="kpi-label">Выручка</div><div class="kpi-value">{{ revenue.total_income|default:0 }} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Комиссия платформы</div><div class="kpi-value">{{ revenue.total_commission|default:0 }} ₽</div></div>
+        <div class="kpi-card"><div class="kpi-label">Выплаты авторам</div><div class="kpi-value">{{ revenue.total_payout|default:0 }} ₽</div></div>
+    </div>
+
+    <div class="chart-grid">
+        <div class="analytics-card">
+            <h3>Выручка по дням (30 последних дней)</h3>
+            <div class="analytics-table-wrap">
+                <table class="analytics-table" style="min-width: 520px;">
+                    <thead><tr><th>Дата</th><th>Выручка</th><th>Покупок</th><th>Покупателей</th></tr></thead>
+                    <tbody>
+                        {% for row in daily_revenue %}
+                        <tr>
+                            <td>{{ row.day|date:"d.m.Y" }}</td>
+                            <td>{{ row.revenue|default:0 }} ₽</td>
+                            <td>{{ row.purchases }}</td>
+                            <td>{{ row.buyers }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Пока нет данных.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <h3>Категории курсов</h3>
+            <div class="analytics-table-wrap">
+                <table class="analytics-table" style="min-width: 520px;">
+                    <thead><tr><th>Категория</th><th>Курсов</th><th>Покупок</th><th>Выручка</th></tr></thead>
+                    <tbody>
+                        {% for row in category_rows %}
+                        <tr>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.total_courses }}</td>
+                            <td>{{ row.paid_orders|default:0 }}</td>
+                            <td>{{ row.revenue|default:0 }} ₽</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4">Нет категорий.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="analytics-card">
+        <h3>Подробно по каждому курсу</h3>
+        <div class="analytics-table-wrap">
+            <table class="analytics-table">
+                <thead>
+                    <tr>
+                        <th>Курс</th>
+                        <th>Категория</th>
+                        <th>Автор</th>
+                        <th>Покупок</th>
+                        <th>Покупателей</th>
+                        <th>Выручка</th>
+                        <th>Средний чек</th>
+                        <th>Активные сейчас</th>
+                        <th>Завершили</th>
+                        <th>Доля завершения</th>
+                        <th>Средний прогресс</th>
+                        <th>Рейтинг</th>
+                        <th>Последняя оплата</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in course_rows %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'course_detail' row.course.id %}">{{ row.course.title }}</a>
+                            <div class="tiny">ID: {{ row.course.id }}</div>
+                        </td>
+                        <td>{% if row.course.category %}{{ row.course.category.name }}{% else %}—{% endif %}</td>
+                        <td>{% if row.course.creator %}{{ row.course.creator.username }}{% else %}Системный{% endif %}</td>
+                        <td>{{ row.purchases }}</td>
+                        <td>{{ row.buyers }}</td>
+                        <td>{{ row.revenue }} ₽</td>
+                        <td>{{ row.avg_check|floatformat:2 }} ₽</td>
+                        <td class="text-good">{{ row.active }}</td>
+                        <td>{{ row.completed }}</td>
+                        <td class="{% if row.completion_rate >= 70 %}text-good{% else %}text-warn{% endif %}">{{ row.completion_rate }}%</td>
+                        <td>{{ row.avg_progress }}%</td>
+                        <td>⭐ {{ row.avg_rating }} <span class="tiny">({{ row.rating_count }})</span></td>
+                        <td>{% if row.last_paid %}{{ row.last_paid|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="13">Курсы не найдены.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endblock %}

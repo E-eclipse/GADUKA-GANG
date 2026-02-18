@@ -338,3 +338,120 @@ BEGIN
     LEFT JOIN user_ranks new_r ON ru.new_rank_id = new_r.id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================
+-- ХРАНИМЫЕ ПРОЦЕДУРЫ (Stored Procedures)
+-- ============================================
+
+-- 1. Массовое удаление спам-постов
+CREATE OR REPLACE PROCEDURE bulk_delete_spam_posts(
+    p_user_ids INTEGER[],
+    p_moderator_id INTEGER,
+    OUT deleted_count INTEGER
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    -- Помечаем посты как удалённые
+    UPDATE posts
+    SET is_deleted = TRUE
+    WHERE author_id = ANY(p_user_ids);
+    
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    -- Логируем действие модератора
+    INSERT INTO system_logs (
+        user_id,
+        action_type,
+        action_level,
+        description,
+        affected_resource_type,
+        affected_resource_id,
+        timestamp
+    ) VALUES (
+        p_moderator_id,
+        'bulk_spam_delete',
+        'moderator'::user_role_enum,
+        'Массовое удаление спам-постов от ' || array_length(p_user_ids, 1) || ' пользователей',
+        'post',
+        NULL,
+        CURRENT_TIMESTAMP
+    );
+END;
+$$;
+
+-- 2. Массовое обновление ролей пользователей
+CREATE OR REPLACE PROCEDURE bulk_update_user_roles(
+    p_user_ids INTEGER[],
+    p_new_role user_role_enum,
+    p_admin_id INTEGER,
+    OUT updated_count INTEGER
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    -- Обновляем роли пользователей
+    UPDATE users
+    SET role = p_new_role
+    WHERE id = ANY(p_user_ids);
+    
+    GET DIAGNOSTICS updated_count = ROW_COUNT;
+    
+    -- Логируем действие администратора
+    INSERT INTO system_logs (
+        user_id,
+        action_type,
+        action_level,
+        description,
+        affected_resource_type,
+        affected_resource_id,
+        timestamp
+    ) VALUES (
+        p_admin_id,
+        'bulk_role_update',
+        'admin_level_1'::user_role_enum,
+        'Массовое обновление ролей для ' || array_length(p_user_ids, 1) || ' пользователей',
+        'user',
+        NULL,
+        CURRENT_TIMESTAMP
+    );
+END;
+$$;
+
+-- 3. Сброс достижений пользователя
+CREATE OR REPLACE PROCEDURE reset_user_achievements(
+    p_user_id INTEGER,
+    p_admin_id INTEGER,
+    OUT removed_count INTEGER
+)
+LANGUAGE plpgsql AS $$
+BEGIN
+    -- Удаляем все достижения пользователя
+    DELETE FROM user_achievements
+    WHERE user_id = p_user_id;
+    
+    GET DIAGNOSTICS removed_count = ROW_COUNT;
+    
+    -- Сбрасываем очки рейтинга пользователя
+    UPDATE user_rank_progress
+    SET current_points = 0, rank_id = 1
+    WHERE user_id = p_user_id;
+    
+    -- Логируем действие администратора
+    INSERT INTO system_logs (
+        user_id,
+        action_type,
+        action_level,
+        description,
+        affected_resource_type,
+        affected_resource_id,
+        timestamp
+    ) VALUES (
+        p_admin_id,
+        'user_achievements_reset',
+        'admin_level_1'::user_role_enum,
+        'Сброс достижений пользователя ID: ' || p_user_id,
+        'user',
+        p_user_id,
+        CURRENT_TIMESTAMP
+    );
+END;
+$$;

@@ -1,9 +1,10 @@
-from django import forms
+﻿from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import get_user_model
 from .models import UserProfile, Section, Topic, Post, Tag
 
 User = get_user_model()
+
 
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={'class': 'form-control'}))
@@ -12,17 +13,18 @@ class CustomUserCreationForm(UserCreationForm):
         label='Я согласен с политикой конфиденциальности',
         error_messages={'required': 'Необходимо принять политику конфиденциальности для регистрации.'}
     )
-    
+
     class Meta:
         model = User
         fields = ("username", "email", "password1", "password2")
-    
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.email = self.cleaned_data["email"]
         if commit:
             user.save()
         return user
+
 
 class UserProfileForm(forms.ModelForm):
     class Meta:
@@ -34,8 +36,10 @@ class UserProfileForm(forms.ModelForm):
             'signature': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+
 class SectionForm(forms.ModelForm):
     """Форма для создания и редактирования разделов"""
+
     class Meta:
         model = Section
         fields = ['name', 'description']
@@ -44,15 +48,17 @@ class SectionForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Описание раздела'}),
         }
 
+
 class TopicForm(forms.ModelForm):
     """Форма для создания и редактирования тем"""
+
     tags = forms.ModelMultipleChoiceField(
         queryset=Tag.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label='Теги'
     )
-    
+
     class Meta:
         model = Topic
         fields = ['title', 'section', 'tags']
@@ -60,15 +66,17 @@ class TopicForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Название темы'}),
             'section': forms.Select(attrs={'class': 'form-control'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             # При редактировании загружаем существующие теги
             self.fields['tags'].initial = self.instance.topic_tags.all().values_list('tag_id', flat=True)
 
+
 class PostForm(forms.ModelForm):
     """Форма для создания и редактирования сообщений"""
+
     class Meta:
         model = Post
         fields = ['content']

@@ -42,7 +42,7 @@
             "axisCenteredZero": false,
             "axisColorMode": "text",
             "axisLabel": "",
-            "axisPlacement": "auto",
+            "axisPlacement": "left",
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
@@ -58,7 +58,8 @@
             "lineWidth": 2,
             "pointSize": 5,
             "scaleDistribution": {
-              "type": "linear"
+              "log": 2,
+              "type": "symlog"
             },
             "showPoints": "never",
             "showValues": false,
@@ -100,7 +101,7 @@
             "max"
           ],
           "displayMode": "table",
-          "placement": "right",
+          "placement": "bottom",
           "showLegend": true
         },
         "tooltip": {
@@ -117,7 +118,7 @@
             "uid": "gaduka-prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(gadukagang_django_http_responses_total_by_status_total{status=\"404\"}[1m])",
+          "expr": "floor(sum(increase(gadukagang_django_http_responses_total_by_status_total{status=\"404\"}[2m])))",
           "legendFormat": "404 errors/sec",
           "range": true,
           "refId": "A"
@@ -142,5 +143,5 @@
   "timezone": "",
   "title": "404 Errors Dashboard",
   "uid": "404-errors",
-  "version": 6
+  "version": 9
 }

@@ -1,0 +1,39 @@
+{% for item in courses_with_progress %}
+    <div class="course-card">
+        <h3>{{ item.course.title }}</h3>
+        <p>{{ item.course.description }}</p>
+        <div class="course-meta">
+            {% if item.course.category %}<span>{{ item.course.category.name }}</span>{% endif %}
+            {% if item.course.duration_weeks %}<span>{{ item.course.duration_weeks }} недель</span>{% endif %}
+            <span>{{ item.course.level }}</span>
+            {% if item.course.has_practice %}<span>Практика</span>{% endif %}
+        </div>
+        <div class="course-price">{{ item.course.price }} ₽</div>
+        {% if item.progress %}
+            <div class="course-meta">Прогресс: {{ item.progress.progress }}%</div>
+        {% endif %}
+        <div class="course-actions">
+            {% if item.has_access %}
+                <a href="{% url 'course_detail' item.course.id %}" class="btn btn-primary">Перейти</a>
+                {% if user.is_authenticated and is_admin_user and not item.enrollment %}
+                    <form method="post" action="{% url 'course_purchase' item.course.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-secondary">Автоподтвердить оплату</button>
+                    </form>
+                {% endif %}
+            {% else %}
+                {% if user.is_authenticated %}
+                    <a href="{% url 'course_purchase' item.course.id %}" class="btn btn-primary">Купить курс</a>
+                    <a href="{% url 'course_detail' item.course.id %}" class="btn btn-secondary">Описание</a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary">Войти для покупки</a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+{% empty %}
+    <div class="course-card">
+        <h3>Курсы не найдены</h3>
+        <p>Попробуйте изменить запрос или выбрать другое направление.</p>
+    </div>
+{% endfor %}

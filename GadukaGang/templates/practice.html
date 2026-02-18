@@ -1,157 +1,83 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Практика - Gaduka Gang{% endblock %}
+{% block title %}Практика — Plekhanov CourseHub{% endblock %}
 
-{% block content %}
-<div class="practice-container">
-    <div class="practice-header">
-        <h1>Практика Python</h1>
-        <p>Здесь вы найдете задачи и упражнения для оттачивания своих навыков программирования</p>
-    </div>
-    
-    <div class="practice-content">
-        <div class="practice-section">
-            <h2>Интерактивные задания</h2>
-            <p>Теперь доступна система автоматической проверки решений с сертификацией</p>
-            <a href="{% url 'practice_topics' %}" class="btn btn-primary btn-lg">
-                <i class="fas fa-play"></i> Начать практику
-            </a>
-        </div>
-        
-        <div class="practice-features">
-            <div class="feature-card">
-                <h3><i class="fas fa-tasks"></i> Задачи разной сложности</h3>
-                <p>От простых упражнений до сложных алгоритмических задач</p>
-            </div>
-            
-            <div class="feature-card">
-                <h3><i class="fas fa-chart-line"></i> Система рейтинга</h3>
-                <p>Соревнуйтесь с другими участниками и улучшайте свои навыки</p>
-            </div>
-            
-            <div class="feature-card">
-                <h3><i class="fas fa-graduation-cap"></i> Обучающие материалы</h3>
-                <p>Доступ к теоретическим материалам и примерам решений</p>
-            </div>
-            
-            <div class="feature-card">
-                <h3><i class="fas fa-certificate"></i> Сертификация</h3>
-                <p>Получайте сертификаты за завершение уровней</p>
-            </div>
-        </div>
-    </div>
-</div>
-
+{% block extra_css %}
 <style>
-    .practice-container {
-        padding: 40px 20px;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-    
-    .practice-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-    
-    .practice-header h1 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.5rem;
-        color: var(--accent-green);
-        text-shadow: var(--neon-shadow);
-        margin-bottom: 20px;
-    }
-    
-    .practice-header p {
-        font-size: 1.2rem;
-        color: var(--text-secondary);
-        max-width: 600px;
-        margin: 0 auto;
-        line-height: 1.6;
-    }
-    
-    .practice-content {
-        background-color: var(--card-bg);
+    .practice-hero {
+        background: #fff;
+        border-radius: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 5px;
         padding: 40px;
-        box-shadow: var(--neon-shadow);
-    }
-    
-    .practice-section {
-        text-align: center;
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.08);
         margin-bottom: 40px;
     }
-    
-    .practice-section h2 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2rem;
-        color: var(--accent-green);
-        margin-bottom: 20px;
+
+    .practice-hero h1 {
+        font-family: var(--font-heading);
+        font-size: 2.4rem;
+        color: var(--accent-blue);
+        margin-bottom: 12px;
     }
-    
-    .practice-section p {
-        font-size: 1.1rem;
+
+    .practice-hero p {
         color: var(--text-secondary);
-        margin-bottom: 30px;
-        line-height: 1.6;
+        max-width: 700px;
     }
-    
-    .practice-features {
+
+    .practice-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-        margin-top: 40px;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
     }
-    
-    .feature-card {
-        background-color: rgba(18, 18, 18, 0.7);
+
+    .practice-card {
+        background: #fff;
+        border-radius: 18px;
+        padding: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 5px;
-        padding: 30px;
-        text-align: center;
-        transition: all 0.3s ease;
+        box-shadow: 0 16px 30px rgba(19, 32, 62, 0.08);
     }
-    
-    .feature-card:hover {
-        border-color: var(--accent-green);
-        transform: translateY(-5px);
-        box-shadow: var(--neon-shadow);
-    }
-    
-    .feature-card h3 {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-green);
-        margin-bottom: 15px;
+
+    .practice-card h3 {
+        font-family: var(--font-heading);
         font-size: 1.4rem;
-    }
-    
-    .feature-card h3 i {
-        margin-right: 10px;
-    }
-    
-    .feature-card p {
-        color: var(--text-secondary);
-        line-height: 1.6;
-    }
-    
-    @media (max-width: 768px) {
-        .practice-container {
-            padding: 20px 10px;
-        }
-        
-        .practice-content {
-            padding: 20px;
-        }
-        
-        .practice-header h1 {
-            font-size: 2rem;
-        }
-        
-        .practice-features {
-            grid-template-columns: 1fr;
-        }
+        margin-bottom: 12px;
     }
 </style>
 {% endblock %}
+
+{% block content %}
+<section class="practice-hero">
+    <h1>Практика курсов</h1>
+    <p>Закрепляйте знания с помощью интерактивных задач, кейсов и индивидуальной проверки. Практикум доступен участникам платных программ.</p>
+    <div class="hero-actions">
+        <a href="{% url 'practice_topics' %}" class="btn btn-primary">Перейти к практикуму</a>
+        <a href="{% url 'forum_hub' %}" class="btn btn-secondary">Обсудить задания</a>
+    </div>
+</section>
+
+<section>
+    <h2 class="section-title">Что входит в практикум</h2>
+    <div class="practice-grid">
+        <div class="practice-card">
+            <h3>Интерактивные задания</h3>
+            <p>Пошаговые задачи с автоматической проверкой и подсказками.</p>
+        </div>
+        <div class="practice-card">
+            <h3>Проектные кейсы</h3>
+            <p>Работа с реальными бизнес-ситуациями и отчетностью.</p>
+        </div>
+        <div class="practice-card">
+            <h3>Обратная связь</h3>
+            <p>Разбор выполненных работ экспертами и рекомендации по улучшению.</p>
+        </div>
+        <div class="practice-card">
+            <h3>Сертификация</h3>
+            <p>Итоговые работы и подтверждение освоенных компетенций.</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+

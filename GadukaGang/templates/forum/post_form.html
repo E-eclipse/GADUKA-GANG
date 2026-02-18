@@ -1,49 +1,92 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ action }} сообщение - Gaduka Gang{% endblock %}
+{% block title %}{{ action }} сообщение - Plekhanov CourseHub{% endblock %}
 
-{% block content %}
-<div class="forum-container">
-    <div class="forum-header">
-        <h1>{{ action }} сообщение</h1>
-        {% if post %}
-            {% if community %}
-            <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">Назад к сообществу</a>
-            {% else %}
-            <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Назад к теме</a>
-            {% endif %}
-        {% else %}
-        <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Назад к теме</a>
-        {% endif %}
-    </div>
-
-    <div class="form-container">
-        <form method="post">
-            {% csrf_token %}
-            <div class="form-group">
-                <label for="{{ form.content.id_for_label }}">Содержание сообщения</label>
-                {{ form.content }}
-                {% if form.content.errors %}
-                <div class="error-message">{{ form.content.errors }}</div>
-                {% endif %}
-                <small class="form-hint">Поддерживается Markdown форматирование</small>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="btn btn-primary">{{ action }}</button>
-                {% if post %}
-                    {% if community %}
-                    <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">Отмена</a>
-                    {% else %}
-                    <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Отмена</a>
-                    {% endif %}
-                {% else %}
-                <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Отмена</a>
-                {% endif %}
-            </div>
-        </form>
-    </div>
-</div>
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+.post-form-page { max-width: 980px; margin: 0 auto; }
+.post-form-card { padding: 28px; }
+.post-form-actions { display: flex; gap: 12px; margin-top: 20px; }
+</style>
 {% endblock %}
 
+{% block content %}
+<section class="post-form-page">
+  <div class="card post-form-card">
+    <h2>{{ action }} сообщение</h2>
+    <p class="help-text">Тема: {% if post %}{{ post.topic.title }}{% else %}{{ topic.title }}{% endif %}</p>
+
+    <form method="post" enctype="multipart/form-data" id="post-form">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Содержание</label>
+        <div class="rich-editor-wrap"><div id="post-editor"></div></div>
+        <input type="hidden" name="content" id="post-content-hidden">
+      </div>
+
+      <div class="form-group">
+        <label for="attachments">Файлы / фото / видео</label>
+        <input id="attachments" name="attachments" type="file" multiple>
+      </div>
+
+      {% if post and post_attachments %}
+      <div class="form-group">
+        <label>Уже прикрепленные файлы</label>
+        <div class="attachment-list">
+          {% for a in post_attachments %}
+          <label class="attachment-chip" style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" name="remove_attachment_ids" value="{{ a.id }}">
+            Удалить: {{ a.title|default:a.file.name|default:a.external_url }}
+          </label>
+          {% endfor %}
+        </div>
+        <small class="help-text">Отметьте вложения, которые нужно удалить при сохранении.</small>
+      </div>
+      {% endif %}
+
+      <div class="post-form-actions">
+        <button type="submit" class="btn btn-primary">{{ action }}</button>
+        {% if post %}
+          {% if community %}
+          <a href="{% url 'community_detail' community.id %}" class="btn btn-secondary">Отмена</a>
+          {% else %}
+          <a href="{% url 'topic_detail' post.topic.id %}" class="btn btn-secondary">Отмена</a>
+          {% endif %}
+        {% else %}
+        <a href="{% url 'topic_detail' topic.id %}" class="btn btn-secondary">Отмена</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+(() => {
+  const initialContent = `{% if post %}{{ post.content|escapejs }}{% endif %}`;
+  const quill = new Quill('#post-editor', {
+    theme: 'snow',
+    modules: {
+      toolbar: [
+        [{ header: [1, 2, false] }],
+        ['bold', 'italic', 'underline'],
+        [{ color: [] }, { background: [] }],
+        [{ list: 'ordered' }, { list: 'bullet' }],
+        ['link', 'blockquote', 'code-block'],
+        ['clean']
+      ]
+    }
+  });
+  if (initialContent) {
+    quill.root.innerHTML = initialContent;
+  }
+  document.getElementById('post-form').addEventListener('submit', function () {
+    document.getElementById('post-content-hidden').value = quill.root.innerHTML;
+  });
+})();
+</script>
+{% endblock %}

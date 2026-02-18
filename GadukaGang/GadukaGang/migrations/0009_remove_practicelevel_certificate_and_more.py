@@ -19,14 +19,6 @@ class Migration(migrations.Migration):
             name='topic',
         ),
         migrations.RemoveField(
-            model_name='userpracticeprogress',
-            name='level',
-        ),
-        migrations.RemoveField(
-            model_name='userpracticeprogress',
-            name='user',
-        ),
-        migrations.RemoveField(
             model_name='userprofile',
             name='karma',
         ),
@@ -36,12 +28,12 @@ class Migration(migrations.Migration):
             field=models.DateTimeField(auto_now=True),
         ),
         migrations.DeleteModel(
-            name='PracticeTopic',
+            name='UserPracticeProgress',
         ),
         migrations.DeleteModel(
             name='PracticeLevel',
         ),
         migrations.DeleteModel(
-            name='UserPracticeProgress',
+            name='PracticeTopic',
         ),
     ]

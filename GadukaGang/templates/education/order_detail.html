@@ -1,0 +1,127 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Чек заказа{% endblock %}
+
+{% block extra_css %}
+<style>
+    .order-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 0;
+    }
+
+    .order-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .order-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 20px;
+    }
+
+    .order-grid .full {
+        grid-column: 1 / -1;
+    }
+
+    .order-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+    }
+
+    .order-value {
+        color: var(--text-primary);
+    }
+
+    .order-actions {
+        margin-top: 25px;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 720px) {
+        .order-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-page">
+    <a href="{% url 'order_list' %}" class="btn btn-secondary">← Все заказы</a>
+
+    <div class="order-card" style="margin-top: 20px;">
+        <h2>Чек заказа</h2>
+        <div class="order-grid">
+            <div>
+                <div class="order-label">Номер заказа</div>
+                <div class="order-value">{{ order.receipt_number|default:order.id }}</div>
+            </div>
+            <div>
+                <div class="order-label">Статус</div>
+                <div class="order-value">{{ order.get_status_display }}</div>
+            </div>
+            <div>
+                <div class="order-label">Курс</div>
+                <div class="order-value">{{ order.course.title }}</div>
+            </div>
+            <div>
+                <div class="order-label">Сумма</div>
+                <div class="order-value">{{ order.amount }} ₽</div>
+            </div>
+            <div>
+                <div class="order-label">Комиссия платформы</div>
+                <div class="order-value">{{ order.commission_amount }} ₽</div>
+            </div>
+            <div>
+                <div class="order-label">К выплате автору</div>
+                <div class="order-value">{{ order.payout_amount }} ₽</div>
+            </div>
+            <div>
+                <div class="order-label">Дата оплаты</div>
+                <div class="order-value">{% if order.paid_at %}{{ order.paid_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</div>
+            </div>
+            <div>
+                <div class="order-label">Способ оплаты</div>
+                <div class="order-value">{{ order.payment_method }}</div>
+            </div>
+            <div class="full">
+                <div class="order-label">Плательщик</div>
+                <div class="order-value">{{ order.billing_name|default:order.user.username }}</div>
+            </div>
+            <div>
+                <div class="order-label">Телефон</div>
+                <div class="order-value">{{ order.billing_phone|default:"—" }}</div>
+            </div>
+            <div>
+                <div class="order-label">Email для чека</div>
+                <div class="order-value">{{ order.receipt_email|default:order.user.email|default:"—" }}</div>
+            </div>
+        </div>
+
+        <div class="order-actions">
+            <a href="{{ course_link }}" class="btn btn-primary">Перейти к курсу</a>
+        </div>
+
+        <hr style="margin: 25px 0; border-color: var(--border-color);">
+
+        <h3>Отправить чек на почту</h3>
+        <form method="post" action="{% url 'send_order_receipt' order.id %}" style="margin-top: 12px;">
+            {% csrf_token %}
+            <label for="email_for_receipt" class="order-label">Email</label>
+            <input id="email_for_receipt" name="email_for_receipt" type="email" value="{{ order.receipt_email|default:order.user.email }}" required style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px;">
+            <div class="order-actions">
+                <button type="submit" class="btn btn-secondary">Отправить чек</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

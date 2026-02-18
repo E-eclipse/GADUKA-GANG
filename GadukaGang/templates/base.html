@@ -1,151 +1,132 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 {% load static %}
 <html lang="ru">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Gaduka Gang - Python Community Forum{% endblock %}</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('pch_theme');
+                var theme = (stored === 'dark' || stored === 'light')
+                    ? stored
+                    : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
+    <title>{% block title %}Plekhanov CourseHub — платные курсы и форум{% endblock %}</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+    <link rel="shortcut icon" href="{% static 'img/favicon.ico' %}">
+    <link rel="icon" type="image/svg+xml" href="{% static 'img/favicon.svg' %}">
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="stylesheet" href="{% static 'css/forum.css' %}">
+    <link rel="stylesheet" href="{% static 'css/editor.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Roboto+Mono:wght@300;400;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=Orbitron:wght@400;500;700&family=Roboto+Mono:wght@300;400;700&display=swap"
         rel="stylesheet">
     {% block extra_css %}{% endblock %}
 </head>
 
 <body>
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-    <!-- Sidebar Menu -->
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <h2>GADUKA GANG</h2>
-                <p>Python Community</p>
-            </div>
-            <button class="sidebar-close" id="sidebarClose">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-
-        <nav class="sidebar-nav">
-            <ul>
-                <li>
-                    <a href="{% url 'home' %}" id="sidebar-home-link" class="sidebar-link">
-                        <i class="fas fa-home"></i>
-                        <span>Главная</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'forum_hub' %}" id="sidebar-forum-link" class="sidebar-link">
-                        <i class="fas fa-comments"></i>
-                        <span>Форум</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'education' %}" id="sidebar-education-link" class="sidebar-link">
-                        <i class="fas fa-graduation-cap"></i>
-                        <span>Образование</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{% url 'members_list' %}" id="sidebar-users-link" class="sidebar-link">
-                        <i class="fas fa-users"></i>
-                        <span>Участники</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="sidebar-user-actions">
+    <header class="site-header">
+        <div class="container header-inner">
+            <a href="{% url 'home' %}" class="brand">
+                <span class="brand-mark">РЭУ</span>
+                <span class="brand-text">
+                    <span class="brand-title">Plekhanov CourseHub</span>
+                    <span class="brand-subtitle">Платформа платных курсов и форума РЭУ им. Г.В. Плеханова</span>
+                </span>
+            </a>
+            <nav class="site-nav">
+                <a href="{% url 'home' %}" class="nav-link" data-nav="home">Главная</a>
+                <a href="{% url 'education' %}" class="nav-link" data-nav="courses">Курсы</a>
                 {% if user.is_authenticated %}
-                <a href="{% url 'profile' %}" class="sidebar-btn sidebar-btn-secondary">
-                    <i class="fas fa-user"></i>
-                    <span>Профиль</span>
-                </a>
-                <a href="{% url 'logout' %}" class="sidebar-btn sidebar-btn-primary">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Выйти</span>
-                </a>
-                {% else %}
-                <a href="{% url 'login' %}" class="sidebar-btn sidebar-btn-primary">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <span>Войти</span>
-                </a>
-                <a href="{% url 'register' %}" class="sidebar-btn sidebar-btn-secondary">
-                    <i class="fas fa-user-plus"></i>
-                    <span>Регистрация</span>
-                </a>
+                <a href="{% url 'creator_courses' %}" class="nav-link" data-nav="creator">Мои курсы</a>
                 {% endif %}
-            </div>
-        </div>
-    </aside>
-
-    <!-- Simplified Header with Hamburger -->
-    <header class="header">
-        <div class="header-content">
-            <button class="hamburger" id="hamburger">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <div class="logo">
-                <h1>GADUKA GANG</h1>
-                <p>Сообщество фанатов Python</p>
+                <a href="{% url 'forum_hub' %}" class="nav-link" data-nav="forum">Форум</a>
+                <a href="{% url 'members_list' %}" class="nav-link" data-nav="community">Сообщество</a>
+                {% if user.role == 'moderator' %}
+                <a href="{% url 'moderator_panel' %}" class="nav-link" data-nav="moderator">Модерация</a>
+                {% endif %}
+            </nav>
+            <div class="header-actions">
+                {% if user.is_authenticated %}
+                <a href="{% url 'profile' %}" class="btn btn-secondary">Профиль</a>
+                <a href="{% url 'logout' %}" class="btn btn-primary">Выйти</a>
+                {% else %}
+                <a href="{% url 'login' %}" class="btn btn-secondary">Войти</a>
+                <a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a>
+                {% endif %}
             </div>
         </div>
     </header>
 
     <div class="container">
-        <!-- Main content -->
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash-message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
         <main>
             {% block content %}{% endblock %}
         </main>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Gaduka Gang</h3>
-                <p>Сообщество фанатов Python, объединенных страстью к коду и инновациям.</p>
+                <h3>Plekhanov CourseHub</h3>
+                <p>Платформа платного обучения и академического форума для студентов и слушателей программ РЭУ им. Г.В. Плеханова.</p>
             </div>
             <div class="footer-section">
                 <h4>Навигация</h4>
                 <ul>
                     <li><a href="{% url 'home' %}">Главная</a></li>
-                    <li><a href="{% url 'sections_list' %}">Форум</a></li>
-                    <li><a href="{% url 'education' %}">Туториалы</a></li>
-                    <li><a href="{% url 'members_list' %}">Участники</a></li>
+                    <li><a href="{% url 'education' %}">Курсы</a></li>
+                    <li><a href="{% url 'forum_hub' %}">Форум</a></li>
+                    <li><a href="{% url 'members_list' %}">Сообщество</a></li>
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>Ресурсы</h4>
+                <h4>Поддержка</h4>
                 <ul>
-                    <li><a href="https://docs.python.org/3/" target="_blank">Документация</a></li>
-                    <li><a href="https://roadmap.sh" target="_blank">Roadmap</a></li>
-                    <li><a href="https://www.codewars.com/kata/search/python" target="_blank">Практика</a></li>
+                    <li><a href="{% url 'privacy_policy' %}">Политика конфиденциальности</a></li>
+                    <li><a href="{% url 'api_documentation' %}">API и интеграции</a></li>
+                    <li><a href="{% url 'home' %}">Вопросы и ответы</a></li>
                 </ul>
             </div>
             <div class="footer-section">
-                <h4>Социальные сети</h4>
+                <h4>Контакты</h4>
                 <ul>
-                    <li><a href="https://github.com/E-eclipse" target="_blank">GitHub</a></li>
-                    <li><a href="https://t.me/e_eclipse1" target="_blank">Telegram</a></li>
+                    <li><a href="mailto:support@coursehub.ru">support@coursehub.ru</a></li>
+                    <li><a href="tel:+74951234567">+7 (495) 123-45-67</a></li>
                 </ul>
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; 2025 Gaduka Gang. Все права защищены.</p>
+            <p>&copy; 2026 Plekhanov CourseHub. Все права защищены.</p>
         </div>
     </footer>
 
+    <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Переключить тему" aria-pressed="false">
+        <span class="theme-toggle__icon" aria-hidden="true">☀</span>
+        <span class="theme-toggle__label">Светлая</span>
+    </button>
+
     <script src="{% static 'js/script.js' %}"></script>
+    <script src="{% static 'js/editor.js' %}"></script>
+    <script src="{% static 'js/attachment-viewer.js' %}"></script>
+    <script src="{% static 'js/theme.js' %}"></script>
     <script src="{% static 'js/hotkeys.js' %}"></script>
     {% block extra_js %}{% endblock %}
 </body>
 
 </html>
+

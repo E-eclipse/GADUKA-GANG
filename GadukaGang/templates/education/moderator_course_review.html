@@ -1,0 +1,112 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Проверка курса{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <h2>{{ course.title }}</h2>
+        <p>{{ course.description }}</p>
+        <p><strong>Автор:</strong> {{ course.creator.username }}</p>
+        <p><strong>Категория:</strong> {{ course.category.name|default:"—" }}</p>
+        <p><strong>Контакты:</strong> {{ course.contact_email }} {{ course.contact_phone }}</p>
+        <p><strong>Цена:</strong> {{ course.price }} ₽</p>
+
+        <hr style="margin: 24px 0; border-color: var(--border-color);">
+
+        <h3>Структура курса</h3>
+        {% for section in course.sections.all %}
+            <div class="card" style="margin: 16px 0; padding: 16px;">
+                <h4>{{ section.title }}</h4>
+                <p>{{ section.description }}</p>
+                {% if section.lessons.all %}
+                    <ul style="margin-top: 12px;">
+                        {% for lesson in section.lessons.all %}
+                            <li style="margin-bottom: 18px;">
+                                <strong>{{ lesson.title }}</strong> ({{ lesson.get_lesson_type_display }})
+                                {% if lesson.lesson_type == 'lecture' %}
+                                    <div style="margin-top: 6px;">{{ lesson.content|linebreaks }}</div>
+                                {% elif lesson.lesson_type == 'practice' %}
+                                    {% if lesson.practice_mode == 'code' %}
+                                        <div style="margin-top: 6px;"><em>Практика (код)</em></div>
+                                        {% if lesson.practice_task %}<div>{{ lesson.practice_task|linebreaks }}</div>{% endif %}
+                                        {% if lesson.practice_code_template %}
+                                            <pre style="margin-top:8px; white-space:pre-wrap;">{{ lesson.practice_code_template }}</pre>
+                                        {% endif %}
+                                        {% if lesson.test_cases %}
+                                            <div style="margin-top: 8px;"><strong>Тесты:</strong></div>
+                                            <ul>
+                                                {% for tc in lesson.test_cases %}
+                                                    <li><strong>Вход:</strong> {{ tc.input|default:"—" }} | <strong>Выход:</strong> {{ tc.output|default:"—" }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        {% endif %}
+                                    {% else %}
+                                        <div style="margin-top: 6px;"><em>Практика (тест)</em></div>
+                                        {% for q in lesson.control_questions.all %}
+                                            <div style="margin-top: 10px;">
+                                                <strong>Вопрос:</strong> {{ q.prompt }}
+                                                {% if q.question_type != 'text' %}
+                                                    <ul>
+                                                        {% for opt in q.options.all %}
+                                                            <li>{% if opt.is_correct %}<strong>(✓)</strong> {% endif %}{{ opt.option_text }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                {% else %}
+                                                    <div><small>Мин. слов: {{ q.min_words }} | Ключевые: {{ q.required_keywords|join:", " }}</small></div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% else %}
+                                    <div style="margin-top: 6px;"><em>Контрольная</em></div>
+                                    {% for q in lesson.control_questions.all %}
+                                        <div style="margin-top: 10px;">
+                                            <strong>Вопрос:</strong> {{ q.prompt }}
+                                            {% if q.question_type != 'text' %}
+                                                <ul>
+                                                    {% for opt in q.options.all %}
+                                                        <li>{% if opt.is_correct %}<strong>(✓)</strong> {% endif %}{{ opt.option_text }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% else %}
+                                                <div><small>Мин. слов: {{ q.min_words }} | Ключевые: {{ q.required_keywords|join:", " }}</small></div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Уроков в блоке нет.</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p>Блоки не созданы. Уроки без блока:</p>
+            {% if course.lessons.all %}
+                <ul>
+                    {% for lesson in course.lessons.all %}
+                        <li><strong>{{ lesson.title }}</strong> ({{ lesson.get_lesson_type_display }})</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>Уроков нет.</p>
+            {% endif %}
+        {% endfor %}
+
+        <h3 style="margin-top: 20px;">Решение</h3>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="comment">Комментарий (необязательно)</label>
+                <textarea id="comment" name="comment" rows="4"></textarea>
+            </div>
+            <div style="display:flex; gap:12px;">
+                <button class="btn btn-primary" type="submit" name="decision" value="approve">Одобрить</button>
+                <button class="btn btn-outline" type="submit" name="decision" value="reject">Отклонить</button>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

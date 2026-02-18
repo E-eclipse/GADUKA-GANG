@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Покупки курсов - Plekhanov CourseHub{% endblock %}
+
+{% block extra_css %}
+<style>
+    .purchases-page {
+        padding: 50px 0;
+    }
+
+    .purchases-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 20px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .purchases-header h1 {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .revenue-grid {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+
+    .revenue-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .revenue-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 8px;
+    }
+
+    .revenue-value {
+        font-family: 'Orbitron', sans-serif;
+        color: var(--text-primary);
+        font-size: 1.4rem;
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .orders-table th,
+    .orders-table td {
+        padding: 14px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 0.95rem;
+    }
+
+    .orders-table th {
+        color: var(--text-secondary);
+        font-weight: 600;
+        background: rgba(31, 122, 140, 0.08);
+    }
+
+    .status-pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .status-paid {
+        background: rgba(31, 122, 140, 0.15);
+        color: var(--accent-green-dark);
+    }
+
+    .status-pending {
+        background: rgba(216, 168, 74, 0.15);
+        color: #7d5a14;
+    }
+
+    .status-failed {
+        background: rgba(200, 71, 71, 0.15);
+        color: #c84747;
+    }
+
+    .status-cancelled {
+        background: rgba(127, 138, 161, 0.15);
+        color: var(--text-secondary);
+    }
+
+    @media (max-width: 900px) {
+        .orders-table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="purchases-page">
+    <div class="container">
+        <div class="purchases-header">
+            <h1>Покупки курсов</h1>
+            {% if is_admin_view %}
+                <a class="btn btn-secondary" href="{% url 'admin_panel' %}">← Назад в админ‑панель</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{% url 'moderator_panel' %}">← Назад в панель модератора</a>
+            {% endif %}
+        </div>
+
+        <div class="revenue-grid">
+            <div class="revenue-card">
+                <div class="revenue-label">Доход (всего)</div>
+                <div class="revenue-value">{{ revenue.total_income|default:0 }} ₽</div>
+            </div>
+            <div class="revenue-card">
+                <div class="revenue-label">Комиссия платформы</div>
+                <div class="revenue-value">{{ revenue.total_commission|default:0 }} ₽</div>
+            </div>
+            <div class="revenue-card">
+                <div class="revenue-label">Выплаты авторам</div>
+                <div class="revenue-value">{{ revenue.total_payout|default:0 }} ₽</div>
+            </div>
+        </div>
+
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Пользователь</th>
+                    <th>Курс</th>
+                    <th>Продавец</th>
+                    <th>Сумма</th>
+                    <th>Комиссия</th>
+                    <th>Выплата</th>
+                    <th>Статус</th>
+                    <th>Оплачен</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>#{{ order.id }}</td>
+                    <td>{{ order.user.username }}</td>
+                    <td>{{ order.course.title }}</td>
+                    <td>{% if order.seller %}{{ order.seller.username }}{% else %}—{% endif %}</td>
+                    <td>{{ order.amount }} ₽</td>
+                    <td>{{ order.commission_amount }} ₽</td>
+                    <td>{{ order.payout_amount }} ₽</td>
+                    <td>
+                        <span class="status-pill status-{{ order.status }}">
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{% if order.paid_at %}{{ order.paid_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9">Пока нет заказов.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

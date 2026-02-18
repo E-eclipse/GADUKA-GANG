@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Предупреждение о скачивании - Plekhanov CourseHub{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+  <div class="profile-container">
+    <div class="card">
+      <h2>Внимание перед скачиванием файла</h2>
+      <p>Вы собираетесь скачать файл: <strong>{{ attachment.title|default:"Файл" }}</strong></p>
+      <p>Файлы, загруженные пользователями, могут содержать вредоносное ПО (вирусы, трояны, скрипты).</p>
+      <p>Сайт не несет ответственности за содержимое скачиваемых файлов и возможный ущерб устройству или данным.</p>
+      <p>Рекомендуется проверять файл антивирусом перед открытием.</p>
+
+      <form method="post" style="display:flex; gap:12px; margin-top:20px; flex-wrap:wrap;">
+        {% csrf_token %}
+        <input type="hidden" name="back_url" value="{{ back_url }}">
+        <button type="submit" name="action" value="download" class="btn btn-primary">Скачать файл</button>
+        <button type="submit" name="action" value="cancel" class="btn btn-secondary">Вернуться назад</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}
+

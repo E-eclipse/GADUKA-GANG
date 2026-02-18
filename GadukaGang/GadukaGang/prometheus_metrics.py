@@ -82,13 +82,7 @@ def handle_topic_change(**kwargs):
 
 
 def initialize_custom_metrics():
-    """
-    Populate gauges with actual data once the app registry is ready.
-    This keeps metric values consistent after process restarts.
-    """
     refresh_user_metrics()
     refresh_community_metrics()
     refresh_post_metrics()
     refresh_hot_topic_metrics()
-
-

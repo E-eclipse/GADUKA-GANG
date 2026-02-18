@@ -50,3 +50,5 @@ SITE_URL=http://127.0.0.1:8000
 # Debug режим (для production установите False)
 # DEBUG=True
 
+
+# DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,127.20.10.2

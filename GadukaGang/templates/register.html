@@ -1,225 +1,122 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Регистрация - Gaduka Gang{% endblock %}
+{% block title %}Регистрация — Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
-    .registration-section {
+    .auth-section {
         padding: 60px 0;
-        min-height: calc(100vh - 300px);
         display: flex;
-        align-items: center;
         justify-content: center;
     }
-    
-    .registration-container {
-        max-width: 550px;
+
+    .auth-card {
         width: 100%;
-        background-color: var(--card-bg);
+        max-width: 560px;
+        background: #fff;
+        border-radius: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
         padding: 40px;
-        box-shadow: var(--neon-shadow);
-        position: relative;
-        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.08);
     }
-    
-    .registration-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-    }
-    
-    .registration-container h2 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.2rem;
-        color: var(--accent-green);
-        text-align: center;
-        margin-bottom: 10px;
-        text-shadow: var(--neon-shadow);
-        letter-spacing: 1px;
-    }
-    
-    .registration-container p.subtitle {
-        text-align: center;
-        color: var(--text-secondary);
-        margin-bottom: 30px;
-        font-size: 1.1rem;
-    }
-    
-    .form-group {
-        margin-bottom: 25px;
-        position: relative;
-    }
-    
-    .form-group label {
-        display: block;
+
+    .auth-card h1 {
+        font-family: var(--font-heading);
+        font-size: 2.4rem;
+        color: var(--accent-blue);
         margin-bottom: 8px;
-        color: var(--text-primary);
-        font-weight: 400;
-        font-size: 1rem;
     }
-    
-    .form-group input {
-        width: 100%;
-        padding: 14px;
-        border: 1px solid var(--border-color);
-        background-color: var(--darker-bg);
-        color: var(--text-primary);
-        font-family: 'Roboto Mono', monospace;
-        border-radius: 4px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        border-left: 3px solid var(--accent-green);
-    }
-    
-    .form-group input:focus {
-        outline: none;
-        border-color: var(--accent-green);
-        box-shadow: var(--neon-shadow);
-        background-color: rgba(0, 255, 65, 0.05);
-    }
-    
-    .error-message {
-        background-color: rgba(255, 68, 68, 0.1);
-        color: #ff4444;
-        padding: 12px;
-        border-radius: 4px;
-        margin-top: 8px;
-        border: 1px solid #ff4444;
-        font-size: 0.9rem;
-    }
-    
-    .password-requirements {
-        background-color: rgba(0, 255, 65, 0.1);
+
+    .auth-card .subtitle {
         color: var(--text-secondary);
-        padding: 15px;
-        border-radius: 4px;
-        margin-top: 8px;
-        border: 1px solid var(--accent-green);
-        font-size: 0.85rem;
+        margin-bottom: 28px;
     }
-    
-    .password-requirements ul {
-        padding-left: 20px;
-        margin: 10px 0;
-    }
-    
-    .password-requirements li {
-        margin-bottom: 5px;
-    }
-    
-    .btn-register {
-        width: 100%;
-        padding: 14px;
-        background-color: var(--accent-green);
-        color: var(--dark-bg);
-        border: none;
-        border-radius: 4px;
-        font-family: 'Roboto Mono', monospace;
-        font-weight: 500;
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: var(--neon-shadow);
+
+    .form-help {
+        background: rgba(31, 122, 140, 0.08);
+        border: 1px solid rgba(31, 122, 140, 0.2);
+        padding: 16px;
+        border-radius: 14px;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
         margin-top: 10px;
     }
-    
-    .btn-register:hover {
-        background-color: var(--accent-green-dark);
-        box-shadow: var(--neon-glow);
-        transform: translateY(-2px);
+
+    .form-help ul {
+        margin: 10px 0 0 18px;
     }
-    
-    .registration-footer {
-        text-align: center;
-        margin-top: 30px;
-        color: var(--text-secondary);
-        padding-top: 20px;
+
+    .auth-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+    }
+
+    .auth-footer {
+        margin-top: 24px;
         border-top: 1px solid var(--border-color);
-    }
-    
-    .registration-footer a {
-        color: var(--accent-green);
-        text-decoration: none;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-    
-    .registration-footer a:hover {
-        text-shadow: var(--neon-shadow);
-        color: #00cc33;
-    }
-    
-    .terms {
-        text-align: center;
-        margin-top: 20px;
+        padding-top: 18px;
         color: var(--text-secondary);
-        font-size: 0.9rem;
     }
-    
-    .terms a {
-        color: var(--accent-green);
+
+    .auth-footer a {
+        color: var(--accent-blue);
         text-decoration: none;
+        font-weight: 600;
     }
-    
-    .terms a:hover {
-        text-decoration: underline;
-    }
-    
+
     .checkbox-label {
         display: flex;
         align-items: flex-start;
         gap: 10px;
-        cursor: pointer;
-        color: var(--text-primary);
         font-size: 0.95rem;
-        line-height: 1.5;
+        color: var(--text-primary);
     }
-    
+
     .checkbox-label input[type="checkbox"] {
         width: auto;
         margin-top: 3px;
-        cursor: pointer;
-        accent-color: var(--accent-green);
     }
-    
-    .checkbox-label a {
-        color: var(--accent-green);
-        text-decoration: none;
-        transition: all 0.3s ease;
+
+    .error-message {
+        background: rgba(200, 71, 71, 0.1);
+        border: 1px solid rgba(200, 71, 71, 0.35);
+        color: #9f2a2a;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 14px;
+        font-size: 0.9rem;
     }
-    
-    .checkbox-label a:hover {
-        text-decoration: underline;
-        text-shadow: var(--neon-shadow);
+
+    @media (max-width: 600px) {
+        .auth-card {
+            padding: 28px;
+        }
+
+        .auth-card h1 {
+            font-size: 2rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Registration section -->
-<section class="registration-section">
-    <div class="registration-container">
-        <h2>Создать аккаунт</h2>
-        <p class="subtitle">Присоединяйтесь к сообществу Gaduka Gang</p>
-        
+<section class="auth-section">
+    <div class="auth-card">
+        <h1>Создать аккаунт</h1>
+        <p class="subtitle">Присоединяйтесь к сообществу Plekhanov CourseHub</p>
+
         {% if form.non_field_errors %}
             <div class="error-message">
                 {{ form.non_field_errors }}
             </div>
         {% endif %}
-        
+
         <form method="post">
             {% csrf_token %}
-            
+
             <div class="form-group">
                 <label for="{{ form.username.id_for_label }}">Имя пользователя</label>
                 {{ form.username }}
@@ -227,7 +124,7 @@
                     <div class="error-message">{{ form.username.errors }}</div>
                 {% endif %}
             </div>
-            
+
             <div class="form-group">
                 <label for="{{ form.email.id_for_label }}">Email</label>
                 {{ form.email }}
@@ -235,14 +132,14 @@
                     <div class="error-message">{{ form.email.errors }}</div>
                 {% endif %}
             </div>
-            
+
             <div class="form-group">
                 <label for="{{ form.password1.id_for_label }}">Пароль</label>
                 {{ form.password1 }}
                 {% if form.password1.errors %}
                     <div class="error-message">{{ form.password1.errors }}</div>
                 {% endif %}
-                <div class="password-requirements">
+                <div class="form-help">
                     <p>Пароль должен содержать:</p>
                     <ul>
                         <li>Минимум 8 символов</li>
@@ -252,7 +149,7 @@
                     </ul>
                 </div>
             </div>
-            
+
             <div class="form-group">
                 <label for="{{ form.password2.id_for_label }}">Подтверждение пароля</label>
                 {{ form.password2 }}
@@ -260,7 +157,7 @@
                     <div class="error-message">{{ form.password2.errors }}</div>
                 {% endif %}
             </div>
-            
+
             <div class="form-group">
                 <label class="checkbox-label">
                     {{ form.privacy_policy_accepted }}
@@ -270,13 +167,17 @@
                     <div class="error-message">{{ form.privacy_policy_accepted.errors }}</div>
                 {% endif %}
             </div>
-            
-            <button type="submit" class="btn-register">Зарегистрироваться</button>
+
+            <div class="auth-actions">
+                <button type="submit" class="btn btn-primary">Зарегистрироваться</button>
+                <a href="{% url 'login' %}" class="btn btn-secondary">Уже есть аккаунт</a>
+            </div>
         </form>
-        
-        <div class="registration-footer">
-            <p>Уже есть аккаунт? <a href="{% url 'login' %}">Войдите</a></p>
+
+        <div class="auth-footer">
+            <p>Нужна помощь? Свяжитесь с учебной поддержкой через форму обратной связи.</p>
         </div>
     </div>
 </section>
 {% endblock %}
+

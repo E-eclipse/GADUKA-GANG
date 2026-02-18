@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Админ-панель - Gaduka Gang{% endblock %}
+{% block title %}Админ-панель - Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -32,6 +32,7 @@
         max-width: 1200px;
         padding: 0 20px;
     }
+
 
     .admin-link-card {
         background: var(--card-bg);
@@ -133,6 +134,21 @@
             <h3 class="card-title">Django Admin</h3>
             <p class="card-desc">Стандартная панель администратора Django для управления всеми таблицами.</p>
         </a>
+
+        <a href="{% url 'admin_purchases' %}" class="admin-link-card">
+            <div class="card-icon">🧾</div>
+            <h3 class="card-title">Покупки курсов</h3>
+            <p class="card-desc">История заказов всех пользователей и финансы по курсам.</p>
+        </a>
+
+        <a href="{% url 'admin_course_analytics' %}" class="admin-link-card">
+            <div class="card-icon">📈</div>
+            <h3 class="card-title">Глубокая аналитика курсов</h3>
+            <p class="card-desc">Выручка, активные ученики, завершения, средний прогресс, рейтинги и динамика продаж.</p>
+        </a>
     </div>
 </section>
 {% endblock %}
+
+
+

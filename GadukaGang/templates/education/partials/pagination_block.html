@@ -1,0 +1,25 @@
+{% if is_paginated %}
+<div class="catalog-pagination">
+    {% if page_obj.has_previous %}
+        <a class="btn btn-secondary" href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ page_obj.previous_page_number }}">← Назад</a>
+    {% else %}
+        <span class="btn btn-secondary" style="opacity:0.5; pointer-events:none;">← Назад</span>
+    {% endif %}
+
+    <div class="page-numbers">
+        {% for num in page_obj.paginator.page_range %}
+            {% if num == page_obj.number %}
+                <span class="page-number active">{{ num }}</span>
+            {% elif num >= page_obj.number|add:"-2" and num <= page_obj.number|add:"2" %}
+                <a class="page-number" href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ num }}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_next %}
+        <a class="btn btn-secondary" href="?{% if base_querystring %}{{ base_querystring }}&{% endif %}page={{ page_obj.next_page_number }}">Вперёд →</a>
+    {% else %}
+        <span class="btn btn-secondary" style="opacity:0.5; pointer-events:none;">Вперёд →</span>
+    {% endif %}
+</div>
+{% endif %}

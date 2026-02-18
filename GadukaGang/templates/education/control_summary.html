@@ -1,0 +1,59 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Контрольная — Итог{% endblock %}
+
+{% block extra_css %}
+<style>
+    .summary-page {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 40px 0;
+    }
+
+    .summary-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .summary-card h2 {
+        margin-bottom: 15px;
+    }
+
+    .summary-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="summary-page">
+    <div class="summary-card">
+        <h2>Завершение контрольной</h2>
+        {% if skipped_count > 0 %}
+            <p>У вас есть пропущенные вопросы: <strong>{{ skipped_count }}</strong>.</p>
+            <p>Хотите вернуться к ним сейчас?</p>
+            <form method="post" action="{% url 'control_test_summary' lesson.id %}">
+                {% csrf_token %}
+                <div class="summary-actions">
+                    <button type="submit" name="return_to_skipped" value="yes" class="btn btn-primary">Да, вернуться</button>
+                    <button type="submit" name="return_to_skipped" value="no" class="btn btn-secondary">Нет, завершить</button>
+                </div>
+            </form>
+        {% else %}
+            <p>Пропущенных вопросов нет. Завершаем проверку.</p>
+            <form method="post" action="{% url 'control_test_summary' lesson.id %}">
+                {% csrf_token %}
+                <div class="summary-actions">
+                    <button type="submit" name="return_to_skipped" value="no" class="btn btn-primary">Завершить контрольную</button>
+                </div>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

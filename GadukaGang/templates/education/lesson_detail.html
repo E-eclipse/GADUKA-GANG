@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ lesson.title }} - Gaduka Gang{% endblock %}
+{% block title %}{{ lesson.title }} - Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
@@ -61,6 +61,12 @@
         color: var(--metallic-1);
     }
 
+    .lesson-type-badge.control {
+        border-color: rgba(216, 168, 74, 0.6);
+        color: #7d5a14;
+        background: rgba(216, 168, 74, 0.1);
+    }
+
     .lesson-content {
         background-color: var(--card-bg);
         border: 1px solid var(--border-color);
@@ -110,6 +116,25 @@
         border: none;
         padding: 0;
         color: var(--text-primary);
+    }
+
+    .lesson-content img {
+        display: block;
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        margin: 16px 0;
+        border: 1px solid var(--border-color);
+    }
+
+    .lesson-content video {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 16px 0;
+        border: 1px solid var(--border-color);
+        background: #000;
     }
 
     .practice-section {
@@ -344,6 +369,58 @@
         transform: translateY(-2px);
         box-shadow: var(--neon-glow);
     }
+
+    .control-section {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 40px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .control-section h3 {
+        color: #b7882a;
+        margin-bottom: 20px;
+    }
+
+    .control-question {
+        padding: 20px;
+        margin-bottom: 16px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+
+    .control-question h4 {
+        margin: 0 0 12px 0;
+        color: var(--text-primary);
+    }
+
+    .control-option {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--text-secondary);
+    }
+
+    .control-textarea {
+        width: 100%;
+        min-height: 140px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text-primary);
+        padding: 12px;
+    }
+
+    .lock-banner {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        background: rgba(160, 30, 30, 0.2);
+        border: 1px solid rgba(220, 70, 70, 0.5);
+        color: #ffb6b6;
+    }
 </style>
 {% endblock %}
 
@@ -358,8 +435,10 @@
         <span class="lesson-type-badge {{ lesson.lesson_type }}">
             {% if lesson.lesson_type == 'lecture' %}
                 📖 Лекция
-            {% else %}
+            {% elif lesson.lesson_type == 'practice' %}
                 💻 Практическое задание
+            {% else %}
+                🧾 Контрольная работа
             {% endif %}
         </span>
         {% if is_completed %}
@@ -374,10 +453,28 @@
             {{ lesson.content|linebreaks }}
         {% endif %}
     </div>
+    {% if lesson_attachments %}
+    <div class="attachment-list">
+        {% for a in lesson_attachments %}
+            {% if a.kind == 'link' %}
+            <a class="attachment-chip" href="{{ a.external_url }}" target="_blank" rel="noopener">{{ a.title|default:a.external_url }}</a>
+            {% elif a.kind == 'image' %}
+            <a class="attachment-chip" href="{{ a.file.url }}" data-attachment-kind="image" data-attachment-title="{{ a.title|default:'Изображение' }}">🖼 {{ a.title|default:'Изображение' }}</a>
+            {% elif a.kind == 'video' %}
+            <a class="attachment-chip" href="{{ a.file.url }}" data-attachment-kind="video" data-attachment-title="{{ a.title|default:'Видео' }}">🎬 {{ a.title|default:'Видео' }}</a>
+            {% else %}
+            <a class="attachment-chip" href="{% url 'attachment_download' a.id %}" data-attachment-kind="file" data-attachment-title="{{ a.title|default:'Файл' }}">📎 {{ a.title|default:'Файл' }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {% endif %}
 
-    {% if lesson.lesson_type == 'practice' and lesson.practice_code_template %}
+    {% if lesson.lesson_type == 'practice' and lesson.practice_mode == 'code' %}
     <div class="practice-section">
         <h3>Практическое задание</h3>
+        {% if lesson.practice_task %}
+        <p>{{ lesson.practice_task|linebreaks }}</p>
+        {% endif %}
         <p>Напишите решение в поле ниже и нажмите "Запустить" для проверки:</p>
         
         {% if lesson.test_cases and lesson.test_cases|length > 0 %}
@@ -437,6 +534,14 @@
         {% endif %}
         
         <div class="code-editor-container">
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label for="practice-language" style="display:block; margin-bottom:6px;">Язык решения</label>
+                <select id="practice-language" style="padding:8px; border-radius:6px; min-width:220px;">
+                    {% for lang in practice_languages %}
+                    <option value="{{ lang.id }}" {% if lang.id == 'python' %}selected{% endif %}>{{ lang.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <div class="code-editor-wrapper">
                 <textarea id="practice-code">{{ lesson.practice_code_template }}</textarea>
             </div>
@@ -461,7 +566,42 @@
     </div>
     {% endif %}
 
-    {% if user.is_authenticated and not is_completed and lesson.lesson_type == 'lecture' %}
+    {% if is_quiz and not is_completed %}
+    <div class="control-section">
+        <h3>{% if lesson.lesson_type == 'practice' %}Практический тест{% else %}Большая контрольная работа{% endif %}</h3>
+        <p>Минимальный проходной балл: <strong>{{ lesson.control_pass_threshold }}%</strong>.</p>
+        <p>Лимит времени: <strong>{{ lesson.control_time_limit_minutes }} мин.</strong></p>
+        <p>Количество заданий: <strong>{{ control_questions_count }}</strong>.</p>
+        {% if latest_attempt %}
+        <p>Последняя попытка: <strong>{{ latest_attempt.percent }}%</strong>.</p>
+        {% endif %}
+
+        {% if lock_remaining_seconds > 0 %}
+        <div class="lock-banner">
+            Контрольная временно закрыта. Повторите теорию и попробуйте снова через
+            <strong id="lock-countdown">{{ lock_remaining_seconds }}</strong> сек.
+        </div>
+        {% endif %}
+
+        {% if control_questions_count > 0 %}
+        <div class="code-actions">
+            {% if control_session %}
+            <a class="run-button" href="{% url 'control_test_start' lesson.id %}" {% if lock_remaining_seconds > 0 %}style="pointer-events:none; opacity:0.6;"{% endif %}>
+                Продолжить тест
+            </a>
+            {% else %}
+            <a class="run-button" href="{% url 'control_test_start' lesson.id %}" data-time-limit="{{ lesson.control_time_limit_minutes }}">
+                Начать тест
+            </a>
+            {% endif %}
+        </div>
+        {% else %}
+        <p>В этой контрольной пока нет вопросов.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if user.is_authenticated and not is_completed and lesson.lesson_type != 'practice' and lesson.lesson_type != 'control' %}
     <div style="text-align: center; margin-top: 30px;">
         <button class="complete-button" onclick="completeLesson()">
             Отметить урок как пройденный
@@ -491,9 +631,27 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/ruby/ruby.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/rust/rust.min.js"></script>
 <script>
     // Инициализация CodeMirror для практических заданий
-    {% if lesson.lesson_type == 'practice' and lesson.practice_code_template %}
+    const languageModeMap = {
+        python: 'python',
+        ruby: 'ruby',
+        cpp: 'text/x-c++src',
+        go: 'go',
+        csharp: 'text/x-csharp',
+        javascript: 'javascript',
+        java: 'text/x-java',
+        php: 'php',
+        rust: 'rust'
+    };
+
+    {% if lesson.lesson_type == 'practice' and lesson.practice_mode == 'code' %}
     var codeEditor = CodeMirror.fromTextArea(document.getElementById('practice-code'), {
         lineNumbers: true,
         mode: 'python',
@@ -502,10 +660,20 @@
         indentWithTabs: false,
         lineWrapping: true,
     });
+
+    var languageSelect = document.getElementById('practice-language');
+    if (languageSelect) {
+        codeEditor.setOption('mode', languageModeMap[languageSelect.value] || 'python');
+        languageSelect.addEventListener('change', function() {
+            codeEditor.setOption('mode', languageModeMap[this.value] || 'python');
+        });
+    }
     {% endif %}
 
     function runCode() {
         var code = codeEditor.getValue();
+        var languageSelect = document.getElementById('practice-language');
+        var language = languageSelect ? languageSelect.value : 'python';
         var outputContainer = document.getElementById('output-container');
         var outputContent = document.getElementById('output-content');
         var validationResult = document.getElementById('validation-result');
@@ -524,7 +692,8 @@
             },
             body: JSON.stringify({ 
                 code: code,
-                lesson_id: {{ lesson.id }}
+                lesson_id: {{ lesson.id }},
+                language: language
             })
         })
         .then(response => response.json())
@@ -644,9 +813,89 @@
         });
     }
 
+    function startLockCountdown() {
+        var node = document.getElementById('lock-countdown');
+        var submitBtn = document.getElementById('control-submit-btn');
+        if (!node) {
+            return;
+        }
+
+        var seconds = parseInt(node.textContent || '0', 10);
+        if (isNaN(seconds) || seconds <= 0) {
+            return;
+        }
+
+        var timer = setInterval(function() {
+            seconds -= 1;
+            if (seconds <= 0) {
+                clearInterval(timer);
+                node.textContent = '0';
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+                return;
+            }
+            node.textContent = String(seconds);
+        }, 1000);
+    }
+
     function closeCelebration() {
         document.getElementById('celebrationModal').classList.remove('show');
         location.reload();
     }
+
+    startLockCountdown();
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.lesson-content video').forEach(function (video) {
+            const source = video.querySelector('source');
+            if (source && source.getAttribute('src')) {
+                video.setAttribute('src', source.getAttribute('src'));
+            }
+            video.querySelectorAll('source').forEach(function (node) { node.remove(); });
+
+            const src = video.getAttribute('src') || '';
+            if (src) {
+                fetch(src)
+                    .then(function (r) {
+                        if (!r.ok) throw new Error('video_fetch_failed');
+                        return r.blob();
+                    })
+                    .then(function (blob) {
+                        video.src = URL.createObjectURL(blob);
+                        video.load();
+                    })
+                    .catch(function () {
+                        video.src = src;
+                        video.load();
+                    });
+            }
+
+            video.addEventListener('error', function () {
+                if (video.dataset.videoErrorHandled === '1') return;
+                video.dataset.videoErrorHandled = '1';
+                const currentSrc = video.currentSrc || video.getAttribute('src') || '';
+                const warn = document.createElement('div');
+                warn.className = 'help-text';
+                warn.style.marginTop = '8px';
+                warn.innerHTML = currentSrc
+                    ? `Не удалось воспроизвести видео в браузере. Попробуйте MP4/WebM (H.264/AAC). <a href="${currentSrc}" target="_blank" rel="noopener">Открыть файл</a>`
+                    : 'Не удалось воспроизвести видео в браузере. Попробуйте MP4/WebM.';
+                video.insertAdjacentElement('afterend', warn);
+            });
+        });
+
+        var btn = document.querySelector('[data-time-limit]');
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+            var minutes = parseInt(btn.getAttribute('data-time-limit') || '0', 10);
+            if (minutes > 0) {
+                alert('На выполнение теста дается ' + minutes + ' мин. По истечению времени незаполненные вопросы считаются неверными.');
+            }
+        });
+    });
 </script>
 {% endblock %}
+
+
+

@@ -594,4 +594,4 @@ GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO CURRENT_USER;
 -- FROM pg_catalog.pg_roles r
 -- WHERE r.rolname = 'forum_owner';
 
-SELECT * FROM user_profiles
+SELECT * FROM "GadukaGang_systemlog" ORDER BY timestamp DESC LIMIT 10;

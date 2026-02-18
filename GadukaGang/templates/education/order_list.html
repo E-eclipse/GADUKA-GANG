@@ -1,0 +1,101 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}История заказов{% endblock %}
+
+{% block extra_css %}
+<style>
+    .orders-page {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 40px 0;
+    }
+
+    .orders-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .orders-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .orders-table th, .orders-table td {
+        padding: 12px 10px;
+        border-bottom: 1px solid var(--border-color);
+        text-align: left;
+        color: var(--text-secondary);
+    }
+
+    .orders-table th {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .orders-table a {
+        color: var(--accent-green);
+        text-decoration: none;
+    }
+
+    .orders-actions {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="orders-page">
+    <a href="{% url 'profile' %}" class="btn btn-secondary">← Назад в профиль</a>
+
+    <div class="orders-card" style="margin-top: 20px;">
+        <h2>История заказов</h2>
+        {% if page_obj.object_list %}
+        <table class="orders-table" style="margin-top: 20px;">
+            <thead>
+                <tr>
+                    <th>Заказ</th>
+                    <th>Курс</th>
+                    <th>Статус</th>
+                    <th>Сумма</th>
+                    <th>Дата оплаты</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in page_obj.object_list %}
+                <tr>
+                    <td>{{ order.receipt_number|default:order.id }}</td>
+                    <td>{{ order.course.title }}</td>
+                    <td>{{ order.get_status_display }}</td>
+                    <td>{{ order.amount }} ₽</td>
+                    <td>{% if order.paid_at %}{{ order.paid_at|date:"d.m.Y H:i" }}{% else %}—{% endif %}</td>
+                    <td><a href="{% url 'order_detail' order.id %}">Открыть</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="margin-top: 20px;">Заказов пока нет.</p>
+        {% endif %}
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="orders-actions">
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+            {% endif %}
+            <span style="margin: 0 12px;">Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

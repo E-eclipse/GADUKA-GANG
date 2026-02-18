@@ -1,4 +1,4 @@
-"""
+﻿"""
 URL configuration for GadukaGang project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -18,27 +18,35 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.generic.base import RedirectView
+from django.templatetags.static import static as static_url
 from . import views
 from . import api
 from . import analytics_views as analytics
 from . import data_management_views as data_mgmt
 from . import community_views as community
 from . import settings_views
+from . import metrics_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('favicon.ico', RedirectView.as_view(url=static_url('img/favicon.ico'), permanent=True)),
     path('', views.index, name='home'),
 
-    # Prometheus metrics endpoint
-    path('', include('django_prometheus.urls')),
+    # InfluxDB метрики
+    path('metrics/', metrics_view.influx_metrics_view, name='influx-metrics'),
     
-    # Custom admin panel (direct URL only)
+    # Кастомная admin-panel (direct URL only)
     path('admin-panel/', views.admin_panel_view, name='admin_panel'),
     
     
     # Analytics Dashboard
     path('analytics/', analytics.analytics_dashboard, name='analytics_dashboard'),
     path('analytics/api/data/', analytics.analytics_api_data, name='analytics_api_data'),
+    path('analytics/api/funnel/', analytics.analytics_funnel_api, name='analytics_funnel_api'),
+    path('analytics/api/retention/', analytics.analytics_retention_api, name='analytics_retention_api'),
+    path('analytics/api/revenue/', analytics.analytics_revenue_api, name='analytics_revenue_api'),
+    path('analytics/api/courses/performance/', analytics.analytics_courses_performance_api, name='analytics_courses_performance_api'),
     path('analytics/export/', analytics.export_analytics_csv, name='export_analytics_csv'),
     
     # Data Management (CSV Import/Export, Backups)
@@ -77,12 +85,29 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile_view, name='edit_profile'),
     path('profile/achievements/', views.achievements_view, name='achievements'),
     path('profile/unlock-admin-token/', views.unlock_admin_token, name='unlock_admin_token'),
+    path('profile/orders/', views.order_list_view, name='order_list'),
+    path('profile/orders/<int:order_id>/', views.order_detail_view, name='order_detail'),
+    path('profile/orders/<int:order_id>/receipt/', views.send_order_receipt, name='send_order_receipt'),
+    path('profile/favorites/', views.profile_favorites_view, name='profile_favorites'),
+    path('profile/favorites/<int:course_id>/toggle/', views.toggle_favorite_course, name='toggle_favorite_course'),
     path('profile/<int:user_id>/', views.profile_detail_view, name='profile_detail'),
+    path('profile/certificate/<int:certificate_id>/download/', views.download_certificate_pdf, name='download_certificate_pdf'),
+    path('certificates/verify/', views.certificate_verify_lookup_view, name='certificate_verify_lookup'),
+    path('certificates/verify/<str:code>/', views.certificate_verify_view, name='certificate_verify'),
+    
+    # Панель модератора
+    path('moderator-panel/', views.moderator_panel_view, name='moderator_panel'),
     
     # Настройки пользователя
     path('settings/', settings_views.user_settings, name='user_settings'),
     path('settings/save/', settings_views.save_settings, name='save_settings'),
     path('settings/filters/save/', settings_views.save_filter_preset, name='save_filter_preset'),
+
+    # Purchase history (admin/moderator)
+    path('admin-panel/purchases/', views.admin_purchases_view, name='admin_purchases'),
+    path('admin-panel/courses-analytics/', views.admin_course_analytics_view, name='admin_course_analytics'),
+    path('moderator-panel/purchases/', views.moderator_purchases_view, name='moderator_purchases'),
+    path('moderator-panel/courses-analytics/', views.moderator_course_analytics_view, name='moderator_course_analytics'),
     
     # Форум и сообщества
     path('forum/', community.forum_hub, name='forum_hub'),
@@ -123,6 +148,7 @@ urlpatterns = [
     # API для лайков и оценок
     path('api/posts/<int:post_id>/like/', views.post_like, name='post_like'),
     path('api/topics/<int:topic_id>/rating/', views.topic_rating, name='topic_rating'),
+    path('api/courses/<int:course_id>/rating/', views.course_rating, name='course_rating'),
     
     # API Documentation
     path('api/', api.api_documentation, name='api_documentation'),
@@ -252,14 +278,47 @@ urlpatterns = [
     path('tags/<int:tag_id>/topics/', views.topics_by_tag, name='topics_by_tag'),
     
     # Образование (заменяет практику)
-    path('education/', views.practice_view, name='education'),
+    path('education/', views.education_view, name='education'),
+    path('practice/', views.practice_view, name='practice'),
+
+    # Курсы автора (конструктор)
+    path('creator/courses/', views.creator_courses_view, name='creator_courses'),
+    path('creator/courses/new/', views.creator_course_create, name='creator_course_create'),
+    path('creator/courses/<int:course_id>/edit/', views.creator_course_edit, name='creator_course_edit'),
+    path('creator/courses/<int:course_id>/builder/', views.creator_course_builder, name='creator_course_builder'),
+    path('creator/courses/<int:course_id>/reorder-sections/', views.creator_reorder_sections, name='creator_reorder_sections'),
+    path('creator/courses/<int:course_id>/reorder-lessons/', views.creator_reorder_lessons, name='creator_reorder_lessons'),
+    path('creator/courses/<int:course_id>/submit/', views.creator_submit_course, name='creator_submit_course'),
+    path('creator/courses/<int:course_id>/sections/new/', views.creator_section_create, name='creator_section_create'),
+    path('creator/sections/<int:section_id>/edit/', views.creator_section_edit, name='creator_section_edit'),
+    path('creator/sections/<int:section_id>/delete/', views.creator_section_delete, name='creator_section_delete'),
+    path('creator/courses/<int:course_id>/lessons/new/', views.creator_lesson_create, name='creator_lesson_create'),
+    path('creator/lessons/<int:lesson_id>/edit/', views.creator_lesson_edit, name='creator_lesson_edit'),
+    path('creator/lessons/<int:lesson_id>/delete/', views.creator_lesson_delete, name='creator_lesson_delete'),
+    path('creator/control/questions/<int:lesson_id>/new/', views.creator_control_question_create, name='creator_control_question_create'),
+    path('creator/control/questions/<int:question_id>/edit/', views.creator_control_question_edit, name='creator_control_question_edit'),
+    path('creator/control/questions/<int:question_id>/delete/', views.creator_control_question_delete, name='creator_control_question_delete'),
+    path('creator/control/options/<int:question_id>/new/', views.creator_control_option_create, name='creator_control_option_create'),
+    path('creator/control/options/<int:option_id>/delete/', views.creator_control_option_delete, name='creator_control_option_delete'),
     
     # Обучение/Образование (курсы)
     path('learning/', views.education_view, name='education_courses'),
     path('learning/course/<int:course_id>/', views.course_detail_view, name='course_detail'),
+    path('learning/course/<int:course_id>/purchase/', views.purchase_course, name='course_purchase'),
+    path('learning/course/<int:course_id>/receipt/', views.send_course_receipt, name='send_course_receipt'),
     path('learning/lesson/<int:lesson_id>/', views.lesson_detail_view, name='lesson_detail'),
+    path('learning/lesson/<int:lesson_id>/control/start/', views.control_test_start, name='control_test_start'),
+    path('learning/lesson/<int:lesson_id>/control/<int:question_id>/', views.control_test_question, name='control_test_question'),
+    path('learning/lesson/<int:lesson_id>/control/summary/', views.control_test_summary, name='control_test_summary'),
+    path('learning/lesson/<int:lesson_id>/control/submit/', views.submit_control_test, name='submit_control_test'),
     path('learning/lesson/<int:lesson_id>/complete/', views.complete_lesson, name='complete_lesson'),
     path('learning/run-code/', views.run_python_code, name='run_python_code'),
+    path('learning/attachments/upload/', views.upload_content_attachment, name='upload_content_attachment'),
+    path('attachments/<int:attachment_id>/download/', views.attachment_download, name='attachment_download'),
+
+    # Модерация курсов
+    path('moderator/courses/', views.moderator_courses_queue, name='moderator_courses_queue'),
+    path('moderator/courses/<int:course_id>/', views.moderator_course_review, name='moderator_course_review'),
     
     # Участники форума
     path('members/', views.members_list, name='members_list'),
@@ -271,3 +330,4 @@ handler404 = views.custom_404_view
 # Serve static files during development
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

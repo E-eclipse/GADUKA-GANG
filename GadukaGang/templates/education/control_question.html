@@ -1,0 +1,202 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Контрольная — {{ lesson.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .control-page {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 0;
+    }
+
+    .control-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 32px;
+        box-shadow: var(--neon-shadow);
+    }
+
+    .control-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 15px;
+    }
+
+    .control-progress {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+    }
+
+    .control-question {
+        margin: 20px 0;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.15);
+    }
+
+    .question-prompt h3 {
+        margin: 0 0 12px 0;
+        color: var(--text-primary);
+        font-size: 1.25rem;
+    }
+
+    .question-prompt p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0 0 10px 0;
+    }
+
+    .answer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .answer-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .answer-option:hover {
+        border-color: rgba(31, 122, 140, 0.5);
+        box-shadow: 0 10px 18px rgba(19, 32, 62, 0.08);
+        transform: translateY(-1px);
+    }
+
+    .answer-option input[type="radio"],
+    .answer-option input[type="checkbox"] {
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid rgba(31, 122, 140, 0.4);
+        border-radius: 999px;
+        margin-top: 2px;
+        flex-shrink: 0;
+        background: #fff;
+    }
+
+    .answer-option input[type="checkbox"] {
+        border-radius: 6px;
+    }
+
+    .answer-option input[type="radio"]:checked {
+        border-color: var(--accent-green);
+        background: radial-gradient(circle at center, var(--accent-green) 0 45%, transparent 46% 100%);
+    }
+
+    .answer-option input[type="checkbox"]:checked {
+        border-color: var(--accent-green);
+        background: linear-gradient(135deg, var(--accent-green), var(--accent-green-dark));
+        position: relative;
+    }
+
+    .answer-text {
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+
+    .control-textarea {
+        width: 100%;
+        min-height: 160px;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text-primary);
+        padding: 12px;
+    }
+
+    @media (max-width: 820px) {
+        .control-question {
+            padding: 16px;
+        }
+    }
+
+    .control-actions {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .control-actions .btn {
+        min-width: 160px;
+        text-align: center;
+    }
+
+    .badge-review {
+        padding: 6px 12px;
+        border-radius: 12px;
+        background: rgba(216, 168, 74, 0.15);
+        color: #d8a84a;
+        border: 1px solid rgba(216, 168, 74, 0.4);
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="control-page">
+    <a href="{% url 'lesson_detail' lesson.id %}" class="btn btn-secondary">← Назад к уроку</a>
+
+    <div class="control-card" style="margin-top: 20px;">
+        <div class="control-header">
+            <div>
+                <h2>Контрольная работа</h2>
+                <div class="control-progress">Вопрос {{ position }} из {{ total_questions }} · Пропущено: {{ skipped_count }}</div>
+            </div>
+            {% if is_review %}
+            <span class="badge-review">Режим возврата к пропущенным</span>
+            {% endif %}
+        </div>
+
+        <form method="post" action="{% url 'control_test_question' lesson.id question.id %}">
+            {% csrf_token %}
+            <div class="control-question">
+                <div class="question-prompt">
+                    <h3>{{ question.prompt }}</h3>
+                </div>
+                {% if question.question_type == 'single' %}
+                    <div class="answer-list">
+                        {% for option in question.options.all %}
+                        <label class="answer-option">
+                            <input type="radio" name="question_{{ question.id }}" value="{{ option.id }}" {% if existing_answer.selected == option.id %}checked{% endif %}>
+                            <span class="answer-text">{{ option.option_text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                {% elif question.question_type == 'multiple' %}
+                    <div class="answer-list">
+                        {% for option in question.options.all %}
+                        <label class="answer-option">
+                            <input type="checkbox" name="question_{{ question.id }}" value="{{ option.id }}" {% if existing_answer.selected and option.id in existing_answer.selected %}checked{% endif %}>
+                            <span class="answer-text">{{ option.option_text }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <textarea class="control-textarea" name="question_{{ question.id }}" placeholder="Дайте развернутый ответ">{{ existing_answer.text|default:"" }}</textarea>
+                {% endif %}
+            </div>
+
+            <div class="control-actions">
+                <button type="submit" name="action" value="submit" class="btn btn-primary">Отправить ответ</button>
+                <button type="submit" name="action" value="skip" class="btn btn-secondary">Пропустить</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

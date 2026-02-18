@@ -1,0 +1,53 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Мои курсы{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>Мои курсы</h2>
+            <p>Создавайте и управляйте своими курсами</p>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <a class="btn btn-primary" href="{% url 'creator_course_create' %}">Создать курс</a>
+        </div>
+
+        {% if courses_data %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Курс</th>
+                        <th>Статус</th>
+                        <th>Продажи</th>
+                        <th>Доход</th>
+                        <th>Комиссия</th>
+                        <th>К выплате</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in courses_data %}
+                    <tr>
+                        <td>{{ item.course.title }}</td>
+                        <td>{{ item.course.get_status_display }}</td>
+                        <td>{{ item.orders_count }}</td>
+                        <td>{{ item.revenue }} ₽</td>
+                        <td>{{ item.commission }} ₽</td>
+                        <td>{{ item.payout }} ₽</td>
+                        <td>
+                            <a class="btn btn-secondary" href="{% url 'creator_course_builder' item.course.id %}">Открыть</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p>Курсов пока нет. Создайте первый.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,196 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Конструктор курса{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <div class="profile-container">
+        <div class="profile-header">
+            <h2>{{ course.title }}</h2>
+            <p>Статус: {{ course.get_status_display }}</p>
+            {% if course.auto_reject_reason %}
+            <p style="color: #c84747;">Авто-отказ: {{ course.auto_reject_reason }}</p>
+            {% endif %}
+            {% if course.moderator_comment %}
+            <p style="color: #7d5a14;">Комментарий модератора: {{ course.moderator_comment }}</p>
+            {% endif %}
+        </div>
+
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom: 20px;">
+            <a class="btn btn-secondary" href="{% url 'creator_course_edit' course.id %}">Редактировать курс</a>
+            <a class="btn btn-secondary" href="{% url 'creator_section_create' course.id %}">Добавить блок</a>
+            <a class="btn btn-secondary" href="{% url 'creator_lesson_create' course.id %}">Добавить урок</a>
+            <form method="post" action="{% url 'creator_submit_course' course.id %}">
+                {% csrf_token %}
+                <button class="btn btn-primary" type="submit">Отправить на модерацию</button>
+            </form>
+        </div>
+
+        <style>
+            .drag-handle {
+                cursor: grab;
+                margin-right: 8px;
+                color: var(--text-secondary);
+            }
+            .dragging {
+                opacity: 0.5;
+            }
+            .lesson-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 10px;
+                border: 1px dashed transparent;
+                border-radius: 8px;
+            }
+            .lesson-item.drag-over {
+                border-color: rgba(31, 122, 140, 0.5);
+                background: rgba(31, 122, 140, 0.06);
+            }
+            .lesson-list {
+                list-style: none;
+                padding-left: 0;
+                margin: 10px 0 0;
+            }
+            .section-card.drag-over {
+                outline: 2px dashed rgba(31, 122, 140, 0.6);
+                outline-offset: 4px;
+            }
+        </style>
+
+        <div id="sections-container">
+        {% for section in sections %}
+        <div class="card section-card" style="margin-bottom: 20px;" data-section-id="{{ section.id }}">
+            <h3><span class="drag-handle section-handle">⋮⋮</span>{{ section.title }}</h3>
+            <p>{{ section.description }}</p>
+            <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                <a class="btn btn-secondary" href="{% url 'creator_section_edit' section.id %}">Редактировать блок</a>
+                <form method="post" action="{% url 'creator_section_delete' section.id %}">
+                    {% csrf_token %}
+                    <button class="btn btn-outline" type="submit">Удалить</button>
+                </form>
+            </div>
+            {% if section.lessons.all %}
+            <ul class="lesson-list" data-lesson-list data-section="{{ section.id }}">
+                {% for lesson in section.lessons.all %}
+                <li class="lesson-item" data-lesson-id="{{ lesson.id }}">
+                    <span class="drag-handle lesson-handle">⠿</span>
+                    <span>{{ lesson.title }} ({{ lesson.get_lesson_type_display }})</span>
+                    <a href="{% url 'creator_lesson_edit' lesson.id %}">Редактировать</a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Уроков пока нет.</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+        </div>
+
+        {% if free_lessons %}
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>Уроки без блока</h3>
+            <ul class="lesson-list" data-lesson-list data-section="none">
+                {% for lesson in free_lessons %}
+                <li class="lesson-item" data-lesson-id="{{ lesson.id }}">
+                    <span class="drag-handle lesson-handle">⠿</span>
+                    <span>{{ lesson.title }} ({{ lesson.get_lesson_type_display }})</span>
+                    <a href="{% url 'creator_lesson_edit' lesson.id %}">Редактировать</a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+</section>
+<script>
+    function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+    const csrfToken = getCookie('csrftoken');
+
+    function postJson(url, data) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(data),
+        });
+    }
+
+    const sectionsContainer = document.getElementById('sections-container');
+    const lessonLists = document.querySelectorAll('[data-lesson-list]');
+
+    function sendLessonMapping() {
+        const mapping = {};
+        document.querySelectorAll('[data-lesson-list]').forEach(container => {
+            const key = container.dataset.section;
+            mapping[key] = Array.from(container.querySelectorAll('.lesson-item'))
+                .map(el => parseInt(el.dataset.lessonId, 10));
+        });
+        postJson('{% url "creator_reorder_lessons" course.id %}', { mapping });
+    }
+
+    let sectionSortable = null;
+    if (sectionsContainer && window.Sortable) {
+        sectionSortable = new Sortable(sectionsContainer, {
+            group: { name: 'sections', pull: true, put: false },
+            handle: '.section-handle',
+            draggable: '.section-card',
+            animation: 150,
+            swapThreshold: 0.65,
+            invertSwap: true,
+            fallbackOnBody: true,
+            forceFallback: true,
+            ghostClass: 'drag-ghost',
+            chosenClass: 'drag-chosen',
+            dragClass: 'drag-dragging',
+            onMove: (evt) => {
+                return evt.to === sectionsContainer;
+            },
+            onEnd: () => {
+                const ids = Array.from(sectionsContainer.querySelectorAll('.section-card'))
+                    .map(el => parseInt(el.dataset.sectionId, 10));
+                postJson('{% url "creator_reorder_sections" course.id %}', { sections: ids });
+            }
+        });
+    }
+
+    if (lessonLists && window.Sortable) {
+        lessonLists.forEach(list => {
+            new Sortable(list, {
+                group: { name: 'lessons', pull: true, put: true },
+                handle: '.lesson-handle',
+                draggable: '.lesson-item',
+                animation: 150,
+                swapThreshold: 0.65,
+                invertSwap: true,
+                fallbackOnBody: true,
+                forceFallback: true,
+                ghostClass: 'drag-ghost',
+                chosenClass: 'drag-chosen',
+                dragClass: 'drag-dragging',
+                onMove: (evt) => {
+                    if (evt.dragged && evt.dragged.classList.contains('section-card')) {
+                        return false;
+                    }
+                    return true;
+                },
+                onStart: () => {
+                    if (sectionSortable) sectionSortable.option('disabled', true);
+                },
+                onEnd: () => {
+                    if (sectionSortable) sectionSortable.option('disabled', false);
+                    sendLessonMapping();
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

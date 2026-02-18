@@ -1,0 +1,101 @@
+.rich-editor-wrap {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+.wysiwyg-editor {
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+.ql-toolbar.ql-snow {
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--card-bg) 92%, var(--dark-bg));
+}
+
+.ql-container.ql-snow {
+    border: none;
+    min-height: 220px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+}
+
+.ql-editor {
+    min-height: 220px;
+}
+
+.attachment-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.attachment-chip {
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+}
+
+.attachment-viewer-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+}
+
+.attachment-viewer-modal.is-hidden {
+    display: none;
+}
+
+.attachment-viewer-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+}
+
+.attachment-viewer-dialog {
+    position: relative;
+    max-width: min(92vw, 1100px);
+    margin: 4vh auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft, 0 10px 20px rgba(19, 32, 62, 0.08));
+    padding: 16px;
+}
+
+.attachment-viewer-close {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.attachment-viewer-title {
+    padding-right: 24px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.attachment-viewer-image,
+.attachment-viewer-video {
+    width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+}

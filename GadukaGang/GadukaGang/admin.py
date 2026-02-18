@@ -23,6 +23,7 @@ from .models import (
     TopicRating,
     UserSubscription,
     TopicSubscription,
+    CourseRating,
     ModeratorAction,
     AdminLog,
     Notification,
@@ -54,6 +55,7 @@ admin.site.register(PostLike)
 admin.site.register(TopicRating)
 admin.site.register(UserSubscription)
 admin.site.register(TopicSubscription)
+admin.site.register(CourseRating)
 admin.site.register(ModeratorAction)
 admin.site.register(AdminLog)
 admin.site.register(Notification)

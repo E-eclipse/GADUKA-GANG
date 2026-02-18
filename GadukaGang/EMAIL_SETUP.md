@@ -9,9 +9,9 @@
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=true
-EMAIL_HOST_USER=simernin.mat@gmail.com
-EMAIL_HOST_PASSWORD=Bprc28gk
-DEFAULT_FROM_EMAIL=noreply@gadukagang.com
+EMAIL_HOST_USER=почта
+EMAIL_HOST_PASSWORD=пароль
+DEFAULT_FROM_EMAIL=дефолт почта
 SITE_URL=http://127.0.0.1:8000
 ```
 
@@ -25,9 +25,9 @@ SITE_URL=http://127.0.0.1:8000
 EMAIL_HOST=smtp.yandex.ru
 EMAIL_PORT=465
 EMAIL_USE_SSL=true
-EMAIL_HOST_USER=matveisimernin@yandex.ru
-EMAIL_HOST_PASSWORD=Bprc28gk
-DEFAULT_FROM_EMAIL=noreply@gadukagang.com
+EMAIL_HOST_USER=почта
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=дефолт почта
 SITE_URL=http://127.0.0.1:8000
 ```
 
@@ -36,9 +36,9 @@ SITE_URL=http://127.0.0.1:8000
 EMAIL_HOST=smtp.mail.ru
 EMAIL_PORT=465
 EMAIL_USE_SSL=true
-EMAIL_HOST_USER=your-email@mail.ru
-EMAIL_HOST_PASSWORD=your-password
-DEFAULT_FROM_EMAIL=noreply@gadukagang.com
+EMAIL_HOST_USER=почта
+EMAIL_HOST_PASSWORD=
+DEFAULT_FROM_EMAIL=дефолт почта
 SITE_URL=http://127.0.0.1:8000
 ```
 

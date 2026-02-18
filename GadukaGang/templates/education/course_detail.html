@@ -1,214 +1,338 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ course.title }} - Gaduka Gang{% endblock %}
+{% block title %}{{ course.title }} — Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
     .course-detail-page {
         padding: 40px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 30px;
     }
 
     .course-header {
-        background-color: var(--card-bg);
+        background: var(--bg-card);
+        border-radius: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 40px;
-        margin-bottom: 40px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        padding: 32px;
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.08);
     }
 
-    .course-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-    }
-
-    .course-header h1 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.5rem;
-        color: var(--text-primary);
-        margin-bottom: 15px;
-        text-shadow: var(--neon-shadow);
-    }
-
-    .course-header p {
+    .course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
         color: var(--text-secondary);
-        font-size: 1.1rem;
-        line-height: 1.6;
+        font-size: 0.95rem;
+        margin-top: 10px;
+    }
+
+    .purchase-card {
+        background: rgba(31, 122, 140, 0.08);
+        border: 1px solid rgba(31, 122, 140, 0.2);
+        border-radius: 18px;
+        padding: 24px;
+        margin-top: 20px;
+    }
+
+    .course-section {
+        background: var(--bg-card);
+        border-radius: 20px;
+        border: 1px solid var(--border-color);
+        padding: 24px;
+        box-shadow: 0 16px 30px rgba(19, 32, 62, 0.06);
+    }
+
+    .course-section h2 {
+        margin-bottom: 8px;
     }
 
     .lessons-list {
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 14px;
+        margin-top: 16px;
     }
 
     .lesson-item {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 25px;
-        text-decoration: none;
-        color: var(--text-primary);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
-        gap: 20px;
+        gap: 16px;
+        padding: 16px 20px;
+        border-radius: 16px;
+        border: 1px solid var(--border-color);
+        text-decoration: none;
+        color: inherit;
+        background: var(--bg-card);
     }
 
-    .lesson-item::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--accent-green);
-        box-shadow: var(--neon-glow);
+    .lesson-item.completed {
+        border-color: rgba(31, 122, 140, 0.35);
+        background: rgba(31, 122, 140, 0.08);
     }
 
-    .lesson-item:hover {
-        transform: translateX(5px);
-        border-color: var(--accent-green);
-        box-shadow: var(--neon-shadow);
+    .lesson-item.locked {
+        background: rgba(27, 42, 78, 0.04);
+        color: var(--text-secondary);
+        border-style: dashed;
     }
 
     .lesson-number {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2rem;
-        color: var(--accent-green);
-        min-width: 60px;
+        font-family: var(--font-heading);
+        font-size: 1.6rem;
+        color: var(--accent-blue);
+        min-width: 48px;
         text-align: center;
     }
 
-    .lesson-content {
-        flex: 1;
-    }
-
-    .lesson-content h3 {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-green);
-        margin-bottom: 10px;
-        font-size: 1.4rem;
-    }
-
-    .lesson-content p {
-        color: var(--text-secondary);
-        margin: 0;
-    }
-
-    .lesson-type-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        background: rgba(18, 18, 18, 0.7);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
+    .lesson-type {
         font-size: 0.85rem;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: rgba(31, 122, 140, 0.12);
+        color: var(--accent-green-dark);
+    }
+
+    .lesson-type.control {
+        background: rgba(216, 168, 74, 0.16);
+        color: var(--warning);
+    }
+
+    .lesson-type.practice {
+        background: rgba(27, 42, 78, 0.12);
+        color: var(--accent-blue);
+    }
+
+    .lock-pill {
+        margin-left: auto;
+        font-size: 0.85rem;
+        color: var(--warning);
+        background: rgba(216, 168, 74, 0.18);
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+
+    .complete-pill {
+        margin-left: auto;
+        font-size: 0.85rem;
+        color: #1f7a8c;
+        background: rgba(31, 122, 140, 0.15);
+        padding: 4px 10px;
+        border-radius: 999px;
+    }
+
+    .section-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .course-insights {
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
         color: var(--text-secondary);
-        margin-top: 10px;
+        font-size: 0.95rem;
     }
 
-    .lesson-type-badge.lecture {
-        border-color: var(--accent-green);
-        color: var(--accent-green);
+    .course-stars {
+        display: inline-flex;
+        gap: 6px;
+        align-items: center;
+        margin-left: 8px;
     }
 
-    .lesson-type-badge.practice {
-        border-color: var(--metallic-1);
-        color: var(--metallic-1);
+    .course-star-btn {
+        border: 0;
+        background: transparent;
+        color: var(--text-secondary);
+        cursor: pointer;
+        font-size: 1.05rem;
+        padding: 0;
     }
 
-    .completed-icon {
-        color: var(--accent-green);
-        font-size: 1.5rem;
-        min-width: 30px;
-    }
-
-    .back-link {
-        display: inline-block;
-        margin-bottom: 20px;
-        padding: 10px 20px;
-        background: rgba(18, 18, 18, 0.7);
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        color: var(--text-primary);
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-
-    .back-link:hover {
-        border-color: var(--accent-green);
-        color: var(--accent-green);
+    .course-star-btn.active,
+    .course-star-btn:hover {
+        color: var(--warning);
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="course-detail-page">
-    <a href="{% url 'education_courses' %}" class="back-link">
-        <i class="fas fa-arrow-left"></i> Назад к курсам
-    </a>
+    <a href="{% url 'education_courses' %}" class="btn btn-secondary">← Назад к каталогу</a>
 
     <div class="course-header">
         <h1>{{ course.title }}</h1>
         <p>{{ course.description }}</p>
-        {% if user.is_authenticated and user_progress %}
-        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div style="flex: 1;">
-                    <div style="width: 100%; height: 8px; background-color: rgba(18, 18, 18, 0.7); border-radius: 4px; overflow: hidden;">
-                        <div style="height: 100%; background: linear-gradient(to right, var(--accent-green), var(--metallic-1)); width: {{ user_progress.get_progress_percentage }}%;"></div>
-                    </div>
-                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px;">
-                        Прогресс: {{ user_progress.get_progress_percentage }}% ({{ user_progress.completed_lessons.count }}/{{ lessons.count }} уроков)
-                    </div>
-                </div>
-                {% if user_progress.is_completed %}
-                <div style="padding: 5px 12px; background: var(--accent-green); color: var(--darker-bg); border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
-                    ✓ Завершено
+        <div class="course-meta">
+            {% if course.category %}<span>{{ course.category.name }}</span>{% endif %}
+            {% if course.duration_weeks %}<span>{{ course.duration_weeks }} недель</span>{% endif %}
+            <span>{{ course.level }}</span>
+            {% if course.has_practice %}<span>Практика</span>{% endif %}
+            <span>{{ course.price }} ₽</span>
+        </div>
+        <div style="margin-top: 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            {% if can_favorite_course %}
+            <form method="post" action="{% url 'toggle_favorite_course' course.id %}">
+                {% csrf_token %}
+                {% if is_favorite %}
+                    <button type="submit" class="btn btn-outline">Убрать из избранного</button>
+                {% else %}
+                    <button type="submit" class="btn btn-secondary">Добавить в избранное</button>
+                {% endif %}
+            </form>
+            {% endif %}
+            <div class="course-insights">
+                <span id="course-rating-summary">⭐ {{ course_avg_rating }} ({{ course_rating_count }})</span>
+                <span>👥 Сейчас проходят: <strong id="active-learners-count">{{ active_learners_count }}</strong></span>
+                {% if can_rate_course %}
+                <div class="course-stars" id="course-rating-stars" data-course-id="{{ course.id }}" data-current="{{ user_course_rating|default:0 }}">
+                    {% for i in "12345" %}
+                    <button class="course-star-btn" type="button" data-rating="{{ i }}">★</button>
+                    {% endfor %}
                 </div>
                 {% endif %}
             </div>
         </div>
+
+        {% if user.is_authenticated and user_progress %}
+        <div style="margin-top: 20px;">
+            <div style="width: 100%; height: 8px; background: rgba(27,42,78,0.08); border-radius: 999px; overflow: hidden;">
+                <div style="height: 100%; background: linear-gradient(90deg, var(--accent-blue), var(--accent-green)); width: {{ user_progress.get_progress_percentage }}%;"></div>
+            </div>
+            <div style="margin-top: 10px; color: var(--text-secondary); font-size: 0.9rem;">Прогресс: {{ user_progress.get_progress_percentage }}%</div>
+        </div>
+        {% endif %}
+
+        {% if not has_access %}
+        <div class="purchase-card">
+            <p>Для доступа к разделам и заданиям необходима оплата курса.</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'course_purchase' course.id %}" class="btn btn-primary">Перейти к оплате</a>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn btn-primary">Войти для покупки</a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if user.is_authenticated and user.is_staff and not enrollment %}
+        <div class="purchase-card">
+            <p>Режим администратора: доступ можно подтвердить без прохождения платежного процесса.</p>
+            <form method="post" action="{% url 'course_purchase' course.id %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary">Автоподтвердить оплату</button>
+            </form>
+        </div>
         {% endif %}
     </div>
 
-    <div class="lessons-list">
-        {% for lesson in lessons %}
-        <a href="{% url 'lesson_detail' lesson.id %}" class="lesson-item">
-            <div class="lesson-number">{{ forloop.counter }}</div>
-            <div class="lesson-content">
-                <h3>{{ lesson.title }}</h3>
-                <span class="lesson-type-badge {{ lesson.lesson_type }}">
-                    {% if lesson.lesson_type == 'lecture' %}
-                        📖 Лекция
-                    {% else %}
-                        💻 Практика
-                    {% endif %}
-                </span>
+    {% for block in section_blocks %}
+    <div class="course-section">
+        {% if block.section %}
+            <div class="section-meta">
+                <h2>{{ block.section.title }}</h2>
+                {% if block.completed %}
+                    <span class="complete-pill">Блок пройден</span>
+                {% endif %}
             </div>
-            {% if user.is_authenticated and user_progress %}
-                {% for completed_lesson in user_progress.completed_lessons.all %}
-                    {% if completed_lesson.id == lesson.id %}
-                    <div class="completed-icon">
-                        <i class="fas fa-check-circle"></i>
+            <p>{{ block.section.description }}</p>
+        {% else %}
+            <div class="section-meta">
+                <h2>Материалы курса</h2>
+                {% if block.completed %}
+                    <span class="complete-pill">Блок пройден</span>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if not block.unlocked %}
+            <div class="lock-pill">{{ block.lock_reason|default:"Откроется после выполнения контрольной работы предшествующего блока" }}</div>
+        {% endif %}
+
+        <div class="lessons-list">
+            {% for lesson in block.lessons %}
+                {% if lesson.id in accessible_lessons %}
+                    <a href="{% url 'lesson_detail' lesson.id %}" class="lesson-item {% if lesson.id in completed_lessons %}completed{% endif %}">
+                {% else %}
+                    <div class="lesson-item locked {% if lesson.id in completed_lessons %}completed{% endif %}">
+                {% endif %}
+                    <div class="lesson-number">{{ forloop.counter }}</div>
+                    <div>
+                        <h3>{{ lesson.title }}</h3>
+                        <span class="lesson-type {{ lesson.lesson_type }}">
+                            {% if lesson.lesson_type == 'lecture' %}Лекция{% elif lesson.lesson_type == 'practice' %}Практика{% else %}Контрольная{% endif %}
+                        </span>
                     </div>
+                    {% if lesson.id in completed_lessons %}
+                        <span class="complete-pill">Пройдено</span>
+                    {% elif lesson.id not in accessible_lessons %}
+                        <span class="lock-pill">Доступ закрыт</span>
                     {% endif %}
-                {% endfor %}
-            {% endif %}
-        </a>
-        {% endfor %}
+                {% if lesson.id in accessible_lessons %}
+                    </a>
+                {% else %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+(() => {
+    const starsContainer = document.getElementById('course-rating-stars');
+    if (!starsContainer) return;
+    function getCookie(name) {
+        const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+        return match ? decodeURIComponent(match[2]) : '';
+    }
+    const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    const csrfToken = csrfInput ? csrfInput.value : getCookie('csrftoken');
+    const courseId = starsContainer.dataset.courseId;
+    const summary = document.getElementById('course-rating-summary');
+    const stars = Array.from(starsContainer.querySelectorAll('.course-star-btn'));
+
+    function paintStars(value) {
+        stars.forEach((btn, idx) => {
+            btn.classList.toggle('active', idx < value);
+        });
+    }
+
+    stars.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const rating = parseInt(btn.dataset.rating, 10);
+            if (!rating) return;
+            const fd = new FormData();
+            fd.append('rating', rating);
+            fd.append('csrfmiddlewaretoken', csrfToken);
+
+            fetch(`/api/courses/${courseId}/rating/`, {
+                method: 'POST',
+                body: fd
+            })
+            .then((r) => r.json())
+            .then((data) => {
+                if (!data.success) return;
+                paintStars(rating);
+                if (summary) {
+                    summary.textContent = `⭐ ${data.average_rating} (${data.rating_count})`;
+                }
+            })
+            .catch(() => {});
+        });
+    });
+
+    const current = parseInt(starsContainer.dataset.current || '0', 10);
+    if (current > 0) paintStars(current);
+})();
+</script>
+{% endblock %}

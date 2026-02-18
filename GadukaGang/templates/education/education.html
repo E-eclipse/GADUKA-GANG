@@ -1,252 +1,231 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Обучение - Gaduka Gang{% endblock %}
+{% block title %}Каталог курсов — Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
-    .education-page {
-        padding: 40px 0;
-    }
-
-    .page-header {
-        background-color: var(--card-bg);
+    .catalog-hero {
+        background: var(--bg-card);
+        border-radius: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
         padding: 40px;
-        margin-bottom: 40px;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.08);
+        margin-bottom: 30px;
     }
 
-    .page-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-    }
-
-    .page-header h1 {
-        font-family: 'Orbitron', sans-serif;
+    .catalog-hero h1 {
+        font-family: var(--font-heading);
         font-size: 2.5rem;
-        color: var(--text-primary);
-        margin-bottom: 10px;
-        text-shadow: var(--neon-shadow);
+        color: var(--accent-blue);
+        margin-bottom: 12px;
     }
 
-    .page-header p {
+    .catalog-hero p {
         color: var(--text-secondary);
-        font-size: 1.1rem;
+        max-width: 760px;
     }
 
-    .courses-grid {
+    .catalog-search {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 30px;
-        margin-bottom: 40px;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        margin-top: 20px;
+    }
+
+    .category-filter {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 24px 0 32px;
+    }
+
+    .category-filter a {
+        padding: 8px 16px;
+        border-radius: 999px;
+        border: 1px solid var(--border-color);
+        text-decoration: none;
+        color: var(--accent-blue);
+        font-weight: 600;
+        background: var(--bg-card);
+    }
+
+    .category-filter a.active {
+        background: var(--accent-blue);
+        color: var(--accent-contrast);
+        border-color: transparent;
+    }
+
+    .course-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 20px;
     }
 
     .course-card {
-        background-color: var(--card-bg);
+        background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 30px;
-        text-decoration: none;
-        color: var(--text-primary);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        border-radius: 18px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        box-shadow: 0 16px 30px rgba(19, 32, 62, 0.08);
     }
 
-    .course-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 4px;
-        height: 100%;
-        background: var(--accent-green);
-        box-shadow: var(--neon-glow);
-    }
-
-    .course-card:hover {
-        transform: translateY(-5px);
-        border-color: var(--accent-green);
-        box-shadow: var(--neon-shadow);
-    }
-
-    .course-card h3 {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-green);
-        margin-bottom: 15px;
-        font-size: 1.5rem;
-    }
-
-    .course-card p {
+    .course-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
         color: var(--text-secondary);
-        margin-bottom: 20px;
-        line-height: 1.6;
-    }
-
-    .course-progress {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .progress-bar {
-        width: 100%;
-        height: 8px;
-        background-color: rgba(18, 18, 18, 0.7);
-        border-radius: 4px;
-        overflow: hidden;
-        margin-bottom: 10px;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-        transition: width 0.3s ease;
-    }
-
-    .progress-text {
         font-size: 0.9rem;
-        color: var(--text-secondary);
     }
 
-    .completed-badge {
-        display: inline-block;
-        padding: 5px 12px;
-        background: var(--accent-green);
-        color: var(--darker-bg);
-        border-radius: 12px;
-        font-size: 0.85rem;
-        font-weight: 600;
-        margin-top: 10px;
+    .course-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: auto;
     }
 
-    .external-resources {
-        margin-top: 50px;
-        padding-top: 40px;
-        border-top: 1px solid var(--border-color);
+    .course-price {
+        font-weight: 700;
+        color: var(--accent-blue);
     }
 
-    .external-resources h2 {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-green);
-        margin-bottom: 30px;
-        text-align: center;
-        font-size: 2rem;
+    .catalog-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin: 28px 0 12px;
+        flex-wrap: wrap;
     }
 
-    .resources-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
+    .page-numbers {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
-    .resource-card {
-        background-color: rgba(18, 18, 18, 0.7);
+    .page-number {
+        min-width: 36px;
+        height: 36px;
+        border-radius: 10px;
         border: 1px solid var(--border-color);
-        border-radius: 5px;
-        padding: 30px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         text-decoration: none;
         color: var(--text-primary);
-        transition: all 0.3s ease;
-        display: block;
+        background: var(--bg-card);
+        font-weight: 600;
     }
 
-    .resource-card:hover {
-        border-color: var(--accent-green);
-        transform: translateY(-5px);
-        box-shadow: var(--neon-shadow);
+    .page-number.active {
+        background: var(--accent-blue);
+        color: var(--accent-contrast);
+        border-color: transparent;
     }
 
-    .resource-card i {
-        font-size: 3rem;
-        color: var(--accent-green);
-        margin-bottom: 20px;
-        display: block;
+    .load-more-wrap {
+        display: flex;
+        justify-content: center;
+        margin: 10px 0 0;
     }
 
-    .resource-card h3 {
-        font-family: 'Orbitron', sans-serif;
-        color: var(--accent-green);
-        margin-bottom: 15px;
-        font-size: 1.5rem;
-    }
-
-    .resource-card p {
-        color: var(--text-secondary);
-        line-height: 1.6;
+    @media (max-width: 700px) {
+        .catalog-search {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="education-page">
-    <div class="page-header">
-        <h1>📚 Обучение Python</h1>
-        <p>Изучайте Python с помощью структурированных курсов, лекций и практических заданий</p>
-    </div>
+<section class="catalog-hero">
+    <h1>Каталог курсов</h1>
+    <p>Выберите программу дополнительного образования. В каждом курсе есть разделы, контрольные работы и блоки практики.</p>
+    <form method="get" class="catalog-search">
+        <input type="search" name="q" placeholder="Поиск по курсам и категориям" value="{{ query }}">
+        <button type="submit" class="btn btn-primary">Найти</button>
+    </form>
+</section>
 
-    {% if courses_with_progress %}
-    <div class="courses-grid">
-        {% for item in courses_with_progress %}
-        <a href="{% url 'course_detail' item.course.id %}" class="course-card">
-            <h3>{{ item.course.title }}</h3>
-            <p>{{ item.course.description|truncatewords:30 }}</p>
-            <div class="course-progress">
-                {% if item.progress %}
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: {{ item.progress.progress }}%"></div>
-                </div>
-                <div class="progress-text">
-                    Прогресс: {{ item.progress.progress }}% ({{ item.progress.completed_lessons_count }}/{{ item.progress.total_lessons }} уроков)
-                </div>
-                {% if item.progress.is_completed %}
-                <div class="completed-badge">✓ Завершено</div>
-                {% endif %}
-                {% elif user.is_authenticated %}
-                <div class="progress-text">Начать обучение</div>
-                {% else %}
-                <div class="progress-text">Войдите, чтобы начать обучение</div>
-                {% endif %}
-            </div>
-        </a>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div style="text-align: center; padding: 80px 20px; color: var(--text-secondary); background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
-        <h2 style="font-family: 'Orbitron', sans-serif; color: var(--text-primary); margin-bottom: 15px;">Курсы пока не доступны</h2>
-        <p>Курсы будут добавлены в ближайшее время</p>
-        <p style="margin-top: 20px;">
-            <a href="{% url 'education' %}" style="color: var(--accent-green); text-decoration: none;">← Вернуться к образованию</a>
-        </p>
-    </div>
-    {% endif %}
-
-    <div class="external-resources">
-        <h2>Дополнительные ресурсы</h2>
-        <div class="resources-grid">
-            <a href="https://roadmap.sh/" target="_blank" class="resource-card">
-                <i class="fas fa-map-marked-alt"></i>
-                <h3>Roadmap.sh</h3>
-                <p>Узнайте, что изучать дальше. Понятные карты развития для программистов</p>
-            </a>
-            
-            <a href="https://www.codewars.com/kata/search/python" target="_blank" class="resource-card">
-                <i class="fas fa-dumbbell"></i>
-                <h3>CodeWars</h3>
-                <p>Практикуйтесь на реальных задачах и улучшайте свои навыки программирования</p>
-            </a>
-        </div>
-    </div>
+<div class="category-filter">
+    <a href="{% url 'education_courses' %}?q={{ query }}" class="{% if not selected_category %}active{% endif %}">Все направления</a>
+    {% for category in categories %}
+        <a href="{% url 'education_courses' %}?q={{ query }}&category={{ category.id }}" class="{% if selected_category == category.id %}active{% endif %}">{{ category.name }}</a>
+    {% endfor %}
 </div>
-{% endblock %}
 
+<section class="course-grid" id="course-grid">
+    {% include 'education/partials/course_cards.html' %}
+</section>
+
+{% include 'education/partials/pagination_block.html' %}
+
+{% if next_page_number %}
+<div class="load-more-wrap">
+    <button
+        id="load-more-courses"
+        class="btn btn-primary"
+        data-next-page="{{ next_page_number }}"
+        data-q="{{ query }}"
+        data-category="{% if selected_category %}{{ selected_category }}{% endif %}">
+        Показать ещё
+    </button>
+</div>
+{% endif %}
+
+<script>
+    (function () {
+        const btn = document.getElementById('load-more-courses');
+        const grid = document.getElementById('course-grid');
+        if (!btn || !grid) return;
+
+        btn.addEventListener('click', async function () {
+            if (btn.disabled) return;
+            const nextPage = btn.dataset.nextPage;
+            if (!nextPage) return;
+
+            btn.disabled = true;
+            const originalText = btn.textContent;
+            btn.textContent = 'Загрузка...';
+
+            const params = new URLSearchParams();
+            params.set('page', nextPage);
+            params.set('partial', 'courses');
+            if (btn.dataset.q) params.set('q', btn.dataset.q);
+            if (btn.dataset.category) params.set('category', btn.dataset.category);
+
+            try {
+                const response = await fetch(`{% url 'education_courses' %}?${params.toString()}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                if (!response.ok) throw new Error('Bad response');
+                const html = await response.text();
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                while (temp.firstChild) {
+                    grid.appendChild(temp.firstChild);
+                }
+
+                const next = parseInt(nextPage, 10) + 1;
+                const totalPages = {{ page_obj.paginator.num_pages|default:1 }};
+                if (next > totalPages) {
+                    btn.remove();
+                    return;
+                }
+                btn.dataset.nextPage = String(next);
+                btn.disabled = false;
+                btn.textContent = originalText;
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = 'Повторить загрузку';
+            }
+        });
+    })();
+</script>
+{% endblock %}

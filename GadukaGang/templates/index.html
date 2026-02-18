@@ -1,577 +1,209 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Gaduka Gang - Python Community Forum{% endblock %}
+{% block title %}Plekhanov CourseHub — платные курсы и форум{% endblock %}
 
 {% block extra_css %}
 <style>
-    .nav a.active {
-        color: var(--accent-green);
-        text-shadow: var(--neon-shadow);
-    }
-    
-    .nav a.active::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: var(--accent-green);
-        box-shadow: var(--neon-glow);
-    }
-    
     .hero {
-        display: flex;
-        align-items: center;
-        gap: 50px;
-        padding: 100px 0 80px;
-        min-height: 85vh;
-    }
-    
-    .hero-content {
-        flex: 1;
-    }
-    
-    .hero-content h2 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 3.5rem;
-        margin-bottom: 20px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
-        text-shadow: var(--neon-shadow);
-        line-height: 1.2;
-    }
-    
-    .hero-content p {
-        font-size: 1.3rem;
-        color: var(--text-secondary);
-        max-width: 600px;
-        margin-bottom: 30px;
-        line-height: 1.8;
-    }
-    
-    .hero-buttons {
-        display: flex;
-        gap: 20px;
-        margin-top: 30px;
-    }
-    
-    .hero-image {
-        flex: 1;
-        position: relative;
-    }
-    
-    .code-snippet {
-        background-color: var(--darker-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 25px;
-        box-shadow: var(--neon-shadow);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .code-snippet::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 5px;
-        height: 100%;
-        background: var(--accent-green);
-        box-shadow: var(--neon-glow);
-    }
-    
-    .code-snippet pre {
-        color: var(--accent-green);
-        font-family: 'Roboto Mono', monospace;
-        overflow-x: auto;
-        font-size: 1.1rem;
-        line-height: 1.5;
-    }
-    
-    .features {
-        padding: 100px 0;
-    }
-    
-    .features h2 {
-        text-align: center;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.8rem;
-        margin-bottom: 60px;
-        color: var(--text-primary);
-        text-shadow: var(--neon-shadow);
-    }
-    
-    .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 35px;
+        gap: 32px;
+        align-items: center;
+        padding: 40px 0 20px;
     }
-    
-    .feature-card {
-        background-color: var(--card-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 35px;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-    }
-    
-    .feature-card:hover {
-        transform: translateY(-10px);
-        border-color: var(--accent-green);
-        box-shadow: var(--neon-glow);
-    }
-    
-    .feature-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-    }
-    
-    .feature-icon {
+
+    .hero h1 {
+        font-family: var(--font-heading);
         font-size: 3rem;
-        margin-bottom: 25px;
-        color: var(--accent-green);
-        text-shadow: var(--neon-shadow);
-    }
-    
-    .feature-card h3 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.6rem;
+        line-height: 1.1;
         margin-bottom: 20px;
-        color: var(--accent-green);
+        color: var(--accent-blue);
     }
-    
-    .feature-card p {
+
+    .hero p {
+        font-size: 1.1rem;
         color: var(--text-secondary);
-        line-height: 1.7;
-        font-size: 1.05rem;
+        margin-bottom: 24px;
     }
-    
-    .discussions {
-        padding: 100px 0;
-        position: relative;
-    }
-    
-    .discussions::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 200px;
-        height: 4px;
-        background: linear-gradient(to right, transparent, var(--accent-green), transparent);
-        box-shadow: 0 0 20px var(--accent-green);
-    }
-    
-    .discussions h2 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.8rem;
-        margin-bottom: 60px;
-        color: var(--text-primary);
-        text-shadow: var(--neon-shadow);
-        text-align: center;
-        position: relative;
-        padding-bottom: 20px;
-    }
-    
-    .discussions h2::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100px;
-        height: 3px;
-        background: linear-gradient(to right, transparent, var(--accent-green), transparent);
-        box-shadow: 0 0 15px var(--accent-green);
-    }
-    
-    .discussion-list {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 30px;
-    }
-    
-    .discussion-card {
-        background: linear-gradient(135deg, rgba(18, 18, 18, 0.95) 0%, rgba(10, 10, 10, 0.95) 100%);
-        border: 2px solid var(--border-color);
-        border-radius: 16px;
-        padding: 0;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        position: relative;
-        overflow: hidden;
-        backdrop-filter: blur(10px);
-    }
-    
-    .discussion-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
-        opacity: 0;
-        transition: opacity 0.4s ease;
-    }
-    
-    .discussion-card:hover {
-        border-color: var(--accent-green);
-        box-shadow: 0 12px 48px rgba(0, 255, 65, 0.3), 0 0 30px rgba(0, 255, 65, 0.1);
-        transform: translateY(-8px) scale(1.02);
-    }
-    
-    .discussion-card:hover::before {
-        opacity: 1;
-        box-shadow: 0 0 20px var(--accent-green);
-    }
-    
-    .discussion-card-content {
-        padding: 28px;
-    }
-    
-    .discussion-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-        gap: 15px;
-    }
-    
-    .discussion-header h3 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 1.5rem;
-        color: var(--text-primary);
-        flex: 1;
-        margin: 0;
-        line-height: 1.4;
-    }
-    
-    .discussion-header h3 a {
-        color: var(--text-primary);
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: block;
-    }
-    
-    .discussion-header h3 a:hover {
-        color: var(--accent-green);
-        text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
-    }
-    
-    .tag {
-        background: linear-gradient(135deg, rgba(0, 255, 65, 0.15), rgba(0, 255, 65, 0.05));
-        color: var(--accent-green);
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        border: 1.5px solid var(--accent-green);
-        text-transform: uppercase;
-        letter-spacing: 1.2px;
-        white-space: nowrap;
-        align-self: flex-start;
-        font-weight: 600;
-        box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
-        transition: all 0.3s ease;
-    }
-    
-    .tag:hover {
-        box-shadow: 0 0 25px rgba(0, 255, 65, 0.4);
-        transform: scale(1.05);
-    }
-    
-    .discussion-card p {
-        color: var(--text-secondary);
-        margin-bottom: 25px;
-        line-height: 1.7;
-        font-size: 1.05rem;
-    }
-    
-    .discussion-meta {
+
+    .hero-actions {
         display: flex;
         flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .hero-card {
+        background: var(--bg-card);
+        border-radius: 22px;
+        border: 1px solid var(--border-color);
+        padding: 28px;
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.1);
+    }
+
+    .hero-card h3 {
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+        color: var(--accent-blue);
+    }
+
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin: 30px 0 50px;
+    }
+
+    .stat-item {
+        background: var(--bg-card);
+        border-radius: 18px;
+        padding: 20px;
+        border: 1px solid var(--border-color);
+    }
+
+    .stat-item span {
+        font-family: var(--font-heading);
+        font-size: 1.5rem;
+        color: var(--accent-green-dark);
+    }
+
+    .section-title {
+        font-family: var(--font-heading);
+        font-size: 2.2rem;
+        margin-bottom: 24px;
+        color: var(--accent-blue);
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 20px;
-        font-size: 0.9rem;
-        color: var(--metallic-2);
-        padding: 20px 28px;
-        background: linear-gradient(180deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%);
-        border-top: 1px solid rgba(34, 34, 34, 0.8);
-        margin-top: 20px;
+        margin-bottom: 60px;
     }
-    
-    .discussion-meta span {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
-        border: 1px solid rgba(34, 34, 34, 0.5);
-        transition: all 0.3s ease;
+
+    .feature-card {
+        background: var(--bg-card);
+        border-radius: 18px;
+        padding: 24px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 16px 30px rgba(19, 32, 62, 0.08);
     }
-    
-    .discussion-meta span:hover {
-        background: rgba(0, 255, 65, 0.1);
-        border-color: var(--accent-green);
-        color: var(--accent-green);
+
+    .feature-card h4 {
+        font-family: var(--font-heading);
+        font-size: 1.4rem;
+        margin-bottom: 12px;
     }
-    
-    .discussion-meta span::before {
-        content: '';
-        width: 6px;
-        height: 6px;
-        background: var(--accent-green);
-        border-radius: 50%;
-        box-shadow: 0 0 8px var(--accent-green);
-        margin-right: 4px;
+
+    .forum-preview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 22px;
     }
-    
-    .discussion-meta span:first-child::before {
-        content: '📁';
-        background: none;
-        box-shadow: none;
-        width: auto;
-        height: auto;
-        margin-right: 0;
+
+    .forum-card {
+        background: linear-gradient(135deg, var(--bg-card), rgba(31, 122, 140, 0.08));
+        border-radius: 18px;
+        padding: 24px;
+        border: 1px solid var(--border-color);
     }
-    
-    .discussion-meta span:nth-child(2)::before {
-        content: '👤';
-        background: none;
-        box-shadow: none;
-        width: auto;
-        height: auto;
-        margin-right: 0;
+
+    .forum-card h4 {
+        font-family: var(--font-heading);
+        font-size: 1.3rem;
+        margin-bottom: 10px;
     }
-    
-    .discussion-meta span:nth-child(3)::before {
-        content: '📅';
-        background: none;
-        box-shadow: none;
-        width: auto;
-        height: auto;
-        margin-right: 0;
-    }
-    
-    .discussion-meta span:nth-child(4)::before {
-        content: '👁️';
-        background: none;
-        box-shadow: none;
-        width: auto;
-        height: auto;
-        margin-right: 0;
-    }
-    
-    .discussion-meta span:nth-child(5)::before {
-        content: '⭐';
-        background: none;
-        box-shadow: none;
-        width: auto;
-        height: auto;
-        margin-right: 0;
-    }
-    
-    .discussion-meta a {
-        color: var(--metallic-2);
-        text-decoration: none;
-        transition: color 0.3s ease;
-    }
-    
-    .discussion-meta a:hover {
-        color: var(--accent-green);
-    }
-    
-    @media (max-width: 992px) {
-        .hero {
-            flex-direction: column;
-            text-align: center;
-            padding: 80px 0;
-        }
-        
-        .hero-content p {
-            margin: 0 auto 30px;
-        }
-        
-        .hero-buttons {
-            justify-content: center;
-        }
-        
-        .discussion-header {
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .hero-content h2 {
-            font-size: 2.8rem;
-        }
-        
-        .discussion-list {
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-        }
-    }
-    
+
     @media (max-width: 768px) {
-        .hero-content h2 {
-            font-size: 2.3rem;
+        .hero h1 {
+            font-size: 2.4rem;
         }
-        
-        .hero-content p {
-            font-size: 1.1rem;
-        }
-        
-        .features h2,
-        .discussions h2 {
-            font-size: 2.2rem;
-        }
-        
-        .hero-buttons {
+
+        .hero-actions {
             flex-direction: column;
-            gap: 15px;
-        }
-        
-        .btn {
-            width: 100%;
-        }
-        
-        .discussion-list {
-            grid-template-columns: 1fr;
-            gap: 20px;
-        }
-        
-        .discussion-card-content {
-            padding: 20px;
-        }
-        
-        .discussion-header h3 {
-            font-size: 1.3rem;
-        }
-        
-        .discussion-meta {
-            flex-direction: column;
-            gap: 12px;
-            padding: 15px 20px;
-        }
-        
-        .discussion-meta span {
-            width: 100%;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Hero section -->
 <section class="hero">
-    <div class="hero-content">
-        <h2>Добро пожаловать в Gaduka Gang</h2>
-        <p>Сообщество разработчиков, влюбленных в Python. Обменивайтесь знаниями, решайте задачи и создавайте будущее вместе.</p>
-        <div class="hero-buttons">
-            {% if not user.is_authenticated %}
-                <a href="{% url 'register' %}" class="btn btn-primary">Присоединиться</a>
-                <a href="{% url 'login' %}" class="btn btn-outline">Войти</a>
-            {% else %}
-                <a href="{% url 'profile' %}" class="btn btn-primary">Мой профиль</a>
-            {% endif %}
+    <div>
+        <h1>Платные курсы и академическое сообщество РЭУ им. Г.В. Плеханова</h1>
+        <p>Учебная платформа для дополнительного образования: курсы с практикой, закрытый форум с преподавателями и профессиональными треками.</p>
+        <div class="hero-actions">
+            <a href="{% url 'education' %}" class="btn btn-primary">Выбрать курс</a>
+            <a href="{% url 'forum_hub' %}" class="btn btn-secondary">Открыть форум</a>
+            <a href="{% url 'certificate_verify_lookup' %}" class="btn btn-outline">Проверить сертификат</a>
         </div>
     </div>
-    <div class="hero-image">
-        <div class="code-snippet">
-            <pre><code>def gaduka_gang():
-    print("Welcome to Python paradise")
-    return "Code is poetry"</code></pre>
+    <div class="hero-card">
+        <h3>Что внутри CourseHub</h3>
+        <ul>
+            <li>Платный доступ к расширенным материалам и практикумам.</li>
+            <li>Сертификаты и проверка домашних заданий.</li>
+            <li>Сообщество и рабочие группы по направлениям.</li>
+            <li>Календарь вебинаров и консультаций.</li>
+        </ul>
+    </div>
+</section>
+
+<section class="stat-grid">
+    <div class="stat-item">
+        <span>25+</span>
+        <p>курсов дополнительного образования</p>
+    </div>
+    <div class="stat-item">
+        <span>48</span>
+        <p>учебных модулей с практикой</p>
+    </div>
+    <div class="stat-item">
+        <span>6</span>
+        <p>профессиональных треков</p>
+    </div>
+</section>
+
+<section>
+    <h2 class="section-title">Направления обучения</h2>
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>Финансовая аналитика</h4>
+            <p>Курсы по финансовому моделированию, работе с данными и подготовке отчетов.</p>
+        </div>
+        <div class="feature-card">
+            <h4>Цифровой маркетинг</h4>
+            <p>Практика построения воронок, медиапланирование и аналитика рекламных кампаний.</p>
+        </div>
+        <div class="feature-card">
+            <h4>Менеджмент проектов</h4>
+            <p>Полный цикл управления проектами с кейсами и экспертной обратной связью.</p>
+        </div>
+        <div class="feature-card">
+            <h4>Данные и автоматизация</h4>
+            <p>Работа с BI-инструментами, базами данных и автоматизацией рутинных задач.</p>
         </div>
     </div>
 </section>
 
-<!-- Features section -->
-<section class="features">
-    <h2>Почему выбирают нас</h2>
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">🐍</div>
-            <h3>Python экспертиза</h3>
-            <p>Обсуждения, проекты и решения на Python всех уровней сложности</p>
+<section>
+    <h2 class="section-title">Форум и учебные сообщества</h2>
+    <div class="forum-preview">
+        <div class="forum-card">
+            <h4>Закрытые группы</h4>
+            <p>Обсуждения по каждому курсу, совместные проекты и разбор домашней работы.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">👥</div>
-            <h3>Активное сообщество</h3>
-            <p>Тысячи разработчиков со всего мира готовы помочь и поделиться опытом</p>
+        <div class="forum-card">
+            <h4>Публичные темы</h4>
+            <p>Обмен опытом, советы по карьерным траекториям и поддержка от выпускников.</p>
         </div>
-        <div class="feature-card">
-            <div class="feature-icon">💡</div>
-            <h3>Обучение</h3>
-            <p>Уроки, туториалы и мастер-классы от экспертов сообщества</p>
-        </div>
-        <div class="feature-card">
-            <div class="feature-icon">🚀</div>
-            <h3>Проекты</h3>
-            <p>Совместная разработка open-source проектов и хакатонов</p>
+        <div class="forum-card">
+            <h4>Служба поддержки</h4>
+            <p>Оперативные ответы по оплате, доступу и организационным вопросам обучения.</p>
         </div>
     </div>
 </section>
-
-<!-- Recent discussions -->
-<section class="discussions">
-    <h2>Последние обсуждения</h2>
-    <div class="discussion-list">
-        {% for topic in latest_topics %}
-        <div class="discussion-card">
-            <div class="discussion-card-content">
-                <div class="discussion-header">
-                    <h3><a href="{% url 'topic_detail' topic.id %}">{{ topic.title }}</a></h3>
-                    {% if topic.topic_tags.all %}
-                        {% for topic_tag in topic.topic_tags.all|slice:":1" %}
-                        <span class="tag" style="background: linear-gradient(135deg, {{ topic_tag.tag.color }}22, {{ topic_tag.tag.color }}08); border-color: {{ topic_tag.tag.color }}; color: {{ topic_tag.tag.color }};">{{ topic_tag.tag.name }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-                <div class="discussion-meta">
-                    <span>Раздел: <a href="{% url 'topics_list' topic.section.id %}">{{ topic.section.name }}</a></span>
-                    <span>Автор: {{ topic.author.username }}</span>
-                    <span>Создано: {{ topic.created_date|date:"d.m.Y" }}</span>
-                    <span>Просмотров: {{ topic.view_count }}</span>
-                    {% if topic.average_rating > 0 %}
-                    <span>Рейтинг: {{ topic.average_rating|floatformat:1 }}</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="discussion-card">
-            <div class="discussion-card-content">
-                <p style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">Пока нет тем. <a href="{% url 'sections_list' %}" style="color: var(--accent-green); text-decoration: none;">Перейти к разделам</a></p>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</section>
-
-<!-- Popular tags -->
-{% if popular_tags %}
-<section class="discussions">
-    <h2>Популярные теги</h2>
-    <div class="tags-list" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-        {% for tag in popular_tags %}
-        <a href="{% url 'topics_by_tag' tag.id %}" class="tag" style="background-color: {{ tag.color }}; text-decoration: none;">
-            {{ tag.name }} ({{ tag.topics_count }})
-        </a>
-        {% endfor %}
-    </div>
-</section>
-{% endif %}
 {% endblock %}
+
+
+

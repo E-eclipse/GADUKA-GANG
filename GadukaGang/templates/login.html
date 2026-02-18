@@ -1,199 +1,127 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Вход - Gaduka Gang{% endblock %}
+{% block title %}Вход — Plekhanov CourseHub{% endblock %}
 
 {% block extra_css %}
 <style>
-    .login-section {
+    .auth-section {
         padding: 60px 0;
-        min-height: calc(100vh - 300px);
         display: flex;
-        align-items: center;
         justify-content: center;
     }
-    
-    .login-container {
-        max-width: 500px;
+
+    .auth-card {
         width: 100%;
-        background-color: var(--card-bg);
+        max-width: 520px;
+        background: #fff;
+        border-radius: 24px;
         border: 1px solid var(--border-color);
-        border-radius: 8px;
         padding: 40px;
-        box-shadow: var(--neon-shadow);
-        position: relative;
-        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(19, 32, 62, 0.08);
     }
-    
-    .login-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(to right, var(--accent-green), var(--metallic-1));
-    }
-    
-    .login-container h2 {
-        font-family: 'Orbitron', sans-serif;
-        font-size: 2.2rem;
-        color: var(--accent-green);
-        text-align: center;
-        margin-bottom: 10px;
-        text-shadow: var(--neon-shadow);
-        letter-spacing: 1px;
-    }
-    
-    .login-container p.subtitle {
-        text-align: center;
-        color: var(--text-secondary);
-        margin-bottom: 30px;
-        font-size: 1.1rem;
-    }
-    
-    .form-group {
-        margin-bottom: 25px;
-        position: relative;
-    }
-    
-    .form-group label {
-        display: block;
+
+    .auth-card h1 {
+        font-family: var(--font-heading);
+        font-size: 2.4rem;
+        color: var(--accent-blue);
         margin-bottom: 8px;
-        color: var(--text-primary);
-        font-weight: 400;
-        font-size: 1rem;
     }
-    
-    .form-group input {
-        width: 100%;
-        padding: 14px;
-        border: 1px solid var(--border-color);
-        background-color: var(--darker-bg);
-        color: var(--text-primary);
-        font-family: 'Roboto Mono', monospace;
-        border-radius: 4px;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-        border-left: 3px solid var(--accent-green);
+
+    .auth-card .subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 26px;
     }
-    
-    .form-group input:focus {
-        outline: none;
-        border-color: var(--accent-green);
-        box-shadow: var(--neon-shadow);
-        background-color: rgba(0, 255, 65, 0.05);
-    }
-    
+
     .error-message {
-        background-color: rgba(255, 68, 68, 0.1);
-        color: #ff4444;
-        padding: 15px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        border: 1px solid #ff4444;
+        background: rgba(200, 71, 71, 0.1);
+        border: 1px solid rgba(200, 71, 71, 0.35);
+        color: #9f2a2a;
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
         font-size: 0.9rem;
     }
-    
+
     .info-message {
-        background-color: rgba(0, 255, 65, 0.1);
-        color: var(--accent-green);
-        padding: 15px;
-        border-radius: 4px;
-        margin-bottom: 20px;
-        border: 1px solid var(--accent-green);
-        font-size: 0.95rem;
-    }
-    
-    .btn-login {
-        width: 100%;
-        padding: 14px;
-        background-color: var(--accent-green);
-        color: var(--dark-bg);
-        border: none;
-        border-radius: 4px;
-        font-family: 'Roboto Mono', monospace;
-        font-weight: 500;
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: var(--neon-shadow);
-        margin-top: 10px;
-    }
-    
-    .btn-login:hover {
-        background-color: var(--accent-green-dark);
-        box-shadow: var(--neon-glow);
-        transform: translateY(-2px);
-    }
-    
-    .login-footer {
-        text-align: center;
-        margin-top: 30px;
+        background: rgba(31, 122, 140, 0.08);
+        border: 1px solid rgba(31, 122, 140, 0.2);
         color: var(--text-secondary);
-        padding-top: 20px;
-        border-top: 1px solid var(--border-color);
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        font-size: 0.9rem;
     }
-    
-    .login-footer a {
-        color: var(--accent-green);
-        text-decoration: none;
-        transition: all 0.3s ease;
-        font-weight: 500;
-    }
-    
-    .login-footer a:hover {
-        text-shadow: var(--neon-shadow);
-        color: #00cc33;
-    }
-    
+
     .forgot-password {
         text-align: right;
-        margin-top: -15px;
-        margin-bottom: 20px;
+        margin-top: -6px;
+        margin-bottom: 18px;
     }
-    
+
     .forgot-password a {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
+        color: var(--accent-blue);
         text-decoration: none;
-        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        font-weight: 600;
     }
-    
-    .forgot-password a:hover {
-        color: var(--accent-green);
-        text-shadow: var(--neon-shadow);
+
+    .auth-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 10px;
+    }
+
+    .auth-footer {
+        margin-top: 24px;
+        border-top: 1px solid var(--border-color);
+        padding-top: 18px;
+        color: var(--text-secondary);
+    }
+
+    .auth-footer a {
+        color: var(--accent-blue);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    @media (max-width: 600px) {
+        .auth-card {
+            padding: 28px;
+        }
+
+        .auth-card h1 {
+            font-size: 2rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Login section -->
-<section class="login-section">
-    <div class="login-container">
-        <h2>Добро пожаловать</h2>
-        <p class="subtitle">Войдите в свой аккаунт Gaduka Gang</p>
-        
+<section class="auth-section">
+    <div class="auth-card">
+        <h1>Добро пожаловать</h1>
+        <p class="subtitle">Войдите в свой аккаунт Plekhanov CourseHub</p>
+
         {% if form.errors %}
             <div class="error-message">
                 <p>Неверное имя пользователя или пароль. Пожалуйста, попробуйте снова.</p>
             </div>
         {% endif %}
-        
+
         {% if next %}
             {% if user.is_authenticated %}
                 <div class="info-message">
-                    <p>Ваш аккаунт не имеет доступа к этой странице. Чтобы продолжить, войдите в систему под другим аккаунтом.</p>
+                    <p>Ваш аккаунт не имеет доступа к этой странице. Войдите под другим пользователем.</p>
                 </div>
             {% else %}
                 <div class="info-message">
-                    <p>Пожалуйста, войдите в систему для просмотра этой страницы.</p>
+                    <p>Пожалуйста, войдите в систему для доступа к этой странице.</p>
                 </div>
             {% endif %}
         {% endif %}
-        
+
         <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
             <div class="form-group">
@@ -204,18 +132,22 @@
                 <label for="{{ form.password.id_for_label }}">Пароль</label>
                 {{ form.password }}
             </div>
-            
+
             <div class="forgot-password">
                 <a href="{% url 'password_reset' %}">Забыли пароль?</a>
             </div>
-            
+
             <input type="hidden" name="next" value="{{ next }}">
-            <button type="submit" class="btn-login">Войти</button>
+            <div class="auth-actions">
+                <button type="submit" class="btn btn-primary">Войти</button>
+                <a href="{% url 'register' %}" class="btn btn-secondary">Создать аккаунт</a>
+            </div>
         </form>
-        
-        <div class="login-footer">
+
+        <div class="auth-footer">
             <p>Нет аккаунта? <a href="{% url 'register' %}">Зарегистрируйтесь</a></p>
         </div>
     </div>
 </section>
 {% endblock %}
+
