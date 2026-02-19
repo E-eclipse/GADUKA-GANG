@@ -8,7 +8,6 @@ stages:
   - test
 
 variables:
-  # Какой settings-файл использовать при запуске manage.py.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
   # Папка виртуального окружения, которое создается в каждом job.
   VENV_PATH: ".venv"
@@ -85,7 +84,7 @@ linter-check:
 # Запускаем основные тесты приложения. Этот job блокирующий.
 unit-tests:
   stage: test
-  script:
+  script: 
     - echo "Запуск unit-тестов"
     # --verbosity 2 дает более подробный лог выполнения тестов.
     - python manage.py test GadukaGang.tests --verbosity 2
