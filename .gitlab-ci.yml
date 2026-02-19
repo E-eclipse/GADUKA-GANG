@@ -1,96 +1,124 @@
-# Этапы пайплайна: сначала проверка сборки, затем линтер, затем тестовые/аналитические проверки.
+﻿# Этапы пайплайна идут сверху вниз.
+# 1) build  — убеждаемся, что Django-проект корректно собирается.
+# 2) linter — проверяем код линтером на критичные синтаксические проблемы.
+# 3) test   — запускаем тесты и дополнительные проверки качества/безопасности.
 stages:
   - build
   - linter
   - test
 
 variables:
-  # Django settings модуль проекта.
+  # Какой settings-файл использовать при запуске manage.py.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
-  # Локальное виртуальное окружение внутри job.
+  # Папка виртуального окружения, которое создается в каждом job.
   VENV_PATH: ".venv"
-  # Переменные БД (сейчас используются как заготовка под PostgreSQL-окружение).
+  # Параметры БД как заготовка (на случай PostgreSQL в CI).
   DB_NAME: "forum_database"
   DB_USER: "forum_owner"
   DB_PASSWORD: "1111"
   DB_HOST: "localhost"
   DB_PORT: "5432"
-  # Ключ нужен для модулей шифрования, чтобы команды Django не падали в CI.
+  # Ключ шифрования нужен части кода/тестов, чтобы не падать на импорте модулей.
   ENCRYPTION_KEY: "KafqByaeRwSiijl2t7uRpPZKj6-4MgHEVILKiqZQKkM="
-  # Кэш pip ускоряет повторные сборки.
+  # Куда складывать кэш pip-пакетов между запусками job.
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  # Логи Python без буферизации и без .pyc-файлов.
+  # Логи Python сразу в CI-вывод, без буферизации.
   PYTHONUNBUFFERED: "1"
+  # Не создавать .pyc-файлы в CI.
   PYTHONDONTWRITEBYTECODE: "1"
 
-# Кэшируем только pip-артефакты.
+# Кэшируем только pip, чтобы ускорить повторные job.
 cache:
   paths:
     - .cache/pip
 
-# Общая подготовка окружения для всех job.
+# Этот блок выполняется перед КАЖДЫМ job.
+# Здесь мы готовим одинаковое рабочее окружение для build/linter/test.
 default:
   before_script:
+    # Проверяем наличие python3 и фиксируем версию в логах.
     - python3 --version
-    # Создаем и активируем venv, чтобы не ставить пакеты в системный Python runner'а.
+    # Создаем виртуальное окружение (чтобы не ставить пакеты в системный Python runner-а).
     - python3 -m venv "$VENV_PATH"
+    # Активируем окружение: далее python/pip относятся к .venv.
     - . "$VENV_PATH/bin/activate"
+    # Обновляем pip внутри окружения.
     - python -m pip install --upgrade pip
-    # drf-yasg требует pkg_resources, поэтому фиксируем совместимую ветку setuptools.
+    # Для drf-yasg нужна совместимость с pkg_resources, поэтому ограничиваем setuptools.
     - python -m pip install "setuptools<81"
-    # Основной Django-проект находится в подпапке GadukaGang.
+    # Переходим в папку Django-проекта.
     - cd GadukaGang
+    # Ставим зависимости проекта.
     - python -m pip install -r requirements.txt
-    # Поднимаем .env для Django-команд в CI.
+    # Копируем шаблон переменных окружения для manage.py-команд.
     - cp .env.example .env
 
-# Базовая проверка проекта: валидность конфигурации и отсутствие незакоммиченных миграций.
+# build-check:
+# Проверяем, что конфигурация Django валидна и миграции не забыты.
 build-check:
   stage: build
   script:
     - echo "Проверка сборки началась"
+    # django check — проверка apps/settings/конфигурации.
     - python manage.py check
+    # --dry-run: не создает файлы миграций.
+    # --check: вернет ошибку, если миграции должны быть созданы.
     - python manage.py makemigrations --check --dry-run
     - echo "Проверка сборки завершена"
 
-# Минимальный линтер: только критичные ошибки синтаксиса/парсинга.
+# linter-check:
+# Минимальный линт: только критичные ошибки синтаксиса/парсинга.
 linter-check:
   stage: linter
   allow_failure: true
   script:
     - echo "Запуск минимальной проверки flake8"
+    # Устанавливаем flake8.
     - python -m pip install flake8
-    # Исключаем архивные/проблемные файлы, чтобы линтер проверял рабочий код.
-    # || true оставляет job зеленым (информативная проверка, не блокирующая merge/pipeline).
+    # --exclude: исключаем архивные/проблемные файлы.
+    # --select=E9,F63,F7,F82: только критичные категории ошибок.
+    # || true: job остается информативным и не блокирует pipeline.
     - flake8 GadukaGang/ --exclude=views_old_backup.py,GadukaGang/management/commands/populate_data_science_course.py --select=E9,F63,F7,F82 || true
     - echo "Проверка линтером завершена"
 
-# Основные юнит-тесты, которые должны реально проходить.
+# unit-tests:
+# Запускаем основные тесты приложения. Этот job блокирующий.
 unit-tests:
   stage: test
   script:
     - echo "Запуск unit-тестов"
+    # --verbosity 2 дает более подробный лог выполнения тестов.
     - python manage.py test GadukaGang.tests --verbosity 2
 
-# Информативный анализ качества кода (сложность и "сырой" объем).
+# code-quality:
+# Неблокирующий анализ качества кода через radon.
 code-quality:
   stage: test
   allow_failure: true
   script:
     - echo "Анализ качества кода"
+    # Устанавливаем radon для анализа сложности и метрик.
     - python -m pip install radon
-    # Исключаем миграции и проблемные/архивные файлы из расчета метрик.
+    # radon cc: цикломатическая сложность функций/методов.
+    # -a: показать среднюю оценку.
+    # -e: исключить миграции и проблемные/архивные файлы.
     - radon cc . -a -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
+    # radon raw: сырые метрики (LOC, LLOC, comments, blanks и т.п.).
     - radon raw . -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
     - echo "Анализ качества кода завершен"
 
-# Информативная проверка безопасности через bandit.
+# security-check:
+# Неблокирующая проверка безопасности через bandit.
 security-check:
   stage: test
   allow_failure: true
   script:
     - echo "Проверка безопасности"
+    # Устанавливаем bandit.
     - python -m pip install bandit
-    # Исключаем миграции и тестовые/архивные файлы с ожидаемыми false-positive.
+    # -r: рекурсивная проверка.
+    # -ll: только medium/high severity.
+    # -x: исключаем пути с ожидаемыми false-positive.
+    # || true: отчет формируется, но pipeline не блокируется.
     - bandit -r . -ll -x migrations,views_old_backup.py,test_practice.py || true
     - echo "Проверка безопасности завершена"
