@@ -6,18 +6,13 @@ on:
 
 
 
+
 # Общие переменные окружения для всех job.
 env:
   # Какой settings-файл использовать при запуске manage.py.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
   # Папка виртуального окружения, которое создается в каждом job.
   VENV_PATH: ".venv"
-  # Параметры БД как заготовка (на случай PostgreSQL в CI).
-  DB_NAME: "forum_database"
-  DB_USER: "forum_owner"
-  DB_PASSWORD: "1111"
-  DB_HOST: "localhost"
-  DB_PORT: "5432"
   # Ключ шифрования нужен части кода/тестов, чтобы не падать на импорте модулей.
   ENCRYPTION_KEY: "KafqByaeRwSiijl2t7uRpPZKj6-4MgHEVILKiqZQKkM="
   # Логи Python сразу в CI-вывод, без буферизации.
@@ -108,7 +103,6 @@ jobs:
           python -m pip install "setuptools<81"
           cd GadukaGang
           python -m pip install -r requirements.txt
-          cp .env.example .env
 
       - name: Run minimal flake8
         run: |
