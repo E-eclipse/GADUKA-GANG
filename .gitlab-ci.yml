@@ -7,7 +7,6 @@ stages:
   - linter
   - test
 
-
 variables:
   # Какой settings-файл использовать при запуске manage.py.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
