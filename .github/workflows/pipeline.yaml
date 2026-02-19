@@ -6,6 +6,7 @@ on:
   pull_request:
     branches: [ "main", "master" ]
 
+
 # Общие переменные окружения для всех job.
 env:
   # Какой settings-файл использовать при запуске manage.py.
