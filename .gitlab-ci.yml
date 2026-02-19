@@ -51,8 +51,6 @@ default:
     - cd GadukaGang
     # Ставим зависимости проекта.
     - python -m pip install -r requirements.txt
-    # Копируем шаблон переменных окружения для manage.py-команд.
-    - cp .env.example .env
 
 # build-check:
 # Проверяем, что конфигурация Django валидна и миграции не забыты.
@@ -123,3 +121,5 @@ security-check:
     # || true: отчет формируется, но pipeline не блокируется.
     - bandit -r . -ll -x migrations,views_old_backup.py,test_practice.py || true
     - echo "Проверка безопасности завершена"
+
+    
