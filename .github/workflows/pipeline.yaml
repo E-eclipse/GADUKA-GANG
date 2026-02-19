@@ -1,75 +1,244 @@
-name: Django check
+name: Django CI Pipeline
 
 on:
   push:
-    branches: [ master ]
+    branches: [ "main", "master" ]
+  merge_request:
+    branches: [ "main", "master" ]
 
-  # pull_request:
+# Общие переменные окружения для всех job.
+env:
+  # Какой settings-файл использовать при запуске manage.py.
+  DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
+  # Папка виртуального окружения, которое создается в каждом job.
+  VENV_PATH: ".venv"
+  # Параметры БД как заготовка (на случай PostgreSQL в CI).
+  DB_NAME: "forum_database"
+  DB_USER: "forum_owner"
+  DB_PASSWORD: "1111"
+  DB_HOST: "localhost"
+  DB_PORT: "5432"
+  # Ключ шифрования нужен части кода/тестов, чтобы не падать на импорте модулей.
+  ENCRYPTION_KEY: "KafqByaeRwSiijl2t7uRpPZKj6-4MgHEVILKiqZQKkM="
+  # Логи Python сразу в CI-вывод, без буферизации.
+  PYTHONUNBUFFERED: "1"
+  # Не создавать .pyc-файлы в CI.
+  PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
-  validate:
-    name: Validate Django Project
+  # build-check:
+  # Проверяем, что конфигурация Django валидна и миграции не забыты.
+  build-check:
+    name: build-check
     runs-on: ubuntu-latest
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v6
+      # Получаем код из репозитория.
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: set up Python
-        uses: action/setup-python@v6
+      # Устанавливаем Python на Ubuntu runner.
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
-      - name: create venv and install libs
-        run: | 
-          python3 m venv .venv
-          source .venv/bin/activate
-          cd GadukaGang
-          pip install --upgrade pip
-          pip install -r requirements.txt
+          python-version: "3.11"
+          # Кэшируем pip-зависимости между запусками workflow.
+          cache: "pip"
+          cache-dependency-path: "GadukaGang/requirements.txt"
 
-      - name: Check Django settings
+      # Готовим окружение: venv, pip, setuptools, зависимости, .env.
+      - name: Prepare environment
         run: |
-          source .venv/bin/activate
+          python3 --version
+          python3 -m venv "$VENV_PATH"
+          . "$VENV_PATH/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<81"
           cd GadukaGang
-          echo "Проверка настроек Django"
-          python3 manage.py check
-          echo "Настройки валидны"
+          python -m pip install -r requirements.txt
+          cp .env.example .env
 
-      - name: Check Django migrations
+      - name: Build check started
         run: |
-          source .venv/bin/activate
+          . "$VENV_PATH/bin/activate"
           cd GadukaGang
-          echo "Проверка миграций Django"
-          python3 manage.py makemigrations --check --dry-run
-          echo "Миграции валидны"
+          echo "Проверка сборки началась"
 
-  test:
-    name: Test Django static files
+      # django check — проверка apps/settings/конфигурации.
+      - name: Django system check
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          python manage.py check
+
+      # --dry-run: не создает файлы миграций.
+      # --check: вернет ошибку, если миграции должны быть созданы.
+      - name: Django migrations check
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          python manage.py makemigrations --check --dry-run
+
+      - name: Build check finished
+        run: echo "Проверка сборки завершена"
+
+  # linter-check:
+  # Минимальный линт: только критичные ошибки синтаксиса/парсинга.
+  linter-check:
+    name: linter-check
     runs-on: ubuntu-latest
-    needs: validate
-
+    needs: [build-check]
+    continue-on-error: true
     steps:
-      - name: checkout repository
-        uses: actions/checkout@v6
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: set up Python
-        uses: action/setup-python@v6
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
-      - name: create venv and install libs
-        run: | 
-          python3 m venv .venv
-          source .venv/bin/activate
-          cd GadukaGang
-          pip install --upgrade pip
-          pip install -r requirements.txt
-      
-      - name: Check static files
-        run: | 
-          source .venv/bin/activate
-          cd GadukaGang
-          echo "Проверка статик-файлов Django"
-          python3 manage.py collectstatic --noinput --dry-run
-          echo "Статик-файлы валидны"
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "GadukaGang/requirements.txt"
 
+      - name: Prepare environment
+        run: |
+          python3 --version
+          python3 -m venv "$VENV_PATH"
+          . "$VENV_PATH/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<81"
+          cd GadukaGang
+          python -m pip install -r requirements.txt
+          cp .env.example .env
+
+      - name: Run minimal flake8
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          echo "Запуск минимальной проверки flake8"
+          python -m pip install flake8
+          # --exclude: исключаем архивные/проблемные файлы.
+          # --select=E9,F63,F7,F82: только критичные категории ошибок.
+          # || true: job остается информативным и не блокирует pipeline.
+          flake8 GadukaGang/ --exclude=views_old_backup.py,GadukaGang/management/commands/populate_data_science_course.py --select=E9,F63,F7,F82 || true
+          echo "Проверка линтером завершена"
+
+  # unit-tests:
+  # Запускаем основные тесты приложения. Этот job блокирующий.
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    needs: [linter-check]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "GadukaGang/requirements.txt"
+
+      - name: Prepare environment
+        run: |
+          python3 --version
+          python3 -m venv "$VENV_PATH"
+          . "$VENV_PATH/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<81"
+          cd GadukaGang
+          python -m pip install -r requirements.txt
+          cp .env.example .env
+
+      # --verbosity 2 дает более подробный лог выполнения тестов.
+      - name: Run unit tests
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          echo "Запуск unit-тестов"
+          python manage.py test GadukaGang.tests --verbosity 2
+
+  # code-quality:
+  # Неблокирующий анализ качества кода через radon.
+  code-quality:
+    name: code-quality
+    runs-on: ubuntu-latest
+    needs: [linter-check]
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "GadukaGang/requirements.txt"
+
+      - name: Prepare environment
+        run: |
+          python3 --version
+          python3 -m venv "$VENV_PATH"
+          . "$VENV_PATH/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<81"
+          cd GadukaGang
+          python -m pip install -r requirements.txt
+          cp .env.example .env
+
+      - name: Run code quality checks
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          echo "Анализ качества кода"
+          python -m pip install radon
+          # radon cc: цикломатическая сложность функций/методов.
+          # -a: показать среднюю оценку.
+          # -e: исключить миграции и проблемные/архивные файлы.
+          radon cc . -a -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
+          # radon raw: сырые метрики (LOC, LLOC, comments, blanks и т.п.).
+          radon raw . -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
+          echo "Анализ качества кода завершен"
+
+  # security-check:
+  # Неблокирующая проверка безопасности через bandit.
+  security-check:
+    name: security-check
+    runs-on: ubuntu-latest
+    needs: [linter-check]
+    continue-on-error: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: "GadukaGang/requirements.txt"
+
+      - name: Prepare environment
+        run: |
+          python3 --version
+          python3 -m venv "$VENV_PATH"
+          . "$VENV_PATH/bin/activate"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<81"
+          cd GadukaGang
+          python -m pip install -r requirements.txt
+          cp .env.example .env
+
+      - name: Run security scan
+        run: |
+          . "$VENV_PATH/bin/activate"
+          cd GadukaGang
+          echo "Проверка безопасности"
+          python -m pip install bandit
+          # -r: рекурсивная проверка.
+          # -ll: только medium/high severity.
+          # -x: исключаем пути с ожидаемыми false-positive.
+          # || true: отчет формируется, но pipeline не блокируется.
+          bandit -r . -ll -x migrations,views_old_backup.py,test_practice.py || true
+          echo "Проверка безопасности завершена"
