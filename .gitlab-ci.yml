@@ -1,74 +1,96 @@
+# Этапы пайплайна: сначала проверка сборки, затем линтер, затем тестовые/аналитические проверки.
 stages:
   - build
   - linter
   - test
 
 variables:
+  # Django settings модуль проекта.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
+  # Локальное виртуальное окружение внутри job.
   VENV_PATH: ".venv"
+  # Переменные БД (сейчас используются как заготовка под PostgreSQL-окружение).
   DB_NAME: "forum_database"
   DB_USER: "forum_owner"
   DB_PASSWORD: "1111"
   DB_HOST: "localhost"
   DB_PORT: "5432"
+  # Ключ нужен для модулей шифрования, чтобы команды Django не падали в CI.
   ENCRYPTION_KEY: "KafqByaeRwSiijl2t7uRpPZKj6-4MgHEVILKiqZQKkM="
+  # Кэш pip ускоряет повторные сборки.
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Логи Python без буферизации и без .pyc-файлов.
   PYTHONUNBUFFERED: "1"
   PYTHONDONTWRITEBYTECODE: "1"
 
+# Кэшируем только pip-артефакты.
 cache:
   paths:
     - .cache/pip
 
+# Общая подготовка окружения для всех job.
 default:
   before_script:
     - python3 --version
+    # Создаем и активируем venv, чтобы не ставить пакеты в системный Python runner'а.
     - python3 -m venv "$VENV_PATH"
     - . "$VENV_PATH/bin/activate"
     - python -m pip install --upgrade pip
+    # drf-yasg требует pkg_resources, поэтому фиксируем совместимую ветку setuptools.
     - python -m pip install "setuptools<81"
+    # Основной Django-проект находится в подпапке GadukaGang.
     - cd GadukaGang
     - python -m pip install -r requirements.txt
+    # Поднимаем .env для Django-команд в CI.
     - cp .env.example .env
 
+# Базовая проверка проекта: валидность конфигурации и отсутствие незакоммиченных миграций.
 build-check:
   stage: build
   script:
-    - echo "Build check started"
+    - echo "Проверка сборки началась"
     - python manage.py check
     - python manage.py makemigrations --check --dry-run
-    - echo "Build check finished"
+    - echo "Проверка сборки завершена"
 
+# Минимальный линтер: только критичные ошибки синтаксиса/парсинга.
 linter-check:
   stage: linter
   allow_failure: true
   script:
-    - echo "Running minimal flake8"
+    - echo "Запуск минимальной проверки flake8"
     - python -m pip install flake8
+    # Исключаем архивные/проблемные файлы, чтобы линтер проверял рабочий код.
+    # || true оставляет job зеленым (информативная проверка, не блокирующая merge/pipeline).
     - flake8 GadukaGang/ --exclude=views_old_backup.py,GadukaGang/management/commands/populate_data_science_course.py --select=E9,F63,F7,F82 || true
-    - echo "Linter check finished"
+    - echo "Проверка линтером завершена"
 
+# Основные юнит-тесты, которые должны реально проходить.
 unit-tests:
   stage: test
   script:
-    - echo "Running unit tests"
+    - echo "Запуск unit-тестов"
     - python manage.py test GadukaGang.tests --verbosity 2
 
+# Информативный анализ качества кода (сложность и "сырой" объем).
 code-quality:
   stage: test
   allow_failure: true
   script:
-    - echo "Running code quality"
+    - echo "Анализ качества кода"
     - python -m pip install radon
+    # Исключаем миграции и проблемные/архивные файлы из расчета метрик.
     - radon cc . -a -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
     - radon raw . -e "migrations/*,views_old_backup.py,management/commands/populate_data_science_course.py" || true
-    - echo "Code quality finished"
+    - echo "Анализ качества кода завершен"
 
+# Информативная проверка безопасности через bandit.
 security-check:
   stage: test
   allow_failure: true
   script:
-    - echo "Running security scan"
+    - echo "Проверка безопасности"
     - python -m pip install bandit
+    # Исключаем миграции и тестовые/архивные файлы с ожидаемыми false-positive.
     - bandit -r . -ll -x migrations,views_old_backup.py,test_practice.py || true
-    - echo "Security scan finished"
+    - echo "Проверка безопасности завершена"
