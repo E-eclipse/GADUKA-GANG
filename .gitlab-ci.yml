@@ -8,8 +8,8 @@ stages:
   - test
 
 variables:
+  # Какой settings-файл использовать при запуске manage.py.
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
-  
   # Папка виртуального окружения, которое создается в каждом job.
   VENV_PATH: ".venv"
   # Параметры БД как заготовка (на случай PostgreSQL в CI).
