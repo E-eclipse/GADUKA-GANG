@@ -9,6 +9,7 @@ stages:
 
 variables:
   DJANGO_SETTINGS_MODULE: "GadukaGang.settings"
+  
   # Папка виртуального окружения, которое создается в каждом job.
   VENV_PATH: ".venv"
   # Параметры БД как заготовка (на случай PostgreSQL в CI).
